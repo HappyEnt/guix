@@ -907,7 +907,7 @@ the GNOME desktop environment.")
                    ;; <https://debbugs.gnu.org/cgi/bugreport.cgi?bug=39281>.
                    "InitialSetupEnable=false\n"
                    ;; Enable me once X is working.
-                   "WaylandEnable=false\n"
+                   "WaylandEnable=true\n"
                    "\n"
                    "[debug]\n"
                    "Enable=" (if (gdm-configuration-debug? config)
@@ -957,6 +957,7 @@ the GNOME desktop environment.")
                            (string-append
                             "GDM_DBUS_DAEMON="
                             #$(gdm-configuration-dbus-daemon config))
+                            "XCURSOR_PATH=/run/current-system/profile/share/icons"
                            (string-append
                             "GDM_X_SERVER="
                             #$(xorg-wrapper
