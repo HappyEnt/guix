@@ -18,14 +18,19 @@
 
 (define-module (guix git-authenticate)
   #:use-module (git)
+  #:autoload   (gcrypt hash) (sha256)
   #:use-module (guix base16)
-  #:use-module ((guix git) #:select (false-if-git-not-found))
+  #:autoload   (guix base64) (base64-encode)
+  #:use-module ((guix git)
+                #:select (commit-difference false-if-git-not-found))
   #:use-module (guix i18n)
+  #:use-module ((guix diagnostics) #:select (formatted-message))
   #:use-module (guix openpgp)
   #:use-module ((guix utils)
                 #:select (cache-directory with-atomic-file-output))
   #:use-module ((guix build utils)
                 #:select (mkdir-p))
+  #:use-module (guix progress)
   #:use-module (srfi srfi-1)
   #:use-module (srfi srfi-11)
   #:use-module (srfi srfi-26)
@@ -43,6 +48,9 @@
             load-keyring-from-reference
             previously-authenticated-commits
             cache-authenticated-commit
+
+            repository-cache-key
+            authenticate-repository
 
             git-authentication-error?
             git-authentication-error-commit
@@ -98,23 +106,21 @@ not in KEYRING."
                   (lambda _
                     (values #f #f)))))
     (unless signature
-      (raise (condition
-              (&unsigned-commit-error (commit commit-id))
-              (&message
-               (message (format #f (G_ "commit ~a lacks a signature")
-                                (oid->string commit-id)))))))
+      (raise (make-compound-condition
+              (condition (&unsigned-commit-error (commit commit-id)))
+              (formatted-message (G_ "commit ~a lacks a signature")
+                                 (oid->string commit-id)))))
 
     (let ((signature (string->openpgp-packet signature)))
       (when (memq (openpgp-signature-hash-algorithm signature)
                   `(,@disallowed-hash-algorithms md5))
-        (raise (condition
-                (&unsigned-commit-error (commit commit-id))
-                (&message
-                 (message (format #f (G_ "commit ~a has a ~a signature, \
+        (raise (make-compound-condition
+                (condition (&unsigned-commit-error (commit commit-id)))
+                (formatted-message (G_ "commit ~a has a ~a signature, \
 which is not permitted")
-                                  (oid->string commit-id)
-                                  (openpgp-signature-hash-algorithm
-                                   signature)))))))
+                                   (oid->string commit-id)
+                                   (openpgp-signature-hash-algorithm
+                                    signature)))))
 
       (with-fluids ((%default-port-encoding "UTF-8"))
         (let-values (((status data)
@@ -123,23 +129,22 @@ which is not permitted")
           (match status
             ('bad-signature
              ;; There's a signature but it's invalid.
-             (raise (condition
-                     (&signature-verification-error (commit commit-id)
-                                                    (signature signature)
-                                                    (keyring keyring))
-                     (&message
-                      (message (format #f (G_ "signature verification failed \
+             (raise (make-compound-condition
+                     (condition
+                      (&signature-verification-error (commit commit-id)
+                                                     (signature signature)
+                                                     (keyring keyring)))
+                     (formatted-message (G_ "signature verification failed \
 for commit ~a")
-                                       (oid->string commit-id)))))))
+                                        (oid->string commit-id)))))
             ('missing-key
-             (raise (condition
-                     (&missing-key-error (commit commit-id)
-                                         (signature signature))
-                     (&message
-                      (message (format #f (G_ "could not authenticate \
+             (raise (make-compound-condition
+                     (condition (&missing-key-error (commit commit-id)
+                                                    (signature signature)))
+                     (formatted-message (G_ "could not authenticate \
 commit ~a: key ~a is missing")
-                                       (oid->string commit-id)
-                                       data))))))
+                                        (oid->string commit-id)
+                                        (openpgp-format-fingerprint data)))))
             ('good-signature data)))))))
 
 (define (read-authorizations port)
@@ -172,13 +177,13 @@ does not specify anything, fall back to DEFAULT-AUTHORIZATIONS."
     ;; If COMMIT removes the '.guix-authorizations' file found in one of its
     ;; parents, raise an error.
     (when (parents-have-authorizations-file? commit)
-      (raise (condition
-              (&unauthorized-commit-error (commit (commit-id commit))
-                                          (signing-key #f))
-              (&message
-               (message (format #f (G_ "commit ~a attempts \
+      (raise (make-compound-condition
+              (condition
+               (&unauthorized-commit-error (commit (commit-id commit))
+                                           (signing-key #f)))
+              (formatted-message (G_ "commit ~a attempts \
 to remove '.guix-authorizations' file")
-                                (oid->string (commit-id commit)))))))))
+                                 (oid->string (commit-id commit)))))))
 
   (define (commit-authorizations commit)
     (catch 'git-error
@@ -227,16 +232,16 @@ not specify anything, fall back to DEFAULT-AUTHORIZATIONS."
   (unless (member (openpgp-public-key-fingerprint signing-key)
                   (commit-authorized-keys repository commit
                                           default-authorizations))
-    (raise (condition
-            (&unauthorized-commit-error (commit id)
-                                        (signing-key signing-key))
-            (&message
-             (message (format #f (G_ "commit ~a not signed by an authorized \
+    (raise (make-compound-condition
+            (condition
+             (&unauthorized-commit-error (commit id)
+                                         (signing-key signing-key)))
+            (formatted-message (G_ "commit ~a not signed by an authorized \
 key: ~a")
-                              (oid->string id)
-                              (openpgp-format-fingerprint
-                               (openpgp-public-key-fingerprint
-                                signing-key))))))))
+                               (oid->string id)
+                               (openpgp-format-fingerprint
+                                (openpgp-public-key-fingerprint
+                                 signing-key))))))
 
   signing-key)
 
@@ -339,3 +344,93 @@ authenticated (only COMMIT-ID is written to cache, though)."
           (display ";; List of previously-authenticated commits.\n\n"
                    port)
           (pretty-print lst port))))))
+
+
+;;;
+;;; High-level interface.
+;;;
+
+(define (repository-cache-key repository)
+  "Return a unique key to store the authenticate commit cache for REPOSITORY."
+  (string-append "checkouts/"
+                 (base64-encode
+                  (sha256 (string->utf8 (repository-directory repository))))))
+
+(define (verify-introductory-commit repository keyring commit expected-signer)
+  "Look up COMMIT in REPOSITORY, and raise an exception if it is not signed by
+EXPECTED-SIGNER."
+  (define actual-signer
+    (openpgp-public-key-fingerprint
+     (commit-signing-key repository (commit-id commit) keyring)))
+
+  (unless (bytevector=? expected-signer actual-signer)
+    (raise (formatted-message (G_ "initial commit ~a is signed by '~a' \
+instead of '~a'")
+                              (oid->string (commit-id commit))
+                              (openpgp-format-fingerprint actual-signer)
+                              (openpgp-format-fingerprint expected-signer)))))
+
+(define* (authenticate-repository repository start signer
+                                  #:key
+                                  (keyring-reference "keyring")
+                                  (cache-key (repository-cache-key repository))
+                                  (end (reference-target
+                                        (repository-head repository)))
+                                  (historical-authorizations '())
+                                  (make-reporter
+                                   (const progress-reporter/silent)))
+  "Authenticate REPOSITORY up to commit END, an OID.  Authentication starts
+with commit START, an OID, which must be signed by SIGNER; an exception is
+raised if that is not the case.  Return an alist mapping OpenPGP public keys
+to the number of commits signed by that key that have been traversed.
+
+The OpenPGP keyring is loaded from KEYRING-REFERENCE in REPOSITORY, where
+KEYRING-REFERENCE is the name of a branch.  The list of authenticated commits
+is cached in the authentication cache under CACHE-KEY.
+
+HISTORICAL-AUTHORIZATIONS must be a list of OpenPGP fingerprints (bytevectors)
+denoting the authorized keys for commits whose parent lack the
+'.guix-authorizations' file."
+  (define start-commit
+    (commit-lookup repository start))
+  (define end-commit
+    (commit-lookup repository end))
+
+  (define keyring
+    (load-keyring-from-reference repository keyring-reference))
+
+  (define authenticated-commits
+    ;; Previously-authenticated commits that don't need to be checked again.
+    (filter-map (lambda (id)
+                  (false-if-git-not-found
+                   (commit-lookup repository (string->oid id))))
+                (previously-authenticated-commits cache-key)))
+
+  (define commits
+    ;; Commits to authenticate, excluding the closure of
+    ;; AUTHENTICATED-COMMITS.
+    (commit-difference end-commit start-commit
+                       authenticated-commits))
+
+  ;; When COMMITS is empty, it's because END-COMMIT is in the closure of
+  ;; START-COMMIT and/or AUTHENTICATED-COMMITS, in which case it's known to
+  ;; be authentic already.
+  (if (null? commits)
+      '()
+      (let ((reporter (make-reporter start-commit end-commit commits)))
+        ;; If it's our first time, verify START-COMMIT's signature.
+        (when (null? authenticated-commits)
+          (verify-introductory-commit repository keyring
+                                      start-commit signer))
+
+        (let ((stats (call-with-progress-reporter reporter
+                       (lambda (report)
+                         (authenticate-commits repository commits
+                                               #:keyring keyring
+                                               #:default-authorizations
+                                               historical-authorizations
+                                               #:report-progress report)))))
+          (cache-authenticated-commit cache-key
+                                      (oid->string (commit-id end-commit)))
+
+          stats))))

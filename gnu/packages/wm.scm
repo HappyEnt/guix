@@ -121,7 +121,7 @@
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/baskerville/bspwm.git")
+             (url "https://github.com/baskerville/bspwm")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
@@ -270,14 +270,14 @@ commands would.")
 (define-public i3-wm
   (package
     (name "i3-wm")
-    (version "4.18.1")
+    (version "4.18.2")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://i3wm.org/downloads/i3-"
                                   version ".tar.bz2"))
               (sha256
                (base32
-                "0z709cianlzw0x0qwq4361347354xd9ckj1v7vjvhb1zh3x91gws"))))
+                "030jym6b8b07yf4y6pb806hg8k77zsprv569gy0r72rh5zb1g1mj"))))
     (build-system gnu-build-system)
     (arguments
      `(#:configure-flags
@@ -340,7 +340,7 @@ many programming languages.")
 (define-public i3-gaps
   (package (inherit i3-wm)
            (name "i3-gaps")
-           (version "4.18")
+           (version "4.18.2")
            (source (origin
                      (method url-fetch)
                      (uri (string-append
@@ -348,7 +348,7 @@ many programming languages.")
                            version "/i3-" version ".tar.bz2"))
                      (sha256
                       (base32
-                       "0id4qm9a7kc5yawff85blmph4zbizhb6ka88aqm10wrpfsknri3j"))))
+                       "0lz08wf4b0yprzqsmymn94kiyg885dcwmh0p64v2rnf52s165g2g"))))
            (home-page "https://github.com/Airblader/i3")
            (synopsis "Tiling window manager with gaps")
            (description "i3-gaps is a fork of i3wm, a tiling window manager
@@ -403,7 +403,7 @@ Despite the name it should work with any X11 window manager.")
     (source (origin
               (method git-fetch)
               (uri (git-reference
-                    (url "https://github.com/vivien/i3blocks.git")
+                    (url "https://github.com/vivien/i3blocks")
                     (commit version)))
               (sha256
                (base32
@@ -458,7 +458,7 @@ You can then subscribe to events or send messages and receive their replies.")
        ;; for years.
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/ziberna/i3-py.git")
+             (url "https://github.com/ziberna/i3-py")
              (commit "27f88a616e9ecc340e7d041d3d00782f8a1964c1")))
        (sha256
         (base32
@@ -503,7 +503,7 @@ subscribe to events.")
          ;; instead of the release.
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/proxypoke/quickswitch-for-i3.git")
+               (url "https://github.com/proxypoke/quickswitch-for-i3")
                (commit commit)))
          (sha256
           (base32
@@ -541,7 +541,7 @@ prompt.")
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/PandorasFox/i3lock-color.git")
+             (url "https://github.com/PandorasFox/i3lock-color")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
@@ -584,7 +584,7 @@ Features include:
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/meskarune/i3lock-fancy.git")
+             (url "https://github.com/meskarune/i3lock-fancy")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
@@ -1012,14 +1012,14 @@ dynamic and extensible using the Lua programming language.")
 (define-public menumaker
   (package
     (name "menumaker")
-    (version "0.99.11")
+    (version "0.99.12")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://sourceforge/menumaker/"
                            "menumaker-" version ".tar.gz"))
        (sha256
-        (base32 "0dprndnhwm7b803zkp4pisiq06ic9iv8vr42in5is47jmvdim0wx"))))
+        (base32 "034v5204bsgkzzk6zfa5ia63q95gln47f7hwf96yvad5hrhmd8z3"))))
     (build-system gnu-build-system)
     (inputs
      `(("python" ,python)))
@@ -1109,7 +1109,7 @@ Keybinder works with GTK-based applications using the X Window System.")
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/conformal/spectrwm.git")
+             (url "https://github.com/conformal/spectrwm")
              (commit
               (string-append "SPECTRWM_"
                              (string-join (string-split version #\.) "_")))))
@@ -1317,7 +1317,7 @@ functionality to display information about the most commonly used services.")
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/swaywm/wlroots.git")
+             (url "https://github.com/swaywm/wlroots")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
@@ -1362,7 +1362,7 @@ modules for building a Wayland compositor.")
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/swaywm/sway.git")
+             (url "https://github.com/swaywm/sway")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
@@ -1414,7 +1414,7 @@ modules for building a Wayland compositor.")
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/swaywm/swayidle.git")
+             (url "https://github.com/swaywm/swayidle")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
@@ -1440,7 +1440,7 @@ modules for building a Wayland compositor.")
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/swaywm/swaylock.git")
+             (url "https://github.com/swaywm/swaylock")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
@@ -1468,7 +1468,7 @@ modules for building a Wayland compositor.")
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/swaywm/swaybg.git")
+             (url "https://github.com/swaywm/swaybg")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
@@ -1493,7 +1493,7 @@ modules for building a Wayland compositor.")
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/Alexays/Waybar.git")
+             (url "https://github.com/Alexays/Waybar")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
@@ -1531,7 +1531,7 @@ Wlroots based compositors.")
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/emersion/mako.git")
+             (url "https://github.com/emersion/mako")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
@@ -1559,7 +1559,7 @@ compositors that support the layer-shell protocol.")
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/stumpwm/stumpwm.git")
+             (url "https://github.com/stumpwm/stumpwm")
              (commit version)))
        (file-name (git-file-name "stumpwm" version))
        (sha256
@@ -1669,7 +1669,7 @@ productive, customizable lisp based systems.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/stumpwm/stumpwm-contrib.git")
+               (url "https://github.com/stumpwm/stumpwm-contrib")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
@@ -1743,7 +1743,7 @@ rendering.")
          (add-after 'unpack 'chdir
            (lambda _ (chdir "util/pass") #t)))))
     (home-page "https://github.com/stumpwm/stumpwm-contrib")
-    (synopsis "Integrate @code{pass} wih StumpWM")
+    (synopsis "Integrate @code{pass} with StumpWM")
     (description "This package provides an interface which integrates
 password-store into StumpWM.")
     (license (list license:gpl2+ license:gpl3+ license:bsd-2))))
@@ -1892,3 +1892,72 @@ bar entirely based on XCB.  Provides full UTF-8 support, basic
 formatting, RandR and Xinerama support and EWMH compliance without
 wasting your precious memory.")
       (license license:x11))))
+
+(define-public xclickroot
+  (let ((commit "309fd17174dba4149b5ea66654c6fd02cfcf7c9a")
+        (revision "1"))
+    (package
+      (name "xclickroot")
+      (version (git-version "0.0.1" revision commit)) ;no upstream release
+      (source (origin
+                (method git-fetch)
+                (uri (git-reference
+                      (url "https://github.com/phillbush/xclickroot")
+                      (commit commit)))
+                (file-name (git-file-name name version))
+                (sha256
+                 (base32
+                  "0fjqkg3wnyks0my1vrzhxfjicsfy8xwnijaazmpz6mhilcqkpvnd"))))
+      (build-system gnu-build-system)
+      (inputs
+       `(("libx11" ,libx11)))
+      (arguments
+       `(#:tests? #f ;no test suite
+         #:make-flags
+         (list ,(string-append "CC=" (cc-for-target))
+               (string-append "PREFIX=" %output))
+         #:phases
+         (modify-phases %standard-phases
+           (delete 'configure))))
+      (home-page "https://github.com/phillbush/xclickroot")
+      (synopsis "Run a command when a mouse button is pressed on the root window")
+      (description "@code{xclickroot} runs a command every time a given mouse
+button is pressed on the root window.")
+      (license license:public-domain))))
+
+(define-public xmenu
+  (package
+    (name "xmenu")
+    (version "3.4")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/phillbush/xmenu")
+                    (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "1sw9l87fh03jp03a2v7rhgpyx29yg2x9blzfzp40jwad2whs7m7n"))))
+    (build-system gnu-build-system)
+    (inputs
+     `(("libx11" ,libx11)
+       ("libxft" ,libxft)
+       ("freetype" ,freetype)
+       ("imlib2" ,imlib2)))
+    (arguments
+     `(#:tests? #f ;no test suite
+       #:make-flags
+       (list (string-append "CC=" ,(cc-for-target))
+             (string-append "PREFIX=" %output)
+             (string-append "CFLAGS="
+                            "-I" (assoc-ref %build-inputs "freetype")
+                            "/include/freetype2"))
+       #:phases
+       (modify-phases %standard-phases
+         (delete 'configure))))
+    (home-page "https://github.com/phillbush/xmenu")
+    (synopsis "Menu utility for X")
+    (description "@code{xmenu} receives a menu specification in stdin, shows
+a menu for the user to select one of the options, and outputs the option
+selected to stdout.  It can be controlled both via mouse and via keyboard.")
+    (license license:public-domain)))

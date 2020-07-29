@@ -117,6 +117,54 @@ source code editors and IDEs.")
               (base32
                "0d22h8xshmbpl9hba9ch3xj8vb9ybm5akpsbbh7yj07fic4h2hj6"))))))
 
+(define-public clitest
+  (package
+    (name "clitest")
+    (version "0.3.0")
+    (home-page "https://github.com/aureliojargas/clitest")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url home-page)
+                    (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "0zw5wra9hc717srmcar1wm4i34kyj8c49ny4bb7y3nrvkjp2pdb5"))))
+    (build-system gnu-build-system)
+    (arguments
+     `(#:phases
+       (modify-phases %standard-phases
+         ;; This package is distributed as a single shell script and comes
+         ;; without a proper build system.
+         (delete 'configure)
+         (delete 'build)
+         (replace 'check
+           (lambda _
+             (substitute* "test.md"
+               ;; One test looks for an error from grep in the form "grep: foo",
+               ;; but our grep returns the absolute file name on errors.  Adjust
+               ;; the test to cope with that.
+               (("sed 's/\\^e\\*grep: \\.\\*/")
+                "sed 's/.*e*grep: .*/"))
+
+             (setenv "HOME" "/tmp")
+             (invoke "./clitest" "test.md")))
+         (replace 'install
+           (lambda* (#:key outputs #:allow-other-keys)
+             (let ((out (assoc-ref outputs "out")))
+               (install-file "clitest" (string-append out "/bin"))
+               (install-file "README.md"
+                             (string-append out "/share/doc/clitest-" ,version))
+               #t))))))
+    (native-inputs
+     `(("perl" ,perl)))                 ;for tests
+    (synopsis "Command line test tool")
+    (description
+     "@command{clitest} is a portable shell script that performs automatic
+testing of Unix command lines.")
+    (license license:expat)))
+
 (define-public cunit
   (package
     (name "cunit")
@@ -397,7 +445,7 @@ and it supports a very flexible form of test discovery.")
 (define-public doctest
   (package
     (name "doctest")
-    (version "2.3.8")
+    (version "2.4.0")
     (home-page "https://github.com/onqtam/doctest")
     (source (origin
               (method git-fetch)
@@ -405,7 +453,7 @@ and it supports a very flexible form of test discovery.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "16w907750jnp98vdzkn72lzwy1zyryaqvfi80lbdp398pj23rq65"))))
+                "1yi95saqv8qb3ix6w8d7ffvs7qbwvqmq6wblckhxhicxxdxk85cd"))))
     (build-system cmake-build-system)
     (synopsis "C++ test framework")
     (description
@@ -422,7 +470,7 @@ has been designed to be fast, light and unintrusive.")
       (source (origin
                 (method git-fetch)
                 (uri (git-reference
-                      (url "https://github.com/go-check/check.git")
+                      (url "https://github.com/go-check/check")
                       (commit commit)))
                 (file-name (git-file-name name version))
                 (sha256
@@ -528,7 +576,7 @@ test coverage and has a web user interface that will refresh automatically.")
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/google/googletest.git")
+             (url "https://github.com/google/googletest")
              (commit (string-append "release-" version))))
        (file-name (git-file-name name version))
        (sha256
@@ -552,7 +600,7 @@ generation.")
    (source (origin
              (method git-fetch)
              (uri (git-reference
-                   (url "https://github.com/google/googletest.git")
+                   (url "https://github.com/google/googletest")
                    (commit (string-append "release-" version))))
              (file-name (git-file-name "googletest" version))
              (sha256
@@ -1474,7 +1522,7 @@ have failed since the last commit or what tests are currently failing.")))
     (arguments
      ;; FIXME: 95 tests failed, 539 passed, 6 skipped, 2 errors.
      '(#:tests? #f))
-    (home-page "http://nedbatchelder.com/code/coverage")
+    (home-page "https://coverage.readthedocs.io")
     (synopsis "Code coverage measurement for Python")
     (description
      "Coverage measures code coverage, typically during test execution.  It
@@ -1552,7 +1600,7 @@ testing frameworks.")
     (propagated-inputs
      `(("python-coverage" ,python-coverage)
        ("python-requests" ,python-requests)))
-    (home-page "http://github.com/codecov/codecov-python")
+    (home-page "https://github.com/codecov/codecov-python")
     (synopsis "Upload code coverage reports to @code{codecov.io}")
     (description
      "Codecov collects code coverage reports from code written in Python, Java,
@@ -2115,7 +2163,7 @@ a fork of pytest-capturelog.")
     (propagated-inputs
      `(("python-coverage" ,python-coverage)
        ("python-nose" ,python-nose)))
-    (home-page "http://github.com/cmheisel/nose-xcover")
+    (home-page "https://github.com/cmheisel/nose-xcover")
     (synopsis "Extends nose.plugins.cover to add Cobertura-style XML reports")
     (description "Nose-xcover is a companion to the built-in
 @code{nose.plugins.cover}.  This plugin will write out an XML coverage report

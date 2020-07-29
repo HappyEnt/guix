@@ -308,18 +308,18 @@ without requiring the source code to be rewritten.")
             (files '("lib/guile/3.0/site-ccache"
                      "share/guile/site/3.0")))))))
 
-(define-public guile-3.0.3
+(define-public guile-3.0-latest
   ;; TODO: Make this 'guile-3.0' on the next rebuild cycle.
   (package
     (inherit guile-3.0)
-    (version "3.0.3")
+    (version "3.0.4")
     (source (origin
               (inherit (package-source guile-3.0))
               (uri (string-append "mirror://gnu/guile/guile-"
                                   version ".tar.xz"))
               (sha256
                (base32
-                "0fz6fgx7ran6nn0l978jmpckjc9knk4g3bddr75n0daqqmhjs95k"))))))
+                "0c8dkyvs6xbxp7rgnhkyakajzhakay7qn9kahj1mj49x5vf4fybb"))))))
 
 (define-public guile-next
   (deprecated-package "guile-next" guile-3.0))
@@ -330,7 +330,7 @@ without requiring the source code to be rewritten.")
   ;; https://debbugs.gnu.org/cgi/bugreport.cgi?bug=40525
   (hidden-package
    (package
-     (inherit guile-3.0.3)
+     (inherit guile-3.0-latest)
      (propagated-inputs
       `(("bdw-gc" ,libgc-7)
         ,@(srfi-1:alist-delete "bdw-gc" (package-propagated-inputs guile-3.0)))))))
@@ -596,7 +596,7 @@ specification.  These are the main features:
     (source (origin
               (method git-fetch)
               (uri (git-reference
-                    (url "https://github.com/ijp/guile-gdbm.git")
+                    (url "https://github.com/ijp/guile-gdbm")
                     (commit "fa1d5b6231d0e4d096687b378c025f2148c5f246")))
               (file-name (string-append name "-" version "-checkout"))
               (patches (search-patches
@@ -777,5 +777,71 @@ manipulate repositories of the Git version control system.")
 
 (define-deprecated-guile3.0-package guile3.0-git)
 
-;;; guile.scm ends here
+(define-public guile-zlib
+  (package
+    (name "guile-zlib")
+    (version "0.0.1")
+    (source
+     (origin
+       ;; XXX: Do not use "git-fetch" method here that would create and
+       ;; endless inclusion loop, because this package is used as an extension
+       ;; in the same method.
+       (method url-fetch)
+       (uri
+        (string-append "https://notabug.org/guile-zlib/guile-zlib/archive/"
+                       version ".tar.gz"))
+       (sha256
+        (base32
+         "1caz6cbl6sg5567nk68z88rshp0m26zmb0a9ry1jkc1ivpk0n47i"))))
+    (build-system gnu-build-system)
+    (arguments
+     '(#:make-flags
+       '("GUILE_AUTO_COMPILE=0"))) ;to prevent guild warnings
+    (native-inputs
+     `(("autoconf" ,autoconf)
+       ("automake" ,automake)
+       ("pkg-config" ,pkg-config)))
+    (inputs
+     `(("guile" ,guile-3.0)
+       ("zlib" ,zlib)))
+    (synopsis "Guile bindings to zlib")
+    (description
+     "This package provides Guile bindings for zlib, a lossless
+data-compression library.  The bindings are written in pure Scheme by using
+Guile's foreign function interface.")
+    (home-page "https://notabug.org/guile-zlib/guile-zlib")
+    (license license:gpl3+)))
 
+(define-public guile-lzlib
+  (package
+    (name "guile-lzlib")
+    (version "0.0.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri
+        (string-append "https://notabug.org/guile-lzlib/guile-lzlib/archive/"
+                       version ".tar.gz"))
+       (sha256
+        (base32
+         "0rdmszn1qix085ci2mddwq5cypipc004fk7arrrkgn9bv39hazza"))))
+    (build-system gnu-build-system)
+    (arguments
+     '(#:make-flags
+       '("GUILE_AUTO_COMPILE=0"))) ;to prevent guild warnings
+    (native-inputs
+     `(("autoconf" ,autoconf)
+       ("automake" ,automake)
+       ("pkg-config" ,pkg-config)))
+    (inputs
+     `(("guile" ,guile-3.0)
+       ("lzlib" ,lzlib)))
+    (synopsis "Guile bindings to lzlib")
+    (description
+     "This package provides Guile bindings for lzlib, a C library for
+in-memory LZMA compression and decompression.  The bindings are written in
+pure Scheme by using Guile's foreign function interface.")
+    (home-page "https://notabug.org/guile-lzlib/guile-lzlib")
+    (license license:gpl3+)))
+
+;;; guile.scm ends here

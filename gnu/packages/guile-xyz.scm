@@ -28,6 +28,8 @@
 ;;; Copyright © 2020 Jack Hill <jackhill@jackhill.us>
 ;;; Copyright © 2020 Julien Lepiler <julien@lepiller.eu>
 ;;; Copyright © 2020 Marius Bakke <marius@gnu.org>
+;;; Copyright © 2020 Masaya Tojo <masaya@tojo.tokyo>
+;;; Copyright © 2020 Jesse Gibbons <jgibbons2357@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -155,9 +157,9 @@
     ;; projects.
     ;; TODO: Add guile-dbi and guile-dbd optional dependencies.
     (propagated-inputs
-     `(("guile-json" ,guile-json-1)
+     `(("guile-json" ,guile-json-1) ; This ia already using guile-2.2.
        ("guile-readline" ,guile2.2-readline)
-       ("guile-redis" ,guile-redis)))
+       ("guile-redis" ,guile2.2-redis)))
     (native-inputs
      `(("bash"       ,bash)         ;for the `source' builtin
        ("pkgconfig"  ,pkg-config)
@@ -233,7 +235,7 @@ more.")
       (source (origin
                 (method git-fetch)
                 (uri (git-reference
-                      (url "https://github.com/ijp/guildhall.git")
+                      (url "https://github.com/ijp/guildhall")
                       (commit commit)))
                 (file-name (string-append name "-" version "-checkout"))
                 (sha256
@@ -934,8 +936,8 @@ messaging library.")
   (deprecated-package "guile3.0-simple-zmq" guile-simple-zmq))
 
 (define-public jupyter-guile-kernel
-  (let ((commit "a7db9245a886e104138474df46c3e88b95cff629")
-        (revision "1"))
+  (let ((commit "f25fb90b95529b17a006a807bd04e6aee12ea304")
+        (revision "2"))
     (package
       (name "jupyter-guile-kernel")
       (version (git-version "0.0.0" revision commit))
@@ -948,7 +950,7 @@ messaging library.")
          (file-name (git-file-name name version))
          (sha256
           (base32
-           "0aj04853bqm47ivfcmrgpb7w3wkis847kc7qrwsa5zcn9h38qh2f"))))
+           "0zr1fasdb2yv9kn21yll993y9higqss4jnfs030ndhjb93raa9sr"))))
       (build-system guile-build-system)
       (arguments
        '(#:phases (modify-phases %standard-phases
@@ -983,7 +985,7 @@ messaging library.")
 
                           ;; Fix hard-coded file name in the kernel.
                           (substitute* (string-append dir "/kernel.json")
-                            (("/home/.*/guile-jupyter-kernel.scm")
+                            (("/usr/local/.*/guile-jupyter-kernel.scm")
                              (string-append out "/share/guile/site/"
                                             (target-guile-effective-version)
                                             "/guile-jupyter-kernel.scm"))
@@ -1004,17 +1006,17 @@ messaging library.")
                                                              effective
                                                              "/site-ccache\""))
                                             deps)))
-                              (string-append "--no-auto-compile\""
-                                             (string-join -L ", \"-L\", "
-                                                          'prefix)
-                                             (string-join -C ", \"-C\", "
-                                                          'prefix)
-                                             ", \"-s"))))
+                               (string-append "--no-auto-compile\""
+                                              (string-join -L ", \"-L\", "
+                                                           'prefix)
+                                              (string-join -C ", \"-C\", "
+                                                           'prefix)
+                                              ", \"-s"))))
                           #t))))))
       (inputs
        `(("openssl" ,openssl)
-         ("guile" ,guile-2.2)
-         ("guile-json" ,guile-json-1)
+         ("guile" ,guile-3.0)
+         ("guile-json" ,guile-json-3)
          ("guile-simple-zmq" ,guile-simple-zmq)))
       (synopsis "Guile kernel for the Jupyter Notebook")
       (description
@@ -1349,7 +1351,7 @@ SQL databases.  This package implements the interface for SQLite.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/opencog/guile-dbi.git")
+               (url "https://github.com/opencog/guile-dbi")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
@@ -1724,10 +1726,10 @@ capabilities.")
     (license license:gpl3+)))
 
 (define-public g-golf
-  (let ((commit "4a4edf25e4877df9182c77843bdd98ab59e13ef7"))
+  (let ((commit "5d2903afb4b6b65c22f587835d8fdff91916e5ee"))
     (package
       (name "g-golf")
-      (version (git-version "1" "683" commit))
+      (version (git-version "1" "804" commit))
       (source (origin
                 (method git-fetch)
                 (uri (git-reference
@@ -1736,7 +1738,7 @@ capabilities.")
                 (file-name (git-file-name name version))
                 (sha256
                  (base32
-                  "09p0gf71wbmlm9kri693a8fvr9hl3hhlmlidyadwjdh7853xg0h8"))))
+                  "1xkb6a5d3i9s8lpb5cf06bd64p5srqnnhn5l0b2f5csbvyz8hmmh"))))
       (build-system gnu-build-system)
       (native-inputs
        `(("autoconf" ,autoconf)
@@ -1744,10 +1746,11 @@ capabilities.")
          ("texinfo" ,texinfo)
          ("gettext" ,gettext-minimal)
          ("libtool" ,libtool)
-         ("pkg-config" ,pkg-config)))
+         ("pkg-config" ,pkg-config)
+         ("xorg-server" ,xorg-server)))
       (inputs
        `(("guile" ,guile-2.2)
-         ("guile-lib" ,guile-lib)
+         ("guile-lib" ,guile2.2-lib)
          ("clutter" ,clutter)
          ("gtk" ,gtk+)
          ("glib" ,glib)))
@@ -1790,7 +1793,14 @@ capabilities.")
                                                    (assoc-ref outputs "out"))))))))
                  (setenv "GUILE_AUTO_COMPILE" "0")
                  (setenv "GUILE_GGOLF_UNINSTALLED" "1")
-                 #t))))))
+                 #t)))
+           (add-before 'check 'start-xorg-server
+             (lambda* (#:key inputs #:allow-other-keys)
+               ;; The test suite requires a running X server.
+               (system (format #f "~a/bin/Xvfb :1 &"
+                               (assoc-ref inputs "xorg-server")))
+               (setenv "DISPLAY" ":1")
+               #t)))))
       (home-page "https://www.gnu.org/software/g-golf/")
       (synopsis "Guile bindings for GObject Introspection")
       (description
@@ -1849,7 +1859,7 @@ provides access to that interface and its types from the Scheme level.")
       (source (origin
                 (method git-fetch)
                 (uri (git-reference
-                      (url "https://github.com/fisherdj/miniAdapton.git")
+                      (url "https://github.com/fisherdj/miniAdapton")
                       (commit commit)))
                 (file-name (string-append name "-" version "-checkout"))
                 (sha256
@@ -1873,18 +1883,18 @@ understand, extend, and port to host languages other than Scheme.")
 (define-public guile-reader
   (package
     (name "guile-reader")
-    (version "0.6.2")
+    (version "0.6.3")
     (source  (origin
                (method url-fetch)
                (uri (string-append "mirror://savannah/guile-reader/guile-reader-"
                                    version ".tar.gz"))
                (sha256
                 (base32
-                 "0592s2s8ampqmqwilc4fvcild6rb9gy79di6vxv5kcdmv23abkgx"))))
+                 "1fyjckmygkhq22lq8nqc86yl5zzbqd7a944dnz5c1f6vx92b9hiq"))))
     (build-system gnu-build-system)
     (native-inputs `(("pkgconfig" ,pkg-config)
-                     ("gperf" ,gperf-3.0)))
-    (inputs `(("guile" ,guile-2.2)))
+                     ("gperf" ,gperf)))
+    (inputs `(("guile" ,guile-3.0)))
     (synopsis "Framework for building readers for GNU Guile")
     (description
      "Guile-Reader is a simple framework for building readers for GNU Guile.
@@ -1900,6 +1910,12 @@ hopefully more powerful and flexible (for instance, one may instantiate as
 many readers as needed).")
     (home-page "https://www.nongnu.org/guile-reader/")
     (license license:gpl3+)))
+
+(define-public guile2.2-reader
+  (package
+    (inherit guile-reader)
+    (name "guile2.2-reader")
+    (inputs `(("guile" ,guile-2.2)))))
 
 (define-public guile-ncurses
   (package
@@ -2046,7 +2062,7 @@ for Guile\".")
     (source (origin
               (method git-fetch)
               (uri (git-reference
-                    (url "https://github.com/ijp/minikanren.git")
+                    (url "https://github.com/ijp/minikanren")
                     (commit "e844d85512f8c055d3f96143ee506007389a25e3")))
               (file-name (string-append name "-" version "-checkout"))
               (sha256
@@ -2205,8 +2221,7 @@ inspired by the SCSH regular expression system.")
     (inputs
      `(("guile" ,guile-3.0)))
     (propagated-inputs
-     ;; XXX: Guile-Reader is currently unavailable for Guile 2.2 so strip it.
-     `(;;("guile-reader" ,guile-reader)
+     `(("guile-reader" ,guile-reader)
        ("guile-commonmark" ,guile-commonmark)))
     (synopsis "Functional static site generator")
     (description "Haunt is a static site generator written in Guile
@@ -2221,7 +2236,7 @@ interface for reading articles in any format.")
     (name "guile2.2-haunt")
     (inputs `(("guile" ,guile-2.2)))
     (propagated-inputs
-     `(("guile-reader" ,guile-reader)
+     `(("guile-reader" ,guile2.2-reader)
        ("guile-commonmark" ,guile2.2-commonmark)))))
 
 (define-public guile2.0-haunt
@@ -2574,7 +2589,7 @@ serializing continuations or delimited continuations.")
 (define-public python-on-guile
   (package
     (name "python-on-guile")
-    (version "1.2.3.4")
+    (version "1.2.3.5")
     (home-page "https://gitlab.com/python-on-guile/python-on-guile")
     (source (origin
               (method git-fetch)
@@ -2583,7 +2598,7 @@ serializing continuations or delimited continuations.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1qn5f79z43jh0rqh39a0qal81nsnw3cd5pj0d1j5cm3nhj5s64a7"))))
+                "05xrvcj6a4gzq1ybyin270qz8wamgc7w2skyi9iy6hkpgdhxy8vf"))))
     (build-system gnu-build-system)
     (arguments
      `(#:parallel-build? #f                   ;not supported
@@ -2962,9 +2977,9 @@ perform geometrical transforms on JPEG images.")
        ("perl" ,perl)))
     (inputs
      `(("guile" ,guile-2.2)
-       ("guile-lib" ,guile-lib)
-       ("guile-gcrypt" ,guile-gcrypt)
-       ("guile-readline" ,guile-readline)
+       ("guile-lib" ,guile2.2-lib)
+       ("guile-gcrypt" ,guile2.2-gcrypt)
+       ("guile-readline" ,guile2.2-readline)
        ("gnutls" ,gnutls)
        ("shroud" ,shroud)
        ("emacsy" ,emacsy-minimal)
@@ -2984,6 +2999,9 @@ perform geometrical transforms on JPEG images.")
                   (ice-9 popen)
                   (ice-9 rdelim)
                   (srfi srfi-26))
+       #:configure-flags
+       ;; Ignore ‘error: ‘GTimeVal’ is deprecated: Use 'GDateTime' instead.’
+       (list "CFLAGS=-Wno-error")
        #:phases
        (modify-phases %standard-phases
          (add-before 'check 'start-xorg-server
@@ -3103,7 +3121,7 @@ clean and easy to use high level API.")
       (source (origin
                 (method git-fetch)
                 (uri (git-reference
-                      (url "https://github.com/lloda/guile-ffi-fftw.git")
+                      (url "https://github.com/lloda/guile-ffi-fftw")
                       (commit commit)))
                 (file-name (git-file-name "guile-ffi-fftw" version))
                 (sha256
@@ -3539,7 +3557,7 @@ according to Bitorrent BEP003.")
       (source (origin
                 (method git-fetch)
                 (uri (git-reference
-                      (url "https://github.com/rekado/guile-irc.git")
+                      (url "https://github.com/rekado/guile-irc")
                       (commit commit)))
                 (file-name (git-file-name name version))
                 (sha256
@@ -3554,7 +3572,7 @@ according to Bitorrent BEP003.")
          ("texinfo" ,texinfo)))
       (inputs
        `(("gnutls" ,gnutls)
-         ("guile" ,guile-2.2)))
+         ("guile" ,guile-3.0)))
       (home-page "https://github.com/rekado/guile-irc")
       (synopsis "IRC library for Guile")
       (description "This package provides a Guile library for @dfn{Internet

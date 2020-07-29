@@ -7,6 +7,8 @@
 ;;; Copyright © 2017 Marius Bakke <mbakke@fastmail.com>
 ;;; Copyright © 2017, 2018, 2019, 2020 Tobias Geerinckx-Rice <me@tobias.gr>
 ;;; Copyright © 2020 Oleg Pykhalov <go.wigust@gmail.com>
+;;; Copyright © 2020 Vinicius Monego <monego@posteo.net>
+;;; Copyright © 2020 Jakub Kądziołka <kuba@kadziolka.net>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -26,10 +28,13 @@
 (define-module (gnu packages irc)
   #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix download)
+  #:use-module (guix git-download)
   #:use-module (guix packages)
   #:use-module (guix build-system cmake)
+  #:use-module (guix build-system glib-or-gtk)
   #:use-module (guix build-system gnu)
   #:use-module (guix build-system python)
+  #:use-module (guix build-system qt)
   #:use-module (gnu packages)
   #:use-module (gnu packages admin)
   #:use-module (gnu packages aspell)
@@ -45,7 +50,9 @@
   #:use-module (gnu packages file)
   #:use-module (gnu packages gettext)
   #:use-module (gnu packages glib)
+  #:use-module (gnu packages gnome)
   #:use-module (gnu packages gnupg)
+  #:use-module (gnu packages gtk)
   #:use-module (gnu packages guile)
   #:use-module (gnu packages lua)
   #:use-module (gnu packages lxqt)
@@ -60,6 +67,7 @@
   #:use-module (gnu packages ruby)
   #:use-module (gnu packages qt)
   #:use-module (gnu packages tcl)
+  #:use-module (gnu packages textutils)
   #:use-module (gnu packages time)
   #:use-module (gnu packages tls)
   #:use-module (gnu packages web)
@@ -80,14 +88,12 @@
           "0mg8jydc70vlylppzich26q4s40kr78r3ysfyjwisfvlg2byxvs8"))
         (patches (search-patches "quassel-qt-514-compat.patch"))
         (modules '((guix build utils)))
-        ;; We don't want to install the bundled scripts.
+        ;; We don't want to install the bundled inxi script.
         (snippet
          '(begin
-            (delete-file-recursively "data/scripts")
-            (substitute* "data/CMakeLists.txt"
-              (("NOT WIN32") "WIN32"))
+            (delete-file "data/scripts/inxi")
             #t))))
-    (build-system cmake-build-system)
+    (build-system qt-build-system)
     (arguments
       ;; The three binaries are not mutually exlusive, and are all built
       ;; by default.
@@ -103,8 +109,7 @@
          (add-after 'unpack 'patch-inxi-reference
            (lambda* (#:key inputs #:allow-other-keys)
              (let ((inxi (string-append (assoc-ref inputs "inxi") "/bin/inxi")))
-               (substitute* "src/common/aliasmanager.cpp"
-                 ((" inxi ") (string-append " " inxi " ")))
+               (symlink inxi "data/scripts/inxi")
                #t))))
        #:tests? #f)) ; no test target
     (native-inputs
@@ -118,6 +123,7 @@
        ("qtbase" ,qtbase)
        ("qtmultimedia" ,qtmultimedia)
        ("qtscript" ,qtscript)
+       ("qtsvg" ,qtsvg)
        ("snorenotify" ,snorenotify)
        ("zlib" ,zlib)))
     (home-page "https://quassel-irc.org/")
@@ -237,6 +243,49 @@ Everything in WeeChat can be done with the keyboard, though it also supports
 using a mouse.  It is customizable and extensible with plugins and scripts.")
     (home-page "https://www.weechat.org/")
     (license license:gpl3)))
+
+(define-public srain
+  (package
+    (name "srain")
+    (version "1.1.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/SrainApp/srain")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1ypaxdnag61smd8vy4rzl8sarwxa85543nzp0c9zfq02jqmz1gah"))))
+    (arguments
+     `(#:tests? #f ;there are no tests
+       #:phases
+       (modify-phases %standard-phases
+         (add-before 'install 'fix-permissions
+           ;; Make po folder writable for gettext to install translations.
+           (lambda _
+             (for-each make-file-writable
+                       (find-files "po" "." #:directories? #t)))))))
+    (build-system glib-or-gtk-build-system)
+    (native-inputs
+     `(("gettext" ,gettext-minimal)
+       ("glib:bin" ,glib "bin")
+       ("pkg-config" ,pkg-config)))
+    (inputs
+     `(("glib-networking" ,glib-networking)
+       ("gsettings-desktop-schemas" ,gsettings-desktop-schemas)
+       ("gtk+" ,gtk+)
+       ("libconfig" ,libconfig)
+       ("libsecret" ,libsecret)
+       ("libsoup" ,libsoup)
+       ("openssl" ,openssl)))
+    (home-page "https://srain.im")
+    (synopsis "Modern IRC client written in GTK")
+    (description
+     "Srain is an IRC client written in GTK.  It aims to be modern and easy to
+use while still remaining useful to power users.  It also has partial support
+for the IRCv3 protocol.")
+    (license license:gpl3+)))
 
 (define-public ircii
   (package

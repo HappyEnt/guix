@@ -53,10 +53,12 @@
   #:use-module (srfi srfi-35)
   #:use-module (rnrs bytevectors)
   #:use-module (ice-9 match)
-  #:export (esp-partition
+  #:export (root-offset
+            root-label
+
+            esp-partition
             root-partition
 
-            hurd-disk-image
             efi-disk-image
             iso9660-image
 
@@ -94,27 +96,6 @@
    (flags '(boot))
    (initializer (gexp initialize-root-partition))))
 
-(define hurd-initialize-root-partition
-  #~(lambda* (#:rest args)
-      (apply initialize-root-partition
-             (append args
-                     (list #:make-device-nodes
-                           make-hurd-device-nodes)))))
-
-(define hurd-disk-image
-  (image
-   (format 'disk-image)
-   (target "i586-pc-gnu")
-   (partitions
-    (list (partition
-           (size 'guess)
-           (offset root-offset)
-           (label root-label)
-           (file-system "ext2")
-           (file-system-options '("-o" "hurd" "-O" "ext_attr"))
-           (flags '(boot))
-           (initializer hurd-initialize-root-partition))))))
-
 (define efi-disk-image
   (image
    (format 'disk-image)
@@ -127,9 +108,7 @@
     (list (partition
            (size 'guess)
            (label "GUIX_IMAGE")
-           (flags '(boot)))))
-   ;; XXX: Temporarily disable compression to speed-up the tests.
-   (compression? #f)))
+           (flags '(boot)))))))
 
 
 ;;
@@ -322,7 +301,11 @@ image ~a {
 }~%" #$genimage-name #$image-type (list #$@partitions-config))))))))
       (computed-file "genimage.cfg" builder)))
 
-  (let* ((substitutable? (image-substitutable? image))
+  (let* ((image-name (image-name image))
+         (name (if image-name
+                   (symbol->string image-name)
+                   name))
+         (substitutable? (image-substitutable? image))
          (builder
           (with-imported-modules*
            (let ((inputs '#+(list genimage coreutils findutils))
@@ -565,7 +548,8 @@ addition of the <image> record."
     (_ (cond
         ((and target
               (hurd-triplet? target))
-         hurd-disk-image)
+         (module-ref (resolve-interface '(gnu system images hurd))
+                     'hurd-disk-image))
         (else
          efi-disk-image)))))
 

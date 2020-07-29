@@ -22,6 +22,7 @@
 ;;; Copyright © 2019 Guillaume Le Vaillant <glv@posteo.net>
 ;;; Copyright © 2019 Clément Lassieur <clement@lassieur.org>
 ;;; Copyright © 2020 Alexandros Theodotou <alex@zrythm.org>
+;;; Copyright © 2020 Justus Winter <justus@sequoia-pgp.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -205,14 +206,14 @@ This package provides a Python interface for BLAKE2.")
 (define-public python-paramiko
   (package
     (name "python-paramiko")
-    (version "2.4.2")
+    (version "2.7.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "paramiko" version))
        (sha256
         (base32
-         "1jqgj2gl1pz7bi2aab1r2xq0ml0gskmm9p235cg9y32nydymm5x8"))))
+         "17wx8lkhqxmddfdq7z7x45xqq2w3gwa974hpq1n3y0dqbn4r414j"))))
     (build-system python-build-system)
     (arguments
      `(;; FIXME: Tests require many unpackaged libraries, see dev-requirements.txt.
@@ -719,7 +720,7 @@ ECB and OFB).")
       (origin
        (method git-fetch)
        (uri (git-reference
-              (url "https://github.com/wbond/asn1crypto.git")
+              (url "https://github.com/wbond/asn1crypto")
               (commit version)))
         (file-name (git-file-name name version))
         (sha256
@@ -739,26 +740,44 @@ PKCS#8, PKCS#12, PKCS#5, X.509 and TSP.")
 (define-public python-pynacl
   (package
     (name "python-pynacl")
-    (version "1.3.0")
+    (version "1.4.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "PyNaCl" version))
        (modules '((guix build utils)))
-       ;; Remove bundled libsodium.
-       (snippet '(begin (delete-file-recursively "src/libsodium")
-                        #t))
+       (snippet
+        '(begin
+           ;; Remove spurious dependency on python-wheel, can be removed
+           ;; for 1.5.
+           (substitute* "setup.py"
+             (("\"wheel\"") ""))
+           ;; Remove bundled libsodium.
+           (delete-file-recursively "src/libsodium")
+           #t))
        (sha256
         (base32
-         "0330wyvggm19xhmwmz9rrr97lzbv3siwfy50gmax3vvgs7nh0q8c"))))
+         "01b56hxrbif3hx8l6rwz5kljrgvlbj7shmmd2rjh0hn7974a5sal"))))
     (build-system python-build-system)
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
+     `(#:modules (,@%python-build-system-modules
+                  (guix build utils)
+                  (ice-9 ftw)
+                  (srfi srfi-26))
+       #:phases
+       (modify-phases (@ (guix build python-build-system) %standard-phases)
          (add-before 'build 'use-system-sodium
            (lambda _
              (setenv "SODIUM_INSTALL" "system")
-             #t)))))
+             #t))
+         (replace 'check
+           (lambda _
+             (let ((build-directory
+                    (car (scandir "build" (cut string-prefix? "lib" <>)))))
+               (setenv "PYTHONPATH"
+                       (string-append "./build/" build-directory ":"
+                                      (getenv "PYTHONPATH")))
+               (invoke "pytest" "-vv")))))))
     (native-inputs
      `(("python-hypothesis" ,python-hypothesis)
        ("python-pytest" ,python-pytest)))
@@ -1197,7 +1216,6 @@ Password-Authenticated Key Exchange algorithm.")
      `(("python-automat" ,python-automat)
        ("python-idna" ,python-idna)
        ("python-incremental" ,python-incremental)
-       ("python-ipaddress" ,python-ipaddress)
        ("python-service-identity" ,python-service-identity)
        ("python-twisted" ,python-twisted)
        ("python-zope-interface" ,python-zope-interface)))
@@ -1429,3 +1447,61 @@ can decide how long it takes to hash a password and how much memory is required.
 data such as API keys, cryptocurrency wallets, or seeds for digital
 signatures.")
     (license (list license:expat license:asl2.0)))) ; dual licensed
+
+(define-public python-pgpy
+  (package
+    (name "python-pgpy")
+    (version "0.5.2")
+    (source
+      (origin
+        (method url-fetch)
+        (uri (pypi-uri "PGPy" version))
+        (sha256
+         (base32
+          "0i4lqhzdwkjkim3wab0kqadx28z3r5ixlh6qxj4lif4gif56c0m7"))))
+    (build-system python-build-system)
+    (native-inputs
+     `(("python-cryptography" ,python-cryptography)
+       ("python-pyasn1" ,python-pyasn1)
+       ("python-singledispatch" ,python-singledispatch)
+       ("python-six" ,python-six)))
+    (home-page "https://github.com/SecurityInnovation/PGPy")
+    (synopsis "Python implementation of OpenPGP")
+    (description
+     "Currently, PGPy can load keys and signatures of all kinds in both ASCII
+armored and binary formats.
+
+It can create and verify RSA, DSA, and ECDSA signatures, at the moment.  It
+can also encrypt and decrypt messages using RSA and ECDH.")
+    (license license:bsd-3)))
+
+(define-public python-sop
+  (package
+    (name "python-sop")
+    (version "0.2.0")
+    (source
+      (origin
+        (method url-fetch)
+        (uri (pypi-uri "sop" version))
+        (sha256
+         (base32
+          "0gljyjsdn6hdmwlwwb5g5s0c031p6izamvfxp0d39x60af8k5jyf"))))
+    (build-system python-build-system)
+    (arguments
+     '(#:tests? #f)) ; There are no tests, and unittest throws an error trying
+                     ; to find some:
+                     ;     TypeError: don't know how to make test from: 0.2.0
+    (home-page "https://gitlab.com/dkg/python-sop")
+    (synopsis "Stateless OpenPGP Command-Line Interface")
+    (description
+     "The Stateless OpenPGP Command-Line Interface (or sop) is a
+specification that encourages OpenPGP implementors to provide a common,
+relatively simple command-line API for purposes of object security.
+
+This Python module helps implementers build such a CLI from any implementation
+accessible to the Python interpreter.
+
+It does not provide such an implementation itself -- this is just the
+scaffolding for the command line, which should make it relatively easy to
+supply a handful of python functions as methods to a class.")
+    (license license:expat))) ; MIT license

@@ -267,14 +267,14 @@ utilities.")
   (package
     (inherit geda-gaf)
     (name "lepton-eda")
-    (version "1.9.9-20191003")
+    (version "1.9.11-20200604")
     (home-page "https://github.com/lepton-eda/lepton-eda")
     (source (origin
               (method git-fetch)
               (uri (git-reference (url home-page) (commit version)))
               (sha256
                (base32
-                "08cc3zfk84qq9mrkc9pp4r9jlavvm01wwy0yd9frql68w2zw6mip"))
+                "091y8h7wcr9smwhb1wf12sj27n5jrannbj3y6qq3q2gwiifiz8sd"))
               (file-name (git-file-name name version))))
     (native-inputs
      `(("autoconf" ,autoconf)
@@ -423,14 +423,14 @@ optimizer; and it can produce photorealistic and design review images.")
 (define-public pcb-rnd
   (package (inherit pcb)
     (name "pcb-rnd")
-    (version "1.1.3")
+    (version "2.2.3")
     (source (origin
               (method url-fetch)
               (uri (string-append "http://repo.hu/projects/pcb-rnd/releases/"
                                   "pcb-rnd-" version ".tar.gz"))
               (sha256
                (base32
-                "0pycynla60b96jkb6fh6f4sx663pqbzjwnixhw5ym8sym2absm09"))))
+                "0j650498d87b4xsggzc0xlk73k0hhj43wfy45qz2lcn0xc3bks1m"))))
     (arguments
      `(#:tests? #f ; no check target
        #:phases
@@ -606,7 +606,7 @@ multipole-accelerated algorithm.")
     (source (origin
               (method git-fetch)
               (uri (git-reference
-                    (url "https://github.com/fritzing/fritzing-app.git")
+                    (url "https://github.com/fritzing/fritzing-app")
                     (commit version)))
               (file-name (git-file-name name version))
               (sha256
@@ -655,7 +655,7 @@ multipole-accelerated algorithm.")
         ,(origin
            (method git-fetch)
            (uri (git-reference
-                 (url "https://github.com/fritzing/fritzing-parts.git")
+                 (url "https://github.com/fritzing/fritzing-parts")
                  (commit version)))
            (file-name (git-file-name "fritzing-parts" version))
            (sha256
@@ -713,7 +713,7 @@ as well as pick-place files.")
       (source (origin
                 (method git-fetch)
                 (uri (git-reference
-                      (url "https://github.com/erichVK5/translate2geda.git")
+                      (url "https://github.com/erichVK5/translate2geda")
                       (commit commit)))
                 (file-name (git-file-name name version))
                 (sha256
@@ -933,7 +933,7 @@ translations for KiCad.")
     (source (origin
               (method git-fetch)
               (uri (git-reference
-                    (url "https://github.com/KiCad/kicad-symbols.git")
+                    (url "https://github.com/KiCad/kicad-symbols")
                     (commit version)))
               (file-name (git-file-name name version))
               (sha256
@@ -962,7 +962,7 @@ libraries.")
     (source (origin
               (method git-fetch)
               (uri (git-reference
-                    (url "https://github.com/KiCad/kicad-footprints.git")
+                    (url "https://github.com/KiCad/kicad-footprints")
                     (commit version)))
               (file-name (git-file-name name version))
               (sha256
@@ -979,7 +979,7 @@ libraries.")
     (source (origin
               (method git-fetch)
               (uri (git-reference
-                    (url "https://github.com/KiCad/kicad-packages3d.git")
+                    (url "https://github.com/KiCad/kicad-packages3d")
                     (commit version)))
               (file-name (git-file-name name version))
               (sha256
@@ -996,7 +996,7 @@ libraries.")
     (source (origin
               (method git-fetch)
               (uri (git-reference
-                    (url "https://github.com/KiCad/kicad-templates.git")
+                    (url "https://github.com/KiCad/kicad-templates")
                     (commit version)))
               (file-name (git-file-name name version))
               (sha256
@@ -2109,7 +2109,7 @@ editors.")
     (source (origin
               (method git-fetch)
               (uri (git-reference
-                    (url "https://github.com/markwal/GPX.git")
+                    (url "https://github.com/markwal/GPX")
                     (commit version)))
               (file-name (git-file-name name version))
               (sha256
@@ -2230,7 +2230,7 @@ engineers for reverse engineers.")
     (source
      (origin
       (method git-fetch)
-      (uri (git-reference (url "https://github.com/3MFConsortium/lib3mf.git")
+      (uri (git-reference (url "https://github.com/3MFConsortium/lib3mf")
                           (commit (string-append "v" version))))
       (file-name (git-file-name name version))
       (sha256
@@ -2335,7 +2335,7 @@ full programmatic control over your models.")
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/FreeCAD/FreeCAD.git")
+             (url "https://github.com/FreeCAD/FreeCAD")
              (commit version)))
        (modules '((guix build utils)))
        (snippet
@@ -2478,7 +2478,7 @@ interpolation toolkit.")
       (source
        (origin
          (method git-fetch)
-         (uri (git-reference (url "https://github.com/Heeks/libarea.git")
+         (uri (git-reference (url "https://github.com/Heeks/libarea")
                              (commit commit)))
          (file-name (git-file-name name version))
          (sha256
@@ -2519,7 +2519,7 @@ operations.")
     (source (origin
               (method git-fetch)
               (uri (git-reference
-                    (url "https://github.com/FreeSpacenav/libspnav.git")
+                    (url "https://github.com/FreeSpacenav/libspnav")
                     (commit (string-append "libspnav-" version))))
               (sha256
                (base32

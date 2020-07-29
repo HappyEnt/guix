@@ -5,7 +5,7 @@
 ;;; Copyright © 2016 Roel Janssen <roel@gnu.org>
 ;;; Copyright © 2016 Thomas Danckaert <post@thomasdanckaert.be>
 ;;; Copyright © 2017 Kei Kebreau <kkebreau@posteo.net>
-;;; Copyright © 2017 Efraim Flashner <efraim@flashner.co.il>
+;;; Copyright © 2017, 2020 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2018 Tobias Geerinckx-Rice <me@tobias.gr>
 ;;; Copyright © 2019 Mathieu Othacehe <m.othacehe@gmail.com>
 ;;; Copyright © 2020 Ricardo Wurmus <rekado@elephly.net>
@@ -51,13 +51,14 @@
     (name "asciidoc")
     (version "8.6.10")
     (source (origin
-              (method url-fetch)
-              (uri (string-append "https://github.com/asciidoc/asciidoc/"
-                                  "archive/" version ".tar.gz"))
-              (file-name (string-append name "-" version ".tar.gz"))
+              (method git-fetch)
+              (uri (git-reference
+                     (url "https://github.com/asciidoc/asciidoc")
+                     (commit version)))
+              (file-name (git-file-name name version))
               (sha256
                (base32
-                "10xrl1iwyvs8aqm0vzkvs3dnsn93wyk942kk4ppyl6w9imbzhlly"))))
+                "1hrqkgjmp1gq3f9rkbr8l0y62fzvwb9n8ys35s25bg2ld04y4g4y"))))
     (build-system gnu-build-system)
     (arguments
      `(#:tests? #f                     ; no 'check' target
@@ -127,7 +128,7 @@ markup) can be customized and extended by the user.")
 (define-public asciidoc-py3
   (package (inherit asciidoc)
     (name "asciidoc-py3")
-    (version "9.0.0rc1")
+    (version "9.0.1")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -136,7 +137,7 @@ markup) can be customized and extended by the user.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1v815dgab62970m9cr2crwbh4kvlzk6pv3hk4bzv6gfa4lbwfkfl"))))
+                "1xpws5lgzaqwgbc7sq6bp8adjxy8qb4qb9nj4vvpxamjgx3pny54"))))
     (build-system gnu-build-system)
     (native-inputs
      `(("autoconf" ,autoconf)))

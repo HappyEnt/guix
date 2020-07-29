@@ -149,6 +149,11 @@ dependencies are registered."
             (define db-file
               (store-database-file #:state-directory #$output))
 
+            ;; Make sure non-ASCII file names are properly handled.
+            (setenv "GUIX_LOCPATH"
+                    #+(file-append glibc-utf8-locales "/lib/locale"))
+            (setlocale LC_ALL "en_US.utf8")
+
             (sql-schema #$schema)
             (let ((items (append-map read-closure '#$labels)))
               (with-database db-file db
@@ -180,6 +185,15 @@ added to the pack."
     (and localstatedir?
          (file-append (store-database (list profile))
                       "/db/db.sqlite")))
+
+  (define set-utf8-locale
+    ;; Arrange to not depend on 'glibc-utf8-locales' when using '--bootstrap'.
+    (and (or (not (profile? profile))
+             (profile-locales? profile))
+         #~(begin
+             (setenv "GUIX_LOCPATH"
+                     #+(file-append glibc-utf8-locales "/lib/locale"))
+             (setlocale LC_ALL "en_US.utf8"))))
 
   (define build
     (with-imported-modules (source-module-closure
@@ -225,6 +239,9 @@ added to the pack."
             (zero? (system* (string-append #+archiver "/bin/tar")
                             "cf" "/dev/null" "--files-from=/dev/null"
                             "--sort=name")))
+
+          ;; Make sure non-ASCII file names are properly handled.
+          #+set-utf8-locale
 
           ;; Add 'tar' to the search path.
           (setenv "PATH" #+(file-append archiver "/bin"))
@@ -727,11 +744,13 @@ last resort for relocation."
     (with-imported-modules (source-module-closure
                             '((guix build utils)
                               (guix build union)
+                              (guix build gremlin)
                               (guix elf)))
       #~(begin
           (use-modules (guix build utils)
                        ((guix build union) #:select (relative-file-name))
                        (guix elf)
+                       (guix build gremlin)
                        (ice-9 binary-ports)
                        (ice-9 ftw)
                        (ice-9 match)
@@ -769,6 +788,14 @@ last resort for relocation."
                                    bv 0 (bytevector-length bv))
                  (utf8->string bv)))))
 
+          (define (runpath file)
+            ;; Return the RUNPATH of FILE as a list of directories.
+            (let* ((bv      (call-with-input-file file get-bytevector-all))
+                   (elf     (parse-elf bv))
+                   (dyninfo (elf-dynamic-info elf)))
+              (or (and=> dyninfo elf-dynamic-info-runpath)
+                  '())))
+
           (define (elf-loader-compile-flags program)
             ;; Return the cpp flags defining macros for the ld.so/fakechroot
             ;; wrapper of PROGRAM.
@@ -790,6 +817,13 @@ last resort for relocation."
 
                             (string-append "-DLOADER_AUDIT_MODULE=\""
                                            #$(audit-module) "\"")
+                            (string-append "-DLOADER_AUDIT_RUNPATH={ "
+                                           (string-join
+                                            (map object->string
+                                                 (runpath
+                                                  #$(audit-module)))
+                                            ", " 'suffix)
+                                           "NULL }")
                             (if gconv
                                 (string-append "-DGCONV_DIRECTORY=\""
                                                gconv "\"")
@@ -836,9 +870,10 @@ last resort for relocation."
                     (scandir input))
 
           (for-each build-wrapper
-                    (append (find-files (string-append input "/bin"))
-                            (find-files (string-append input "/sbin"))
-                            (find-files (string-append input "/libexec")))))))
+                    ;; Note: Trailing slash in case these are symlinks.
+                    (append (find-files (string-append input "/bin/"))
+                            (find-files (string-append input "/sbin/"))
+                            (find-files (string-append input "/libexec/")))))))
 
   (computed-file (string-append
                   (cond ((package? package)
@@ -857,7 +892,10 @@ last resort for relocation."
     (item (apply wrapped-package
                  (manifest-entry-item entry)
                  (manifest-entry-output entry)
-                 args))))
+                 args))
+    (dependencies (map (lambda (entry)
+                         (apply wrapped-manifest-entry entry args))
+                       (manifest-entry-dependencies entry)))))
 
 
 ;;;

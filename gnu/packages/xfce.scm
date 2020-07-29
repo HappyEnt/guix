@@ -478,7 +478,7 @@ keys for controlling the audio volume.")
 (define-public xfce4-whiskermenu-plugin
   (package
     (name "xfce4-whiskermenu-plugin")
-    (version "2.4.3")
+    (version "2.4.6")
     (source
      (origin
        (method url-fetch)
@@ -486,7 +486,7 @@ keys for controlling the audio volume.")
                            "xfce4-whiskermenu-plugin/" (version-major+minor version) "/"
                            "xfce4-whiskermenu-plugin-" version ".tar.bz2"))
        (sha256
-        (base32 "1w2zvqr0g6miliv3nb0shljfawwc1brdn2fyz4kvfg7b3klyxyir"))))
+        (base32 "0i2pn8852x6zvlys4610knscscyjpha6wjzy7rljixbxr26d6x49"))))
     (build-system cmake-build-system)
     (native-inputs
      `(("pkg-config" ,pkg-config)
@@ -724,7 +724,7 @@ and import the new pictures from your camera.")
 (define-public xfwm4
   (package
     (name "xfwm4")
-    (version "4.14.2")
+    (version "4.14.3")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://archive.xfce.org/src/xfce/"
@@ -732,7 +732,7 @@ and import the new pictures from your camera.")
                                   "xfwm4-" version ".tar.bz2"))
               (sha256
                (base32
-                "14pxiymg0hpg3yijbjv5w6259pra4rqq79b7a6mvd8wn4ls40nxi"))))
+                "1gw3fbiwraylarl1bqbvfh7nxlss5w8w0im5ahfg3a9mkrdfr6w2"))))
     (build-system gnu-build-system)
     (native-inputs
      `(("pkg-config" ,pkg-config)
@@ -1284,7 +1284,7 @@ core or CPU.")
 (define-public xfce4-eyes-plugin
   (package
    (name "xfce4-eyes-plugin")
-   (version "4.5.0")
+   (version "4.5.1")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://archive.xfce.org/src/panel-plugins/"
@@ -1293,7 +1293,7 @@ core or CPU.")
                                   "/xfce4-eyes-plugin-" version ".tar.bz2"))
               (sha256
                (base32
-                "17gj6fbvvrdzvz61czmia8hqynllsnmhk61fs4aml443cc1h1bpx"))))
+                "1iaszzkagl1mb0cdafrvlfjnjklhhs9y90517par34sjiqbq1dsd"))))
     (build-system gnu-build-system)
     (native-inputs
      `(("intltool" ,intltool)
@@ -1899,7 +1899,7 @@ time.")
 (define-public xfce4-timer-plugin
   (package
    (name "xfce4-timer-plugin")
-   (version "1.7.0")
+   (version "1.7.1")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://archive.xfce.org/src/panel-plugins/"
@@ -1908,7 +1908,7 @@ time.")
                                   "/xfce4-timer-plugin-" version ".tar.bz2"))
               (sha256
                (base32
-                "16vypwwjwfk7nn4n16rfgn0z78jqrmbgxmc1r46269lrwd1m6kif"))))
+                "1qr4m3n2l3rvsizsr3h7fyfajszfalqm7rhvjx2yjj8r3f8x4ljb"))))
     (build-system gnu-build-system)
     (native-inputs
      `(("intltool" ,intltool)

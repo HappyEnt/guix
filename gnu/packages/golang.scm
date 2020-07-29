@@ -12,7 +12,7 @@
 ;;; Copyright © 2018 Tomáš Čech <sleep_walker@gnu.org>
 ;;; Copyright © 2018 Pierre-Antoine Rouby <pierre-antoine.rouby@inria.fr>
 ;;; Copyright © 2018 Pierre Neidhardt <mail@ambrevar.xyz>
-;;; Copyright @ 2018, 2019 Katherine Cox-Buday <cox.katherine.e@gmail.com>
+;;; Copyright @ 2018, 2019, 2020 Katherine Cox-Buday <cox.katherine.e@gmail.com>
 ;;; Copyright @ 2019 Giovanni Biscuolo <g@xelera.eu>
 ;;; Copyright @ 2019, 2020 Alex Griffin <a@ajgrf.com>
 ;;; Copyright © 2019, 2020 Arun Isaac <arunisaac@systemreboot.net>
@@ -218,19 +218,21 @@ in the style of communicating sequential processes (@dfn{CSP}).")
     (supported-systems '("x86_64-linux" "i686-linux" "armhf-linux" "aarch64-linux"))
     (license license:bsd-3)))
 
-(define-public go-1.13
+(define-public go-1.14
   (package
     (inherit go-1.4)
     (name "go")
-    (version "1.13.9")
+    (version "1.14.4")
     (source
      (origin
-       (method url-fetch)
-       (uri (string-append "https://storage.googleapis.com/golang/"
-                           name version ".src.tar.gz"))
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/golang/go")
+             (commit (string-append "go" version))))
+       (file-name (git-file-name name version))
        (sha256
         (base32
-         "07gksk9194wa90xyd6yhagxfv7syvsx29bh8ypc4mg700vc1kfrl"))))
+         "08bazglmqp123c9dgrxflvxd011xsqfxsgah2kzbvca0mhm6qcm3"))))
     (arguments
      (substitute-keyword-arguments (package-arguments go-1.4)
        ((#:system system)
@@ -266,7 +268,13 @@ in the style of communicating sequential processes (@dfn{CSP}).")
                   '("cmd/go/testdata/script/mod_case_cgo.txt"
                     "cmd/go/testdata/script/list_find.txt"
                     "cmd/go/testdata/script/list_compiled_imports.txt"
-                    "cmd/go/testdata/script/cgo_syso_issue29253.txt"))
+                    "cmd/go/testdata/script/cgo_syso_issue29253.txt"
+                    "cmd/go/testdata/script/cover_cgo.txt"
+                    "cmd/go/testdata/script/cover_cgo_xtest.txt"
+                    "cmd/go/testdata/script/cover_cgo_extra_test.txt"
+                    "cmd/go/testdata/script/cover_cgo_extra_file.txt"))
+
+                 (for-each make-file-writable (find-files "."))
 
                  (substitute* "os/os_test.go"
                    (("/usr/bin") (getcwd))
@@ -369,7 +377,6 @@ in the style of communicating sequential processes (@dfn{CSP}).")
                  (setenv "GOROOT_FINAL" output)
                  (setenv "CGO_ENABLED" "1")
                  (invoke "sh" "all.bash"))))
-
            (replace 'install
              ;; TODO: Most of this could be factorized with Go 1.4.
              (lambda* (#:key outputs #:allow-other-keys)
@@ -415,7 +422,7 @@ in the style of communicating sequential processes (@dfn{CSP}).")
        ,@(package-native-inputs go-1.4)))
     (supported-systems %supported-systems)))
 
-(define-public go go-1.13)
+(define-public go go-1.14)
 
 (define-public go-github-com-alsm-ioprogress
   (let ((commit "063c3725f436e7fba0c8f588547bee21ffec7ac5")
@@ -426,7 +433,7 @@ in the style of communicating sequential processes (@dfn{CSP}).")
       (source (origin
                 (method git-fetch)
                 (uri (git-reference
-                       (url "https://github.com/alsm/ioprogress.git")
+                       (url "https://github.com/alsm/ioprogress")
                        (commit commit)))
                 (file-name (git-file-name name version))
                 (sha256
@@ -452,7 +459,7 @@ writers can be supplied for alternate environments.")
       (source (origin
                 (method git-fetch)
                 (uri (git-reference
-                       (url "https://github.com/aki237/nscjar.git")
+                       (url "https://github.com/aki237/nscjar")
                        (commit commit)))
                 (file-name (git-file-name name version))
                 (sha256
@@ -502,7 +509,7 @@ way of specifying command line options.")
       (source (origin
                 (method git-fetch)
                 (uri (git-reference
-                      (url "https://github.com/go-tomb/tomb.git")
+                      (url "https://github.com/go-tomb/tomb")
                       (commit commit)))
                 (file-name (string-append name "-" version ".tar.gz"))
                 (sha256
@@ -855,7 +862,7 @@ time.")
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/BurntSushi/toml.git")
+             (url "https://github.com/BurntSushi/toml")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
@@ -880,7 +887,7 @@ is similar to Go's standard library @code{json} and @code{xml} package.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/getsentry/raven-go.git")
+               (url "https://github.com/getsentry/raven-go")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
@@ -909,7 +916,7 @@ logging system.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/hashicorp/go-version.git")
+               (url "https://github.com/hashicorp/go-version")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
@@ -939,7 +946,7 @@ increment versions.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/jpillora/backoff.git")
+               (url "https://github.com/jpillora/backoff")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
@@ -962,7 +969,7 @@ Go.")
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/stretchr/objx.git")
+             (url "https://github.com/stretchr/objx")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
@@ -985,7 +992,7 @@ slices, JSON and other data.")
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/stretchr/testify.git")
+             (url "https://github.com/stretchr/testify")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
@@ -1024,7 +1031,7 @@ Features include:
         (origin
           (method git-fetch)
           (uri (git-reference
-                 (url "https://github.com/tevino/abool.git")
+                 (url "https://github.com/tevino/abool")
                  (commit commit)))
           (file-name (git-file-name name version))
           (sha256
@@ -1049,7 +1056,7 @@ optimized for performance yet simple to use.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/blang/semver.git")
+               (url "https://github.com/blang/semver")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
@@ -1073,7 +1080,7 @@ optimized for performance yet simple to use.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/emicklei/go-restful.git")
+               (url "https://github.com/emicklei/go-restful")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
@@ -1099,7 +1106,7 @@ with the HTTP protocol definition.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/google/cadvisor.git")
+               (url "https://github.com/google/cadvisor")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
@@ -1125,7 +1132,7 @@ containers.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/google/gofuzz.git")
+               (url "https://github.com/google/gofuzz")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
@@ -1150,7 +1157,7 @@ values for the purpose of fuzz testing.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/gorilla/context.git")
+               (url "https://github.com/gorilla/context")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
@@ -1174,7 +1181,7 @@ values for the purpose of fuzz testing.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/gorilla/mux.git")
+               (url "https://github.com/gorilla/mux")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
@@ -1200,7 +1207,7 @@ incoming requests with their respective handler.")
         (origin
           (method git-fetch)
           (uri (git-reference
-                 (url "https://github.com/jonboulle/clockwork.git")
+                 (url "https://github.com/jonboulle/clockwork")
                  (commit commit)))
           (file-name (git-file-name name version))
           (sha256
@@ -1236,8 +1243,9 @@ incoming requests with their respective handler.")
     (propagated-inputs
      `(("golang.org/x/text" ,go-golang-org-x-text)))
     (home-page "https://github.com/spf13/afero")
-    (synopsis "Filesystem abstraction for Go")
-    (description "Filesystem abstraction for Go")
+    (synopsis "File system abstraction for Go")
+    (description
+     "This package provides a file system abstraction for Go.")
     (license license:asl2.0)))
 
 (define-public go-github-com-spf13-cast
@@ -1321,7 +1329,7 @@ applications as well as a program to generate applications and command files.")
       (origin
         (method git-fetch)
         (uri (git-reference
-               (url "https://github.com/spf13/pflag.git")
+               (url "https://github.com/spf13/pflag")
                (commit (string-append "v" version))))
         (file-name (git-file-name name version))
         (sha256
@@ -1348,7 +1356,7 @@ GNU extensions} to the POSIX recommendations for command-line options.")
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/spf13/viper.git")
+             (url "https://github.com/spf13/viper")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
@@ -1485,7 +1493,7 @@ all types of configuration needs and formats.")
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/sirupsen/logrus.git")
+             (url "https://github.com/sirupsen/logrus")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
@@ -1514,7 +1522,7 @@ compatible with the standard library logger.")
     (source (origin
               (method git-fetch)
               (uri (git-reference
-                    (url "https://github.com/rifflock/lfshook.git")
+                    (url "https://github.com/rifflock/lfshook")
                     (commit (string-append "v" version))))
               (file-name (git-file-name name version))
               (sha256
@@ -1528,7 +1536,7 @@ compatible with the standard library logger.")
     (home-page "https://github.com/rifflock/lfshook")
     (synopsis "Local File System hook for Logrus logger")
     (description "This package provides a hook for Logrus to write directly to
-a file on the filesystem.  The log levels are dynamic at instantiation of the
+a file on the file system.  The log levels are dynamic at instantiation of the
 hook, so it is capable of logging at some or all levels.")
     (license license:expat)))
 
@@ -1647,7 +1655,7 @@ to interact with distribution components.")
         (origin
           (method git-fetch)
           (uri (git-reference
-                 (url "https://github.com/docker/go-connections.git")
+                 (url "https://github.com/docker/go-connections")
                  (commit commit)))
           (file-name (git-file-name name version))
           (sha256
@@ -1674,7 +1682,7 @@ translation (NAT), proxies, sockets, and transport layer security (TLS).")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/docker/machine.git")
+               (url "https://github.com/docker/machine")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
@@ -1701,7 +1709,7 @@ Docker on them, then configures the Docker client to talk to them.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/gorhill/cronexpr.git")
+               (url "https://github.com/gorhill/cronexpr")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
@@ -2234,7 +2242,7 @@ generation features.  This code generation is used to achieve:
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/libp2p/go-flow-metrics.git")
+               (url "https://github.com/libp2p/go-flow-metrics")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
@@ -2260,7 +2268,7 @@ that's a lot faster (and only does simple bandwidth metrics).")
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/davecgh/go-spew.git")
+             (url "https://github.com/davecgh/go-spew")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
@@ -2300,7 +2308,7 @@ style).
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/btcsuite/btclog.git")
+               (url "https://github.com/btcsuite/btclog")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
@@ -2326,7 +2334,7 @@ implementing the same interface.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/btcsuite/btcd.git")
+               (url "https://github.com/btcsuite/btcd")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
@@ -2362,7 +2370,7 @@ needing to use secp256k1 elliptic curve cryptography.")
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/minio/sha256-simd.git")
+             (url "https://github.com/minio/sha256-simd")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
@@ -2398,7 +2406,7 @@ Architecture Processors\" by J. Guilford et al.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/libp2p/go-libp2p-crypto.git")
+               (url "https://github.com/libp2p/go-libp2p-crypto")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
@@ -2428,7 +2436,7 @@ Architecture Processors\" by J. Guilford et al.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/mr-tron/base58.git")
+               (url "https://github.com/mr-tron/base58")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
@@ -2455,7 +2463,7 @@ encoding and 8 times faster decoding.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/gxed/hashland.git")
+               (url "https://github.com/gxed/hashland")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
@@ -2481,7 +2489,7 @@ hash algorithm.  See http://keccak.noekeon.org.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/minio/blake2b-simd.git")
+               (url "https://github.com/minio/blake2b-simd")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
@@ -2511,7 +2519,7 @@ increase approaching hashing speeds of 1GB/sec on a single core.")
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/spaolacci/murmur3.git")
+             (url "https://github.com/spaolacci/murmur3")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
@@ -2537,7 +2545,7 @@ required by Go's standard Hash interface.")
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/twmb/murmur3.git")
+             (url "https://github.com/twmb/murmur3")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
@@ -2565,7 +2573,7 @@ required by Go's standard Hash interface.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/multiformats/go-multihash.git")
+               (url "https://github.com/multiformats/go-multihash")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
@@ -2596,7 +2604,7 @@ required by Go's standard Hash interface.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/libp2p/go-libp2p-peer.git")
+               (url "https://github.com/libp2p/go-libp2p-peer")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
@@ -2631,7 +2639,7 @@ required by Go's standard Hash interface.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/libp2p/go-libp2p-protocol.git")
+               (url "https://github.com/libp2p/go-libp2p-protocol")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
@@ -2656,7 +2664,7 @@ required by Go's standard Hash interface.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/libp2p/go-libp2p-metrics.git")
+               (url "https://github.com/libp2p/go-libp2p-metrics")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
@@ -2695,7 +2703,7 @@ statistics for wrapped connections.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/mitchellh/go-homedir.git")
+               (url "https://github.com/mitchellh/go-homedir")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
@@ -2756,7 +2764,7 @@ cross-compilation.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/multiformats/go-multiaddr.git")
+               (url "https://github.com/multiformats/go-multiaddr")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
@@ -2798,7 +2806,7 @@ does the following:
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/multiformats/go-multiaddr-net.git")
+               (url "https://github.com/multiformats/go-multiaddr-net")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
@@ -2836,7 +2844,7 @@ as conversion to and from @command{net.Addr}.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/whyrusleeping/tar-utils.git")
+               (url "https://github.com/whyrusleeping/tar-utils")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
@@ -2861,7 +2869,7 @@ as conversion to and from @command{net.Addr}.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/cheekybits/is.git")
+               (url "https://github.com/cheekybits/is")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
@@ -2893,7 +2901,7 @@ as conversion to and from @command{net.Addr}.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/sabhiram/go-gitignore.git")
+               (url "https://github.com/sabhiram/go-gitignore")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
@@ -2918,7 +2926,7 @@ as conversion to and from @command{net.Addr}.")
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/urfave/cli.git")
+             (url "https://github.com/urfave/cli")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
@@ -3047,7 +3055,7 @@ anchor names.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/whyrusleeping/json-filter.git")
+               (url "https://github.com/whyrusleeping/json-filter")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
@@ -3073,7 +3081,7 @@ anchor names.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/whyrusleeping/progmeter.git")
+               (url "https://github.com/whyrusleeping/progmeter")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
@@ -3098,7 +3106,7 @@ anchor names.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/whyrusleeping/stump.git")
+               (url "https://github.com/whyrusleeping/stump")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
@@ -3123,7 +3131,7 @@ have super fancy logs.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/kr/fs.git")
+               (url "https://github.com/kr/fs")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
@@ -3170,7 +3178,7 @@ format in Go.")
     (source (origin
               (method git-fetch)
               (uri (git-reference
-                    (url "https://github.com/kr/pretty.git")
+                    (url "https://github.com/kr/pretty")
                     (commit (string-append "v" version))))
               (file-name (git-file-name name version))
               (sha256
@@ -3193,7 +3201,7 @@ format in Go.")
     (source (origin
               (method git-fetch)
               (uri (git-reference
-                    (url "https://github.com/kr/text.git")
+                    (url "https://github.com/kr/text")
                     (commit (string-append "v" version))))
               (file-name (git-file-name name version))
               (sha256
@@ -3538,7 +3546,7 @@ decode/encode structures and slices.")
     (source (origin
               (method git-fetch)
               (uri (git-reference
-                    (url "https://github.com/pkg/errors.git")
+                    (url "https://github.com/pkg/errors")
                     (commit (string-append "v" version))))
               (file-name (git-file-name name version))
               (sha256
@@ -3760,7 +3768,7 @@ can be used to build a client and/or a server.")
     (source (origin
               (method git-fetch)
               (uri (git-reference
-                     (url "https://github.com/fatih/color.git")
+                     (url "https://github.com/fatih/color")
                      (commit (string-append "v" version))))
               (file-name (git-file-name name version))
               (sha256
@@ -3782,7 +3790,7 @@ colorized or SGR defined output to the standard output.")
     (source (origin
               (method git-fetch)
               (uri (git-reference
-                     (url "https://github.com/google/go-cmp.git")
+                     (url "https://github.com/google/go-cmp")
                      (commit (string-append "v" version))))
               (file-name (git-file-name name version))
               (sha256
@@ -3830,7 +3838,7 @@ common task.")
   (origin
     (method git-fetch)
     (uri (git-reference
-          (url "https://github.com/gotestyourself/gotest.tools.git")
+          (url "https://github.com/gotestyourself/gotest.tools")
           (commit (string-append "v" version))))
     (file-name (git-file-name "go-gotest-tools" version))
     (sha256
@@ -3906,7 +3914,7 @@ test when a comparison fails.")
     (source (origin
               (method git-fetch)
               (uri (git-reference
-                     (url "https://github.com/gotestyourself/gotestsum.git")
+                     (url "https://github.com/gotestyourself/gotestsum")
                      (commit (string-append "v" version))))
               (file-name (git-file-name name version))
               (sha256
@@ -3953,7 +3961,7 @@ test results.")
     (source (origin
               (method git-fetch)
               (uri (git-reference
-                     (url "https://github.com/golang/protobuf.git")
+                     (url "https://github.com/golang/protobuf")
                      (commit (string-append "v" version))))
               (file-name (git-file-name name version))
               (sha256
@@ -3978,7 +3986,7 @@ data serialization format.")
     (source (origin
               (method git-fetch)
               (uri (git-reference
-                    (url "https://github.com/mattn/go-zglob.git")
+                    (url "https://github.com/mattn/go-zglob")
                     (commit (string-append "v" version))))
               (file-name (git-file-name name version))
               (sha256
