@@ -2,7 +2,7 @@
 ;;; Copyright © 2016 Leo Famulari <leo@famulari.name>
 ;;; Copyright © 2016 Alex Griffin <a@ajgrf.com>
 ;;; Copyright © 2017, 2018 Björn Höfling <bjoern.hoefling@bjoernhoefling.de>
-;;; Copyright © 2018, 2019 Tobias Geerinckx-Rice <me@tobias.gr>
+;;; Copyright © 2018, 2019, 2020 Tobias Geerinckx-Rice <me@tobias.gr>
 ;;; Copyright © 2018 Ricardo Wurmus <rekado@elephly.net>
 ;;; Copyright © 2018, 2019 Arun Isaac <arunisaac@systemreboot.net>
 ;;; Copyright © 2018 Joshua Sierles, Nextjournal <joshua@nextjournal.com>
@@ -104,7 +104,7 @@
 (define-public geos
   (package
     (name "geos")
-    (version "3.8.0")
+    (version "3.8.1")
     (source (origin
               (method url-fetch)
               (uri (string-append "http://download.osgeo.org/geos/geos-"
@@ -112,7 +112,7 @@
                                   ".tar.bz2"))
               (sha256
                (base32
-                "1mb2v9fy1gnbjhcgv0xny11ggfb17vkzsajdyibigwsxr4ylq4cr"))))
+                "1xqpmr10xi0n9sj47fbwc89qb0yr9imh4ybk0jsxpffy111syn22"))))
     (build-system gnu-build-system)
     (arguments `(#:phases
                  (modify-phases %standard-phases
@@ -1212,7 +1212,7 @@ to the OSM opening hours specification.")
 (define-public josm
   (package
     (name "josm")
-    (version "16731")
+    (version "16812")
     (source (origin
               (method svn-fetch)
               (uri (svn-reference
@@ -1221,7 +1221,7 @@ to the OSM opening hours specification.")
                      (recursive? #f)))
               (sha256
                (base32
-                "036kdb1ckhym5f7lj5ydzblli7f1i1pl8z00hxvagf2rczdf5fi3"))
+                "131ly6ah9ygrah1wq1h2199v4hyzgflnh62ychs4jqvy9wz0dal6"))
               (file-name (string-append name "-" version "-checkout"))
               (modules '((guix build utils)))
             (snippet
@@ -1348,7 +1348,7 @@ ways, and relations) and their metadata tags.")
 (define-public libmaxminddb
   (package
     (name "libmaxminddb")
-    (version "1.4.2")
+    (version "1.4.3")
     (source
      (origin
        (method url-fetch)
@@ -1356,14 +1356,11 @@ ways, and relations) and their metadata tags.")
                            "/releases/download/" version "/"
                            "/libmaxminddb-" version ".tar.gz"))
        (sha256
-        (base32 "0mnimbaxnnarlw7g1rh8lpxsyf7xnmzwcczcc3lxw8xyf6ljln6x"))))
+        (base32 "0fd4a4sxiiwzbd5h74wl1ijnb7xybjyybb7q41vdq3w8nk3zdzd5"))))
     (build-system gnu-build-system)
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (add-before 'configure 'set-cc-to-gcc
-           (lambda _
-             (setenv "CC" "gcc"))))))
+     `(#:make-flags
+       (list ,(string-append "CC=" (cc-for-target)))))
     (native-inputs
      `(("perl" ,perl)))
     (home-page "https://maxmind.github.io/libmaxminddb/")
@@ -1538,14 +1535,14 @@ QLandkarte GT application.")
 (define-public readosm
   (package
     (name "readosm")
-    (version "1.1.0")
+    (version "1.1.0a")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "https://www.gaia-gis.it/gaia-sins/"
                            "readosm-" version ".tar.gz"))
        (sha256
-        (base32 "1v20pnda67imjd70fn0zw30aar525xicy3d3v49md5cvqklws265"))))
+        (base32 "0zv6p352pqjcv70nvcaf2x3011z35jqa24dcdm27a4ns1wha3cjc"))))
     (build-system gnu-build-system)
     (inputs
      `(("expat" ,expat)

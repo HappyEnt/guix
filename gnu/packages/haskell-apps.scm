@@ -341,14 +341,14 @@ to @code{cabal repl}).")
 (define-public git-annex
   (package
     (name "git-annex")
-    (version "8.20200720.1")
+    (version "8.20200810")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "https://hackage.haskell.org/package/"
                            "git-annex/git-annex-" version ".tar.gz"))
        (sha256
-        (base32 "0g4wlfkwr9w21hvdywc7sk077rxlnigdr4m4yz41rc0s2nbjc9fn"))))
+        (base32 "1wy6ckcf5f6m94gakg1504h1zryail3mmj85sglq03s45vawjcg6"))))
     (build-system haskell-build-system)
     (arguments
      `(#:configure-flags
@@ -427,7 +427,17 @@ to @code{cabal repl}).")
                         (string-append bin "/git-annex-shell"))
                (symlink (string-append bin "/git-annex")
                         (string-append bin "/git-remote-tor-annex"))
-               #t))))))
+               #t)))
+         (add-after 'install 'touch-static-output
+           (lambda* (#:key outputs #:allow-other-keys)
+             ;; The Haskell build system adds a "static" output by
+             ;; default, and there is no way to override this until
+             ;; <https://issues.guix.gnu.org/41569> is fixed.  Without
+             ;; this phase, the daemon complains because we do not
+             ;; create the "static" output.
+             (with-output-to-file (assoc-ref outputs "static")
+               (lambda ()
+                 (display "static output not used\n"))))))))
     (inputs
      `(("curl" ,curl)
        ("ghc-aeson" ,ghc-aeson)

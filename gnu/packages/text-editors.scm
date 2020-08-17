@@ -46,6 +46,7 @@
   #:use-module (gnu packages code)
   #:use-module (gnu packages documentation)
   #:use-module (gnu packages fontutils)
+  #:use-module (gnu packages freedesktop)
   #:use-module (gnu packages gcc)
   #:use-module (gnu packages gettext)
   #:use-module (gnu packages glib)
@@ -121,7 +122,7 @@ based command language.")
 (define-public kakoune
   (package
     (name "kakoune")
-    (version "2020.01.16")
+    (version "2020.08.04")
     (source
      (origin
        (method url-fetch)
@@ -129,7 +130,7 @@ based command language.")
                            "releases/download/v" version "/"
                            "kakoune-" version ".tar.bz2"))
        (sha256
-        (base32 "1bhd990gywdwdhxc5dn83wwj418c5cw1ndqycf7k0a02kxlg3550"))))
+        (base32 "08gikjxyvcr415br1g1llzh5pnq737q55yinalb92cgq3yn9yih2"))))
     (build-system gnu-build-system)
     (arguments
      `(#:make-flags
@@ -148,7 +149,7 @@ based command language.")
                                "\";\n        " line)))
              #t))
          (delete 'configure)            ; no configure script
-         ;; kakoune requires us to be in the src/ directory to build
+         ;; kakoune requires us to be in the src/ directory to build.
          (add-before 'build 'chdir
            (lambda _ (chdir "src") #t)))))
     (native-inputs
@@ -700,32 +701,35 @@ editors.")
 (define-public texmacs
   (package
     (name "texmacs")
-    (version "1.99.11")
+    (version "1.99.13")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "https://www.texmacs.org/Download/ftp/tmftp/"
                            "source/TeXmacs-" version "-src.tar.gz"))
        (sha256
-        (base32 "12bp0f34izzqimz49lfpgf4lyz3h45s9xbmk8v6zsawdjki76alg"))
-       (modules '((guix build utils)))
-       (snippet
-        '(begin
-           (delete-file-recursively "3rdparty")
-           #t))))
+        (base32 "1d590yyanh2ar88pd0ns4mf616bq1lq4cwg93m863anhir5irb82"))))
     (build-system gnu-build-system)
     (native-inputs
-     `(("pkg-config" ,pkg-config)))
+     `(("pkg-config" ,pkg-config)
+       ("xdg-utils" ,xdg-utils)))       ;for xdg-icon-resource
     (inputs
      `(("freetype" ,freetype)
        ("guile" ,guile-1.8)
        ("perl" ,perl)
        ("python" ,python-wrapper)
-       ("qt" ,qt-4)))
+       ("qt" ,qtbase)))
     (arguments
      `(#:tests? #f                      ; no check target
        #:phases
        (modify-phases %standard-phases
+         (add-after 'unpack 'fix-icon-directory
+           (lambda* (#:key outputs #:allow-other-keys)
+             (let ((out (assoc-ref outputs "out")))
+               (substitute* "packages/linux/icons.sh"
+                 (("/usr/share")
+                  (string-append out "/share")))
+               #t)))
          (add-before 'configure 'gzip-flags
            (lambda _
              (substitute* "Makefile.in"
@@ -733,24 +737,24 @@ editors.")
     (synopsis "Editing platform with special features for scientists")
     (description
      "GNU TeXmacs is a text editing platform which is specialized for
-scientists.  It is ideal for editing structured documents with different
-types of content.  It has robust support for mathematical formulas and plots.
- It can also act as an interface to external mathematical programs such as R
-and Octave.  TeXmacs is completely extensible via Guile.")
+scientists.  It is ideal for editing structured documents with different types
+of content.  It has robust support for mathematical formulas and plots.  It
+can also act as an interface to external mathematical programs such as R and
+Octave.  TeXmacs is completely extensible via Guile.")
     (license license:gpl3+)
     (home-page "https://www.texmacs.org/tmweb/home/welcome.en.html")))
 
 (define-public scintilla
   (package
     (name "scintilla")
-    (version "4.4.3")
+    (version "4.4.4")
     (source
      (origin
        (method url-fetch)
        (uri (let ((v (apply string-append (string-split version #\.))))
               (string-append "https://www.scintilla.org/scintilla" v ".tgz")))
        (sha256
-        (base32 "080v9l7dn3qgkdg0nc0kwpj6warwpi904zjgz9kzg1l6pknxf21s"))))
+        (base32 "1zjsb6iiqi4cw9r9md3xv8qyy86ssz11p680xn7vmllrxshxvs8y"))))
     (build-system gnu-build-system)
     (arguments
      `(#:make-flags (list "GTK3=1" "CC=gcc" "-Cgtk")

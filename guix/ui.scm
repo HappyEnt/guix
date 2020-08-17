@@ -795,14 +795,6 @@ directories:~{ ~a~}~%")
                      (invoke-error-stop-signal c)
                      (cons (invoke-error-program c)
                            (invoke-error-arguments c))))
-             ((message-condition? c)
-              ;; Normally '&message' error conditions have an i18n'd message.
-              (report-error (and (error-location? c) (error-location c))
-                            (G_ "~a~%")
-                            (gettext (condition-message c) %gettext-domain))
-              (when (fix-hint? c)
-                (display-hint (condition-fix-hint c)))
-              (exit 1))
 
              ((formatted-message? c)
               (apply report-error
@@ -825,7 +817,16 @@ directories:~{ ~a~}~%")
                 (guile-3
                  ((exception-predicate &exception-with-kind-and-args) c))
                 (else #f))
-              (raise c)))
+              (raise c))
+
+             ((message-condition? c)
+              ;; Normally '&message' error conditions have an i18n'd message.
+              (report-error (and (error-location? c) (error-location c))
+                            (G_ "~a~%")
+                            (gettext (condition-message c) %gettext-domain))
+              (when (fix-hint? c)
+                (display-hint (condition-fix-hint c)))
+              (exit 1)))
       ;; Catch EPIPE and the likes.
       (catch 'system-error
         thunk
@@ -951,17 +952,25 @@ that the rest."
                                         (color DARK))
                        (string-drop file prefix)))))
 
+(define %default-verbosity
+  ;; Default verbosity level for 'show-what-to-build'.
+  2)
+
 (define* (show-what-to-build store drv
                              #:key dry-run? (use-substitutes? #t)
+                             (verbosity %default-verbosity)
                              (mode (build-mode normal)))
   "Show what will or would (depending on DRY-RUN?) be built in realizing the
 derivations listed in DRV using MODE, a 'build-mode' value.  The elements of
 DRV can be either derivations or derivation inputs.
 
 Return two values: a Boolean indicating whether there's something to build,
-and a Boolean indicating whether there's something to download.  When
-USE-SUBSTITUTES?, check and report what is prerequisites are available for
-download."
+and a Boolean indicating whether there's something to download.
+
+When USE-SUBSTITUTES?, check and report what is prerequisites are available
+for download.  VERBOSITY is an integer indicating the level of details to be
+shown: level 2 and higher provide all the details, level 1 shows a high-level
+summary, and level 0 shows nothing."
   (define inputs
     (map (match-lambda
            ((? derivation? drv) (derivation-input drv))
@@ -1020,71 +1029,104 @@ download."
       ;; display when we have information for all of DOWNLOAD.
       (not (any (compose zero? substitutable-download-size) download)))
 
+    ;; Combinatorial explosion ahead along two axes: DRY-RUN? and VERBOSITY.
+    ;; Unfortunately, this is hardly avoidable for proper i18n.
     (if dry-run?
         (begin
-          (format (current-error-port)
-                  (N_ "~:[The following derivation would be built:~%~{   ~a~%~}~;~]"
-                      "~:[The following derivations would be built:~%~{   ~a~%~}~;~]"
-                      (length build))
-                  (null? build) (map colorized-store-item build))
-          (if display-download-size?
-              (format (current-error-port)
-                      ;; TRANSLATORS: "MB" is for "megabyte"; it should be
-                      ;; translated to the corresponding abbreviation.
-                      (G_ "~:[~,1h MB would be downloaded:~%~{   ~a~%~}~;~]")
-                      (null? download)
-                      download-size
-                      (map (compose colorized-store-item substitutable-path)
-                           download))
-              (format (current-error-port)
-                      (N_ "~:[The following file would be downloaded:~%~{   ~a~%~}~;~]"
-                          "~:[The following files would be downloaded:~%~{   ~a~%~}~;~]"
-                          (length download))
-                      (null? download)
-                      (map (compose colorized-store-item substitutable-path)
-                           download)))
-          (format (current-error-port)
-                  (N_ "~:[The following graft would be made:~%~{   ~a~%~}~;~]"
-                      "~:[The following grafts would be made:~%~{   ~a~%~}~;~]"
-                      (length graft))
-                  (null? graft) (map colorized-store-item graft))
-          (format (current-error-port)
-                  (N_ "~:[The following profile hook would be built:~%~{   ~a~%~}~;~]"
-                      "~:[The following profile hooks would be built:~%~{   ~a~%~}~;~]"
-                      (length hook))
-                  (null? hook) (map colorized-store-item hook)))
+          (unless (zero? verbosity)
+            (format (current-error-port)
+                    (N_ "~:[The following derivation would be built:~%~{   ~a~%~}~;~]"
+                        "~:[The following derivations would be built:~%~{   ~a~%~}~;~]"
+                        (length build))
+                    (null? build) (map colorized-store-item build)))
+          (cond ((>= verbosity 2)
+                 (if display-download-size?
+                     (format (current-error-port)
+                             ;; TRANSLATORS: "MB" is for "megabyte"; it should be
+                             ;; translated to the corresponding abbreviation.
+                             (G_ "~:[~,1h MB would be downloaded:~%~{   ~a~%~}~;~]")
+                             (null? download)
+                             download-size
+                             (map (compose colorized-store-item substitutable-path)
+                                  download))
+                     (format (current-error-port)
+                             (N_ "~:[The following file would be downloaded:~%~{   ~a~%~}~;~]"
+                                 "~:[The following files would be downloaded:~%~{   ~a~%~}~;~]"
+                                 (length download))
+                             (null? download)
+                             (map (compose colorized-store-item substitutable-path)
+                                  download)))
+                 (format (current-error-port)
+                         (N_ "~:[The following graft would be made:~%~{   ~a~%~}~;~]"
+                             "~:[The following grafts would be made:~%~{   ~a~%~}~;~]"
+                             (length graft))
+                         (null? graft) (map colorized-store-item graft))
+                 (format (current-error-port)
+                         (N_ "~:[The following profile hook would be built:~%~{   ~a~%~}~;~]"
+                             "~:[The following profile hooks would be built:~%~{   ~a~%~}~;~]"
+                             (length hook))
+                         (null? hook) (map colorized-store-item hook)))
+                ((= verbosity 1)
+                 ;; Display the bare minimum; don't mention grafts and hooks.
+                 (if display-download-size?
+                     (format (current-error-port)
+                             ;; TRANSLATORS: "MB" is for "megabyte"; it should be
+                             ;; translated to the corresponding abbreviation.
+                             (G_ "~:[~,1h MB would be downloaded~%~;~]")
+                             (null? download) download-size)
+                     (format (current-error-port)
+                             (N_ "~:[~h item would be downloaded~%~;~]"
+                                 "~:[~h items would be downloaded~%~;~]"
+                                 (length download))
+                             (null? download) (length download))))))
+
         (begin
-          (format (current-error-port)
-                  (N_ "~:[The following derivation will be built:~%~{   ~a~%~}~;~]"
-                      "~:[The following derivations will be built:~%~{   ~a~%~}~;~]"
-                      (length build))
-                  (null? build) (map colorized-store-item build))
-          (if display-download-size?
-              (format (current-error-port)
-                      ;; TRANSLATORS: "MB" is for "megabyte"; it should be
-                      ;; translated to the corresponding abbreviation.
-                      (G_ "~:[~,1h MB will be downloaded:~%~{   ~a~%~}~;~]")
-                      (null? download)
-                      download-size
-                      (map (compose colorized-store-item substitutable-path)
-                           download))
-              (format (current-error-port)
-                      (N_ "~:[The following file will be downloaded:~%~{   ~a~%~}~;~]"
-                          "~:[The following files will be downloaded:~%~{   ~a~%~}~;~]"
-                          (length download))
-                      (null? download)
-                      (map (compose colorized-store-item substitutable-path)
-                           download)))
-          (format (current-error-port)
-                  (N_ "~:[The following graft will be made:~%~{   ~a~%~}~;~]"
-                      "~:[The following grafts will be made:~%~{   ~a~%~}~;~]"
-                      (length graft))
-                  (null? graft) (map colorized-store-item graft))
-          (format (current-error-port)
-                  (N_ "~:[The following profile hook will be built:~%~{   ~a~%~}~;~]"
-                      "~:[The following profile hooks will be built:~%~{   ~a~%~}~;~]"
-                      (length hook))
-                  (null? hook) (map colorized-store-item hook))))
+          (unless (zero? verbosity)
+            (format (current-error-port)
+                    (N_ "~:[The following derivation will be built:~%~{   ~a~%~}~;~]"
+                        "~:[The following derivations will be built:~%~{   ~a~%~}~;~]"
+                        (length build))
+                    (null? build) (map colorized-store-item build)))
+          (cond ((>= verbosity 2)
+                 (if display-download-size?
+                     (format (current-error-port)
+                             ;; TRANSLATORS: "MB" is for "megabyte"; it should be
+                             ;; translated to the corresponding abbreviation.
+                             (G_ "~:[~,1h MB will be downloaded:~%~{   ~a~%~}~;~]")
+                             (null? download)
+                             download-size
+                             (map (compose colorized-store-item substitutable-path)
+                                  download))
+                     (format (current-error-port)
+                             (N_ "~:[The following file will be downloaded:~%~{   ~a~%~}~;~]"
+                                 "~:[The following files will be downloaded:~%~{   ~a~%~}~;~]"
+                                 (length download))
+                             (null? download)
+                             (map (compose colorized-store-item substitutable-path)
+                                  download)))
+                 (format (current-error-port)
+                         (N_ "~:[The following graft will be made:~%~{   ~a~%~}~;~]"
+                             "~:[The following grafts will be made:~%~{   ~a~%~}~;~]"
+                             (length graft))
+                         (null? graft) (map colorized-store-item graft))
+                 (format (current-error-port)
+                         (N_ "~:[The following profile hook will be built:~%~{   ~a~%~}~;~]"
+                             "~:[The following profile hooks will be built:~%~{   ~a~%~}~;~]"
+                             (length hook))
+                         (null? hook) (map colorized-store-item hook)))
+                ((= verbosity 1)
+                 ;; Display the bare minimum; don't mention grafts and hooks.
+                 (if display-download-size?
+                     (format (current-error-port)
+                             ;; TRANSLATORS: "MB" is for "megabyte"; it should be
+                             ;; translated to the corresponding abbreviation.
+                             (G_ "~:[~,1h MB will be downloaded~%~;~]")
+                             (null? download) download-size)
+                     (format (current-error-port)
+                             (N_ "~:[~h item will be downloaded~%~;~]"
+                                 "~:[~h items will be downloaded~%~;~]"
+                                 (length download))
+                             (null? download) (length download)))))))
 
     (check-available-space installed-size)
 
@@ -1093,7 +1135,8 @@ download."
 (define show-what-to-build*
   (store-lift show-what-to-build))
 
-(define* (build-notifier #:key (dry-run? #f) (use-substitutes? #t))
+(define* (build-notifier #:key (dry-run? #f) (use-substitutes? #t)
+                         (verbosity %default-verbosity))
   "Return a procedure suitable for 'with-build-handler' that, when
 'build-things' is called, invokes 'show-what-to-build' to display the build
 plan.  When DRY-RUN? is true, the 'with-build-handler' form returns without
@@ -1127,6 +1170,7 @@ any build happening."
                   (show-what-to-build store inputs
                                       #:dry-run? dry-run?
                                       #:use-substitutes? use-substitutes?
+                                      #:verbosity verbosity
                                       #:mode mode)))
 
       (unless (and (or build? download?)

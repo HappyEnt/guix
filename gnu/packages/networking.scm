@@ -26,7 +26,7 @@
 ;;; Copyright © 2018, 2020 Marius Bakke <mbakke@fastmail.com>
 ;;; Copyright © 2018, 2020 Oleg Pykhalov <go.wigust@gmail.com>
 ;;; Copyright © 2018 Pierre Neidhardt <mail@ambrevar.xyz>
-;;; Copyright © 2019 Maxim Cournoyer <maxim.cournoyer@gmail.com>
+;;; Copyright © 2019, 2020 Maxim Cournoyer <maxim.cournoyer@gmail.com>
 ;;; Copyright © 2019 Vasile Dumitrascu <va511e@yahoo.com>
 ;;; Copyright © 2019 Julien Lepiller <julien@lepiller.eu>
 ;;; Copyright © 2019 Timotej Lazar <timotej.lazar@araneo.si>
@@ -668,14 +668,14 @@ receiving NDP messages.")
 (define-public ethtool
   (package
     (name "ethtool")
-    (version "5.7")
+    (version "5.8")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://kernel.org/software/network/"
                                   "ethtool/ethtool-" version ".tar.xz"))
               (sha256
                (base32
-                "0f9w0pqkvwn540rasmj6c8897g9gj2hmjnbkhpi9yf1s7jyvhkkj"))))
+                "0ikmz36bdfwxscsfcgjmyzg70hwr8i3wpdhcp1vmk3q4ip858frg"))))
     (build-system gnu-build-system)
     (native-inputs
      `(("pkg-config" ,pkg-config)))
@@ -985,14 +985,14 @@ network frames.")
 (define-public fping
   (package
     (name "fping")
-    (version "4.4")
+    (version "5.0")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "https://fping.org/dist/fping-"
                            version ".tar.gz"))
        (sha256
-        (base32 "049dnyr6d869kwrnfhkj3afifs3219fy6hv7kmsb3irdlmjlp1cz"))))
+        (base32 "1f2prmii4fyl44cfykp40hp4jjhicrhddh9v3dfs11j6nsww0f7d"))))
     (build-system gnu-build-system)
     (home-page "https://fping.org/")
     (synopsis "Send ICMP ECHO_REQUEST packets to network hosts")
@@ -1779,7 +1779,7 @@ library remains flexible, portable, and easily embeddable.")
 (define-public sslh
   (package
     (name "sslh")
-    (version "1.21b")
+    (version "1.21c")
     (source
      (origin
        (method git-fetch)
@@ -1788,7 +1788,7 @@ library remains flexible, portable, and easily embeddable.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1bws153l4x3vbwxshb92vqy3rnv8xfysmf7incp6hcmq43jsgjmr"))))
+        (base32 "19h32dn0076p3s7dn35qi5yp2xvnxw9sqphppmn72vyb8caxvw1z"))))
     (build-system gnu-build-system)
     (native-inputs
      `(;; Test dependencies.
@@ -2499,10 +2499,34 @@ networks using zeromq.  It has these key characteristics:
     (home-page "https://github.com/zeromq/zyre")
     (license license:mpl2.0)))
 
+(define-public libsocketcan
+  (package
+    (name "libsocketcan")
+    (version "0.0.11")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://git.pengutronix.de/cgit/tools/libsocketcan")
+                    (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "17z2y2r9xkixhr9bxr50m77fh710afl30s7jdhbxrvf56vmal2jr"))))
+    (build-system gnu-build-system)
+    (native-inputs
+     `(("autoconf" ,autoconf)
+       ("automake" ,automake)
+       ("libtool" ,libtool)))
+    (home-page "https://git.pengutronix.de/cgit/tools/libsocketcan")
+    (synopsis "SocketCAN user-space library")
+    (description "This library allows controlling basic functions in SocketCAN
+from user-space.  It requires a kernel built with SocketCAN support.")
+    (license license:lgpl2.1+)))
+
 (define-public can-utils
   (package
     (name "can-utils")
-    (version "2018.02.0")
+    (version "2020.02.04")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -2511,7 +2535,7 @@ networks using zeromq.  It has these key characteristics:
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0r0zkm67bdcmbfypjr7z041d4zp0xzb379dyl8cvhmflh12fd2jb"))))
+                "1a3j1mmnb7pvgc8r7zzp6sdp7903in2hna6bmpraxln7cwlzn4l6"))))
     (build-system gnu-build-system)
     (arguments
      `(#:tests? #f                      ; No tests exist.
@@ -2926,20 +2950,20 @@ and targeted primarily for asynchronous processing of HTTP-requests.")
     ;; Since 2.0, the gnu-build-system does not seem to work anymore, upstream bug?
     (build-system cmake-build-system)
     (inputs
-     `(("gnutls" ,gnutls)
+     `(("argon2" ,argon2)
        ("nettle" ,nettle)
        ("readline" ,readline)
        ("jsoncpp" ,jsoncpp)
-       ("openssl" ,openssl)
+       ("openssl" ,openssl)             ;required for the DHT proxy
        ("fmt" ,fmt)))
     (propagated-inputs
-     `(("argon2" ,argon2)  ; TODO: Needed for the pkg-config .pc file to work?
+     `(("gnutls" ,gnutls)               ;included in opendht/crypto.h
        ("msgpack" ,msgpack)))           ;included in several installed headers
     (native-inputs
      `(("autoconf" ,autoconf)
-       ("pkg-config" ,pkg-config)
-       ("restinio" ,restinio)
        ("automake" ,automake)
+       ("pkg-config" ,pkg-config)
+       ("restinio" ,restinio)           ;headers only library
        ("libtool" ,libtool)
        ("cppunit" ,cppunit)))
     (arguments

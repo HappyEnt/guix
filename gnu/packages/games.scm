@@ -53,6 +53,7 @@
 ;;; Copyright © 2020 Vincent Legoll <vincent.legoll@gmail.com>
 ;;; Copyright © 2020 Michael Rohleder <mike@rohleder.de>
 ;;; Copyright © 2020 Trevor Hass <thass@okstate.edu>
+;;; Copyright © 2020 Leo Prikler <leo.prikler@student.tugraz.at>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -1557,14 +1558,14 @@ Chess).  It is similar to standard chess but this variant is far more complicate
 (define-public ltris
   (package
     (name "ltris")
-    (version "1.2")
+    (version "1.2.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://sourceforge/lgames/ltris/"
                            "ltris-" version ".tar.gz"))
        (sha256
-        (base32 "15b18p7id55xiz2jkf56w2f1g6yw1rcb98bpa188i6skqrgnrg57"))))
+        (base32 "0959vvxh5xnxzpdv7i67lpd2b6ghx69z65ldnclj1z6llyfzfs7q"))))
     (build-system gnu-build-system)
     (arguments
      '(;; The code in LTris uses traditional GNU semantics for inline functions
@@ -2731,6 +2732,7 @@ interface or via an external visual interface such as GNU XBoard.")
               (method url-fetch)
               (uri (string-append "mirror://gnu/freedink/freedink-" version
                                   ".tar.gz"))
+              (patches (search-patches "freedink-engine-fix-sdl-hints.patch"))
               (sha256
                (base32
                 "00hhk1bjdrc1np2qz44sa5n1mb62qzwxbvsnws3vpms6iyn3a2sy"))))
@@ -2744,6 +2746,14 @@ interface or via an external visual interface such as GNU XBoard.")
              ;; These tests require a graphical interface.
              (substitute* "src/Makefile.am"
                (("test_gfx_fonts TestIOGfxDisplay") ""))
+             #t))
+         (add-before 'bootstrap 'autoreconf
+           (lambda _
+	     ;; automake is out of date in the source
+	     ;; autoreconf updates the automake scripts
+	     (invoke "autoreconf")
+	     ;; Build fails when autom4te.cache exists.
+	     (delete-file-recursively "autom4te.cache")
              #t)))))
     (native-inputs `(("autoconf" ,autoconf)
                      ("automake" ,automake)
@@ -3130,6 +3140,30 @@ in different ways.")
      "Game data for the Minetest infinite-world block sandbox game.")
     (home-page "https://www.minetest.net/")
     (license license:lgpl2.1+)))
+
+(define-public minetest-mineclone
+  (package
+    (name "minetest-mineclone")
+    (version "0.66.2")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://git.minetest.land/Wuzzy/MineClone2")
+                    (commit version)))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "0miszzlzplpvaj0j1yii9867ydr42wsaqa9g6grxdrci75p05g00"))))
+    (build-system copy-build-system)
+    (arguments
+     `(#:install-plan
+       '(("." "share/minetest/games/mineclone"))))
+    (synopsis "Minecraft clone based on Minetest engine")
+    (description
+     "MineClone is a Minetest subgame, that aims to recreate Minecraft as
+closely as the engine allows.")
+    (home-page "https://content.minetest.net/packages/Wuzzy/mineclone2/")
+    (license license:gpl3+)))
 
 (define glkterm
   (package
@@ -4168,14 +4202,14 @@ are only two levels to play with, but they are very addictive.")
 (define-public pioneers
   (package
     (name "pioneers")
-    (version "15.5")
+    (version "15.6")
     (source (origin
               (method url-fetch)
-              (uri (string-append "http://downloads.sourceforge.net/pio/"
+              (uri (string-append "https://downloads.sourceforge.net/pio/"
                                   "pioneers-" version ".tar.gz"))
               (sha256
                (base32
-                "037gdiiw690jw3wd1s9lxmkqx0caxyk0b4drpm7i9p28gig43q9y"))))
+                "07b3xdd81n8ybsb4fzc5lx0813y9crzp1hj69khncf4faj48sdcs"))))
     (build-system gnu-build-system)
     (inputs `(("avahi" ,avahi)
               ("gtk+" ,gtk+)
@@ -4743,7 +4777,7 @@ of war.  Widelands also offers an Artificial Intelligence to challenge you.")
 (define-public starfighter
   (package
     (name "starfighter")
-    (version "2.3")
+    (version "2.3.1")
     (source (origin
               (method url-fetch)
               (uri (string-append
@@ -4752,7 +4786,7 @@ of war.  Widelands also offers an Artificial Intelligence to challenge you.")
                     version "-src.tar.gz"))
               (sha256
                (base32
-                "156ivi8cqqv9gxi8kj393av1s2sj7bblabm1b3kibla1s8l090n9"))))
+                "13396hvsj4cswlrw52kwqn37dadxps00vhr0hrqgm87fl4ih5yyx"))))
     (build-system gnu-build-system)
     (native-inputs
      `(("pkg-config" ,pkg-config)))
@@ -11625,7 +11659,7 @@ game.")  ;thanks to Debian for description
        ("gsasl" ,gsasl)
        ("libgcrypt" ,libgcrypt)
        ("libircclient" ,libircclient)
-       ("protobuf" ,protobuf-2)
+       ("protobuf" ,protobuf-2)         ; remove package when no longer needed
        ("qtbase" ,qtbase)
        ("sdl" ,(sdl-union (list sdl sdl-mixer)))
        ("sqlite" ,sqlite)
@@ -11707,3 +11741,35 @@ computer opponents or against real players online.")
      "Pilot your ship inside a planet to find and rescue the colonists trapped
 inside the Zenith Colony.")
     (license license:gpl3+)))
+
+(define-public paperview
+  (let ((commit "9f8538eb6734c76877b878b8f1e52587f2ae19e6")
+        (revision "1"))
+    (package
+      (name "paperview")
+      (version (git-version "0.0.1" revision commit)) ;no upstream release
+      (source (origin
+                (method git-fetch)
+                (uri (git-reference
+                      (url "https://github.com/glouw/paperview")
+                      (commit commit)))
+                (file-name (git-file-name name version))
+                (sha256
+                 (base32
+                  "09sb9sg44fvkgfdyycrm1ndpx7cnkrglxhci41y8f3gpagnvi7jk"))))
+      (build-system gnu-build-system)
+      (inputs
+       `(("sdl2" ,sdl2)))
+      (arguments
+       '(#:tests? #f ;no tests
+         #:make-flags
+         (list (string-append "PREFIX=" (assoc-ref %outputs "out")))
+         #:phases
+         (modify-phases %standard-phases
+           (delete 'configure))))
+      (home-page "https://github.com/glouw/paperview/")
+      (synopsis "High performance X11 animated wallpaper setter")
+      (description "High performance animated desktop background setter for
+X11 that won't set your CPU on fire, drain your laptop battery, or lower video
+game FPS.")
+      (license license:unlicense))))

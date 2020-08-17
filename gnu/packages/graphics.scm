@@ -11,7 +11,7 @@
 ;;; Copyright © 2018 Mathieu Othacehe <m.othacehe@gmail.com>
 ;;; Copyright © 2018 Alex Kost <alezost@gmail.com>
 ;;; Copyright © 2018 Kei Kebreau <kkebreau@posteo.net>
-;;; Copyright © 2019 Mark H Weaver <mhw@netris.org>
+;;; Copyright © 2019, 2020 Mark H Weaver <mhw@netris.org>
 ;;; Copyright © 2019 Carlo Zancanaro <carlo@zancanaro.id.au>
 ;;; Copyright © 2019 Steve Sprang <scs@stevesprang.com>
 ;;; Copyright © 2019 John Soo <jsoo1@asu.edu>
@@ -49,6 +49,8 @@
   #:use-module (gnu packages boost)
   #:use-module (gnu packages check)
   #:use-module (gnu packages compression)
+  #:use-module (gnu packages crypto)
+  #:use-module (gnu packages datastructures)
   #:use-module (gnu packages documentation)
   #:use-module (gnu packages flex)
   #:use-module (gnu packages fonts)
@@ -58,12 +60,14 @@
   #:use-module (gnu packages gl)
   #:use-module (gnu packages glib)
   #:use-module (gnu packages gnome)
+  #:use-module (gnu packages gnunet)
   #:use-module (gnu packages graphviz)
   #:use-module (gnu packages gtk)
   #:use-module (gnu packages haskell-xyz)
   #:use-module (gnu packages image)
   #:use-module (gnu packages imagemagick)
   #:use-module (gnu packages jemalloc)
+  #:use-module (gnu packages kde-frameworks)
   #:use-module (gnu packages maths)
   #:use-module (gnu packages multiprecision)
   #:use-module (gnu packages pdf)
@@ -80,12 +84,14 @@
   #:use-module (gnu packages sdl)
   #:use-module (gnu packages swig)
   #:use-module (gnu packages tbb)
+  #:use-module (gnu packages upnp)
   #:use-module (gnu packages video)
   #:use-module (gnu packages xml)
   #:use-module (gnu packages xorg)
   #:use-module (guix build-system cmake)
   #:use-module (guix build-system gnu)
   #:use-module (guix build-system python)
+  #:use-module (guix build-system qt)
   #:use-module (guix download)
   #:use-module (guix git-download)
   #:use-module (guix hg-download)
@@ -294,6 +300,102 @@ compositing and motion tracking, even video editing and game creation.  The
 application can be customized via its API for Python scripting.")
     (license license:gpl2+)))
 
+(define-public blender-2.79
+  (package
+    (name "blender")
+    (version "2.79b")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append "https://download.blender.org/source/"
+                                  "blender-" version ".tar.gz"))
+              (sha256
+               (base32
+                "1g4kcdqmf67srzhi3hkdnr4z1ph4h9sza1pahz38mrj998q4r52c"))
+              (patches (search-patches "blender-2.79-newer-ffmpeg.patch"
+                                       "blender-2.79-oiio2.patch"
+                                       ;; The following patches may be
+                                       ;; needed when the default GCC is
+                                       ;; updated:
+                                       ;;   "blender-2.79-gcc8.patch"
+                                       ;;   "blender-2.79-gcc9.patch"
+                                       "blender-2.79-python-3.7-fix.patch"
+                                       "blender-2.79-python-3.8-fix.patch"))))
+    (build-system cmake-build-system)
+    (arguments
+      (let ((python-version (version-major+minor (package-version python))))
+       `(;; Test files are very large and not included in the release tarball.
+         #:tests? #f
+         #:configure-flags
+         (list "-DWITH_CODEC_FFMPEG=ON"
+               "-DWITH_CODEC_SNDFILE=ON"
+               "-DWITH_CYCLES=ON"
+               "-DWITH_DOC_MANPAGE=ON"
+               "-DWITH_FFTW3=ON"
+               "-DWITH_GAMEENGINE=ON"
+               "-DWITH_IMAGE_OPENJPEG=ON"
+               "-DWITH_INPUT_NDOF=ON"
+               "-DWITH_INSTALL_PORTABLE=OFF"
+               "-DWITH_JACK=ON"
+               "-DWITH_MOD_OCEANSIM=ON"
+               "-DWITH_PLAYER=ON"
+               "-DWITH_PYTHON_INSTALL=OFF"
+               "-DWITH_PYTHON_INSTALL=OFF"
+               "-DWITH_SYSTEM_OPENJPEG=ON"
+               (string-append "-DPYTHON_LIBRARY=python" ,python-version)
+               (string-append "-DPYTHON_LIBPATH=" (assoc-ref %build-inputs "python")
+                              "/lib")
+               (string-append "-DPYTHON_INCLUDE_DIR=" (assoc-ref %build-inputs "python")
+                              "/include/python" ,python-version)
+               (string-append "-DPYTHON_VERSION=" ,python-version))
+         #:phases
+         (modify-phases %standard-phases
+           (add-after 'unpack 'fix-broken-import
+             (lambda _
+               (substitute* "release/scripts/addons/io_scene_fbx/json2fbx.py"
+                 (("import encode_bin") "from . import encode_bin"))
+               #t))
+           (add-after 'set-paths 'add-ilmbase-include-path
+             (lambda* (#:key inputs #:allow-other-keys)
+               ;; OpenEXR propagates ilmbase, but its include files do not appear
+               ;; in the CPATH, so we need to add "$ilmbase/include/OpenEXR/" to
+               ;; the CPATH to satisfy the dependency on "half.h".
+               (setenv "CPATH"
+                       (string-append (assoc-ref inputs "ilmbase")
+                                      "/include/OpenEXR"
+                                      ":" (or (getenv "CPATH") "")))
+               #t))))))
+    (inputs
+     `(("boost" ,boost)
+       ("jemalloc" ,jemalloc)
+       ("libx11" ,libx11)
+       ("openimageio" ,openimageio)
+       ("openexr" ,openexr)
+       ("ilmbase" ,ilmbase)
+       ("openjpeg" ,openjpeg)
+       ("libjpeg" ,libjpeg-turbo)
+       ("libpng" ,libpng)
+       ("libtiff" ,libtiff)
+       ("ffmpeg" ,ffmpeg)
+       ("fftw" ,fftw)
+       ("jack" ,jack-1)
+       ("libsndfile" ,libsndfile)
+       ("freetype" ,freetype)
+       ("glew" ,glew)
+       ("openal" ,openal)
+       ("python" ,python)
+       ("zlib" ,zlib)))
+    (home-page "https://blender.org/")
+    (synopsis "3D graphics creation suite")
+    (description
+     "Blender is a 3D graphics creation suite.  It supports the entirety of
+the 3D pipeline—modeling, rigging, animation, simulation, rendering,
+compositing and motion tracking, even video editing and game creation.  The
+application can be customized via its API for Python scripting.
+
+NOTE: This older version of Blender is the last release that does not require
+OpenGL 3.  It is retained for use with older computers.")
+    (license license:gpl2+)))
+
 (define-public assimp
   (package
     (name "assimp")
@@ -389,8 +491,8 @@ exception-handling library.")
 
 (define-public lib2geom
   ;; Use the latest master commit, as the 1.0 release suffer build problems.
-  (let ((revision "2")
-        (commit "f98256d2a923955af74b8cff3d456f0df1ee4b59"))
+  (let ((revision "3")
+        (commit "17e0d21f0afc8489656f9184bff7ad024a42394a"))
     (package
       (name "lib2geom")
       (version (git-version "1.0" revision commit))
@@ -402,13 +504,11 @@ exception-handling library.")
                 (file-name (git-file-name name version))
                 (sha256
                  (base32
-                  "0w6ijaai8i80d0f35c0shgdspqlsdhw3cvz106k1gm7bmnz1wzpq"))
+                  "0waskrmdrrdjw8pr5cvlkrxywgf376viggpc2jzdqxxpy2k78fpr"))
                 (patches
-                 ;; Patches submitted to upstream (see:
-                 ;; https://gitlab.com/inkscape/lib2geom/merge_requests/17,
+                 ;; Patch submitted to upstream (see:
                  ;; https://gitlab.com/inkscape/lib2geom/-/merge_requests/32).
-                 (search-patches "lib2geom-enable-assertions.patch"
-                                 "lib2geom-fix-tests.patch"))
+                 (search-patches "lib2geom-fix-tests.patch"))
                 (modules '((guix build utils)))
                 (snippet
                  '(begin
@@ -624,7 +724,7 @@ storage of the \"EXR\" file format for storing 16-bit floating-point images.")
 (define-public openimageio
   (package
     (name "openimageio")
-    (version "1.8.17")
+    (version "2.0.13")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -633,7 +733,7 @@ storage of the \"EXR\" file format for storing 16-bit floating-point images.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0zq34szprgkrrayg5sl3whrsx2l6lr8nw4hdrnwv2qhn70jbi2w2"))))
+                "0czcls82v71wkw1syib16ncg7463hx0py0xclycsiv4w6i3wlkzz"))))
     (build-system cmake-build-system)
     ;; FIXME: To run all tests successfully, test image sets from multiple
     ;; third party sources have to be present.  For details see
@@ -650,7 +750,9 @@ storage of the \"EXR\" file format for storing 16-bit floating-point images.")
        ("giflib" ,giflib)
        ("openexr" ,openexr)
        ("ilmbase" ,ilmbase)
-       ("python" ,python-2)
+       ("python" ,python-wrapper)
+       ("pybind11" ,pybind11)
+       ("robin-map" ,robin-map)
        ("zlib" ,zlib)))
     (synopsis "C++ library for reading and writing images")
     (description
@@ -1332,3 +1434,56 @@ and PC Engine formats")
 the graphics formats of the SNES, Game Boy Color and PC Engine game consoles.
 Automated palette selection is supported.")
     (license license:expat)))
+
+(define-public drawpile
+  (package
+    (name "drawpile")
+    (version "2.1.17")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/drawpile/Drawpile")
+                    (commit version)))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "08w8vad8pw4a8kkshys1kd2kjvzpj62klxxxp904rx0qazw5hl80"))))
+    (build-system qt-build-system)
+    (arguments
+     '(#:configure-flags (list "-DTESTS=ON" "-DTOOLS=ON" "-DKIS_TABLET=ON")))
+    (native-inputs
+     `(("extra-cmake-modules" ,extra-cmake-modules)
+       ("pkg-config" ,pkg-config)))
+    (inputs
+     `(("giflib" ,giflib)
+       ("karchive" ,karchive)
+       ("kdnssd" ,kdnssd)
+       ("libmicrohttpd" ,libmicrohttpd)
+       ("libsodium" ,libsodium)
+       ("libvpx" ,libvpx)
+       ("libxi" ,libxi)
+       ;; ("miniupnpc" ,miniupnpc) ;segfaults for some reason
+       ("qtbase" ,qtbase)
+       ("qtkeychain" ,qtkeychain)
+       ("qtmultimedia" ,qtmultimedia)
+       ("qtsvg" ,qtsvg)
+       ("qtx11extras" ,qtx11extras)))
+    (home-page "https://drawpile.net")
+    (synopsis "Collaborative drawing program")
+    (description "Drawpile is a drawing program that allows share the canvas
+with other users in real time.
+
+Some feature highlights:
+@itemize
+@item Shared canvas using the built-in server or a dedicated server
+@item Record, play back and export drawing sessions
+@item Simple animation support
+@item Layers and blending modes
+@item Text layers
+@item Supports pressure sensitive Wacom tablets
+@item Built-in chat
+@item Supports OpenRaster file format
+@item Encrypted connections using SSL
+@item Automatic port forwarding with UPnP
+@end itemize\n")
+    (license license:gpl3+)))

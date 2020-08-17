@@ -372,13 +372,13 @@ Features:
 (define-public ijg-libjpeg
   (package
    (name "libjpeg")
-   (version "9c")
+   (version "9d")
    (source (origin
             (method url-fetch)
             (uri (string-append "https://www.ijg.org/files/jpegsrc.v"
                    version ".tar.gz"))
             (sha256 (base32
-                     "08kixcf3a7s9x91174abjnk1xbvj4v8crdc73zi4k9h3jfbm00k5"))))
+                     "0clwys9lcqlxqgcw8s1gwfm5ix2zjlqpklmd3mbvqmj5ibj51jwr"))))
    (build-system gnu-build-system)
    (synopsis "Library for handling JPEG files")
    (description
@@ -397,16 +397,6 @@ lossless JPEG manipulations such as rotation, scaling or cropping:
 @end enumerate")
    (license license:ijg)
    (home-page "https://www.ijg.org/")))
-
-(define-public ijg-libjpeg-8
-  (package (inherit ijg-libjpeg)
-   (version "8d")
-   (source (origin
-            (method url-fetch)
-            (uri (string-append "https://www.ijg.org/files/jpegsrc.v"
-                   version ".tar.gz"))
-            (sha256 (base32
-                     "1cz0dy05mgxqdgjf52p54yxpyy95rgl30cnazdrfmw7hfca9n0h0"))))))
 
 (define-public libjxr
   (package
@@ -1365,7 +1355,7 @@ convert, manipulate, filter and display a wide variety of image formats.")
 (define-public jasper
   (package
     (name "jasper")
-    (version "2.0.17")
+    (version "2.0.19")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -1374,7 +1364,7 @@ convert, manipulate, filter and display a wide variety of image formats.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "01jxvbz0gziflana8ic6cx735y2480scnnxgc10ykcqyvpkz3bjm"))))
+                "036rcr0wkz9gzmvk1jb96piznk0c0bwxgf31z1zrlg8js4zl1n84"))))
     (build-system cmake-build-system)
     (inputs `(("libjpeg" ,libjpeg-turbo)))
     (synopsis "JPEG-2000 library")
@@ -1590,6 +1580,7 @@ is hereby granted."))))
   (package
     (name "libjpeg-turbo")
     (version "2.0.4")
+    (replacement libjpeg-turbo/fixed)
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://sourceforge/libjpeg-turbo/"
@@ -1645,6 +1636,18 @@ and decompress to 32-bit and big-endian pixel buffers (RGBX, XBGR, etc.).")
     (license (list license:bsd-3        ;the TurboJPEG API library and programs
                    license:ijg          ;the libjpeg library and associated tools
                    license:zlib))))     ;the libjpeg-turbo SIMD extensions
+
+(define libjpeg-turbo/fixed
+  (package
+    (inherit libjpeg-turbo)
+    (version "2.0.5")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append "mirror://sourceforge/libjpeg-turbo/"
+                                  version "/libjpeg-turbo-" version ".tar.gz"))
+              (sha256
+               (base32
+                "0pbv6pc97kbj7ib31qcwi7lnmm9xg5y3b11aasmkhfjvf7rgdy0n"))))))
 
 (define-deprecated libjpeg libjpeg-turbo)
 (export libjpeg)
@@ -1871,7 +1874,7 @@ identical visual appearance.")
 (define-public grim
   (package
    (name "grim")
-   (version "1.2.0")
+   (version "1.3.1")
    (source
     (origin
      (method git-fetch)
@@ -1880,7 +1883,7 @@ identical visual appearance.")
            (commit (string-append "v" version))))
      (file-name (git-file-name name version))
      (sha256
-      (base32 "0brljl4zfbn5mh9hkfrfkvd27c5y9vdkgap9r1hrfy9r1x20sskn"))))
+      (base32 "0fjmjq0ws9rlblkcqxxw2lv7zvvyi618jqzlnz5z9zb477jwdfib"))))
    (build-system meson-build-system)
    (native-inputs `(("pkg-config" ,pkg-config)
                     ("scdoc" ,scdoc)))

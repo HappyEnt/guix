@@ -199,7 +199,7 @@ removable devices or support for multimedia.")
 (define-public terminology
   (package
     (name "terminology")
-    (version "1.8.0")
+    (version "1.8.1")
     (source (origin
               (method url-fetch)
               (uri
@@ -207,7 +207,7 @@ removable devices or support for multimedia.")
                               "terminology/terminology-" version ".tar.xz"))
               (sha256
                (base32
-                "0pvn8mdzxlx7181xdha32fbr0w8xl7hsnb3hfxr5099g841v1xf6"))
+                "1fxqjf7g30ix4qxi6366rrax27s3maxq43z2vakwnhz4mp49m9h4"))
               (modules '((guix build utils)))
               ;; Remove the bundled fonts.
               (snippet
@@ -572,7 +572,7 @@ directories.
 (define-public evisum
   (package
     (name "evisum")
-    (version "0.5.1")
+    (version "0.5.2")
     (source
       (origin
         (method url-fetch)
@@ -580,7 +580,7 @@ directories.
                             "evisum/evisum-" version ".tar.xz"))
         (sha256
          (base32
-          "1gl0nfcsfnzl9vc2qcm5chj2nsavdgyy8szpamq2ggnn5p9llh16"))))
+          "1s2d61hjlyh212d9d7rpdlcv90lxsb8br89806wakgnadqygh9gc"))))
     (build-system meson-build-system)
     (arguments
      '(#:tests? #f))    ; no tests

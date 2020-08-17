@@ -440,14 +440,13 @@ or text interfaces) or as a C++ library.")
 (define-public flint
   (package
    (name "flint")
-   (version "2.6.1")
-   (source (origin
-            (method url-fetch)
-            (uri (string-append
-                  "http://flintlib.org/flint-"
-                  version ".tar.gz"))
-            (sha256 (base32
-                     "16dzmymaavlnc966g58yn154vb532j50byihkdy1s32f4vrw578d"))))
+   (version "2.6.3")
+   (source
+    (origin
+      (method url-fetch)
+      (uri (string-append "http://flintlib.org/flint-" version ".tar.gz"))
+      (sha256
+       (base32 "1qrf6hzbbmg7mhkhbb0bab8z2xpdnba5cj4kmmf72lzs0457a6nf"))))
    (build-system gnu-build-system)
    (inputs
     `(("ntl" ,ntl)))
@@ -489,7 +488,7 @@ Operations that can be performed include conversions, arithmetic,
 GCDs, factoring, solving linear systems, and evaluating special
 functions.  In addition, FLINT provides various low-level routines for
 fast arithmetic.")
-   (license license:gpl2+)
+   (license license:lgpl2.1+)
    (home-page "http://flintlib.org/")))
 
 (define-public arb

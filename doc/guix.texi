@@ -11944,7 +11944,7 @@ If the @code{users} list lacks a user account with UID@tie{}0, a
 ``root'' account with UID@tie{}0 is automatically added.
 
 @item @code{skeletons} (default: @code{(default-skeletons)})
-A list target file name/file-like object tuples (@pxref{G-Expressions,
+A list of target file name/file-like object tuples (@pxref{G-Expressions,
 file-like objects}).  These are the skeleton files that will be added to
 the home directory of newly-created user accounts.
 
@@ -11962,8 +11962,15 @@ A string denoting the contents of the @file{/etc/issue} file, which is
 displayed when users log in on a text console.
 
 @item @code{packages} (default: @code{%base-packages})
-The set of packages installed in the global profile, which is accessible
-at @file{/run/current-system/profile}.
+A list of packages to be installed in the global profile, which is accessible
+at @file{/run/current-system/profile}.  Each element is either a package
+variable or a package/output tuple.  Here's a simple example of both:
+
+@lisp
+(cons* git                     ; the default "out" output
+       (list git "send-email") ; another output of git
+       %base-packages)         ; the default set
+@end lisp
 
 The default set includes core utilities and it is good practice to
 install non-core utilities in user profiles (@pxref{Invoking guix
@@ -12164,6 +12171,12 @@ errors before being mounted.
 
 @item @code{create-mount-point?} (default: @code{#f})
 When true, the mount point is created if it does not exist yet.
+
+@item @code{mount-may-fail?} (default: @code{#f})
+When true, this indicates that mounting this file system can fail but
+that should not be considered an error.  This is useful in unusual
+cases; an example of this is @code{efivarfs}, a file system that can
+only be mounted on EFI/UEFI systems.
 
 @item @code{dependencies} (default: @code{'()})
 This is a list of @code{<file-system>} or @code{<mapped-device>} objects
@@ -15149,7 +15162,7 @@ a positive integer, ports @var{n} and @var{n}+1 are used for
 monitoring the connection, such that port @var{n} is the base
 monitoring port and @code{n+1} is the echo port.  When set to
 @code{"@var{n}:@var{m}"} where @var{n} and @var{m} are positive
-integers, the ports @var{n} and @var{n}+1 are used for monitoring the
+integers, the ports @var{n} and @var{m} are used for monitoring the
 connection, such that port @var{n} is the base monitoring port and
 @var{m} is the echo port.
 
@@ -17259,6 +17272,24 @@ server.
 The PostgreSQL daemon loads its runtime configuration from @var{config-file},
 creates a database cluster with @var{locale} as the default
 locale, stored in @var{data-directory}.  It then listens on @var{port}.
+
+If the services fails to start, it may be due to an incompatible
+cluster already present in @var{data-directory}.  Adjust it (or, if you
+don't need the cluster anymore, delete @var{data-directory}), then
+restart the service.
+
+Peer authentication is used by default and the @code{postgres} user
+account has no shell, which prevents the direct execution of @code{psql}
+commands as this user.  To use @code{psql}, you can temporarily log in
+as @code{postgres} using a shell, create a PostgreSQL superuser with the
+same name as one of the system users and then create the associated
+database.
+
+@example
+sudo -u postgres -s /bin/sh
+createuser --interactive
+createdb $MY_USER_LOGIN      # Replace appropriately.
+@end example
 
 @cindex postgresql extension-packages
 Additional extensions are loaded from packages listed in
@@ -23626,16 +23657,16 @@ source is detected.  More information can be found at
 @uref{https://linrunner.de/en/tlp/tlp.html, TLP home page}.
 
 @deffn {Scheme Variable} tlp-service-type
-The service type for the TLP tool.  Its value should be a valid
-TLP configuration (see below).  To use the default settings, simply
-write:
+The service type for the TLP tool.  The default settings are optimised
+for battery life on most systems, but you can tweak them to your heart's
+content by adding a valid @code{tlp-configuration}:
 @lisp
-(service tlp-service-type)
+(service tlp-service-type
+         (tlp-configuration
+          (cpu-scaling-governor-on-ac (list "performance"))
+          (sched-powersave-on-bat? #t)))
 @end lisp
 @end deffn
-
-By default TLP does not need much configuration but most TLP parameters
-can be tweaked using @code{tlp-configuration}.
 
 Each parameter definition is preceded by its type; for example,
 @samp{boolean foo} indicates that the @code{foo} parameter
@@ -27265,6 +27296,51 @@ parameters, can be done as follow:
 @end lisp
 @end deffn
 
+@cindex zram
+@cindex compressed swap
+@cindex Compressed RAM-based block devices
+@subsubheading Zram Device Service
+
+The Zram device service provides a compressed swap device in system
+memory.  The Linux Kernel documentation has more information about
+@uref{https://www.kernel.org/doc/html/latest/admin-guide/blockdev/zram.html,zram}
+devices.
+
+@deffn {Scheme Variable} zram-device-service-type
+This service creates the zram block device, formats it as swap and
+enables it as a swap device.  The service's value is a
+@code{zram-device-configuration} record.
+
+@deftp {Data Type} zram-device-configuration
+This is the data type representing the configuration for the zram-device
+service.
+
+@table @asis
+@item @code{size} (default @var{"1G"})
+This is the amount of space you wish to provide for the zram device.  It
+accepts a string and can be a number of bytes or use a suffix, eg.:
+@var{"512M"} or @var{1024000}.
+@item @code{compression-algorithm} (default @var{'lzo})
+This is the compression algorithm you wish to use.  It is difficult to
+list all the possible compression options, but common ones supported by
+Guix's Linux Libre Kernel include @var{'lzo}, @var{'lz4} and @var{'zstd}.
+@item @code{memory-limit} (default @var{0})
+This is the maximum amount of memory which the zram device can use.
+Setting it to '0' disables the limit.  While it is generally expected
+that compression will be 2:1, it is possible that uncompressable data
+can be written to swap and this is a method to limit how much memory can
+be used.  It accepts a string and can be a number of bytes or use a
+suffix, eg.: @var{"2G"}.
+@item @code{priority} (default @var{-1})
+This is the priority of the swap device created from the zram device.
+@code{swapon} accepts values between -1 and 32767, with higher values
+indicating higher priority.  Higher priority swap will generally be used
+first.
+@end table
+
+@end deftp
+@end deffn
+
 @node Hurd Services
 @subsection Hurd Services
 
@@ -27583,6 +27659,9 @@ Enable or disable the use of the Docker user-land networking proxy.
 
 @item @code{debug?} (default @code{#f})
 Enable or disable debug output.
+
+@item @code{enable-iptables?} (default @code{#t})
+Enable or disable the addition of iptables rules.
 
 @end table
 @end deftp

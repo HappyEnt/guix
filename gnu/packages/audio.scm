@@ -32,6 +32,7 @@
 ;;; Copyright © 2020 Guillaume Le Vaillant <glv@posteo.net>
 ;;; Copyright © 2020 Jonathan Frederickson <jonathan@terracrypt.net>
 ;;; Copyright © 2020 Giacomo Leidi <goodoldpaul@autistici.org>
+;;; Copyright © 2020 Vinicius Monego <monego@posteo.net>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -2582,9 +2583,12 @@ aimed at audio/musical applications.")
        ("automake" ,automake)
        ("pkg-config" ,pkg-config)
        ("libtool" ,libtool)))
-    (synopsis "Real-time library for sampling rate conversion")
-    (description "The @command{resample} software package contains free
-sampling-rate conversion and filter design utilities.")
+    (synopsis "Sampling rate conversion and filter design utilities")
+    (description "This package contains the @command{resample} and
+@command{windowfilter} command line utilities.  The @command{resample} command
+allows changing the sampling rate of a sound file, while the
+@command{windowfilter} command allows to design Finite Impulse Response (FIR)
+filters using the so-called @emph{window method}.")
     (home-page "https://ccrma.stanford.edu/~jos/resample/Free_Resampling_Software.html")
     (license license:lgpl2.1+)))
 
@@ -3676,14 +3680,14 @@ on the ALSA software PCM plugin.")
 (define-public snd
   (package
     (name "snd")
-    (version "20.5")
+    (version "20.6")
     (source (origin
               (method url-fetch)
               (uri (string-append "ftp://ccrma-ftp.stanford.edu/pub/Lisp/"
                                   "snd-" version ".tar.gz"))
               (sha256
                (base32
-                "1frg64q2d8cia6v7jia7kahzx0apwdl0z252mzlbwqdz5960nv90"))))
+                "1h4dsq5xcvwjbnayhn719cln0lg199w3xm59sl9d2jz8bq78gqgj"))))
     (build-system glib-or-gtk-build-system)
     (arguments
      `(#:tests? #f                      ; no tests
@@ -4397,6 +4401,38 @@ audio plugin UIs, where the dependencies often need to be kept to a
 minimum.")
     (home-page "https://git.zrythm.org/cgit/ztoolkit/")
     (license license:agpl3+)))
+
+(define-public libinstpatch
+  (package
+    (name "libinstpatch")
+    (version "1.1.5")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/swami/libinstpatch")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0psx4hc5yksfd3k2xqsc7c8lbz2d4yybikyddyd9hlkhq979cmjb"))))
+    (build-system cmake-build-system)
+    (arguments
+     `(#:tests? #f)) ;there are no tests
+    (native-inputs
+     `(("glib:bin" ,glib "bin")
+       ("pkg-config" ,pkg-config)))
+    (inputs
+     `(("glib" ,glib)
+       ("libsndfile" ,libsndfile)))
+    (home-page "http://www.swamiproject.org/")
+    (synopsis "Instrument file software library")
+    (description
+     "libInstPatch is a library for processing digital sample based MIDI
+instrument \"patch\" files.  The types of files libInstPatch supports are used
+for creating instrument sounds for wavetable synthesis.  libInstPatch provides
+an object framework (based on GObject) to load patch files, which can then be
+edited, converted, compressed and saved.")
+    (license license:lgpl2.1)))
 
 (define-public ztoolkit-rsvg
   (package

@@ -48,6 +48,7 @@
             alist->file-system-options
 
             file-system-mount?
+            file-system-mount-may-fail?
             file-system-check?
             file-system-create-mount-point?
             file-system-dependencies
@@ -68,6 +69,8 @@
             %pseudo-file-system-types
             %fuse-control-file-system
             %binary-format-file-system
+            %debug-file-system
+            %efivars-file-system
             %shared-memory-file-system
             %pseudo-terminal-file-system
             %tty-gid
@@ -113,6 +116,8 @@
                     (default #f))
   (mount?           file-system-mount?            ; Boolean
                     (default #t))
+  (mount-may-fail?  file-system-mount-may-fail?   ; Boolean
+                    (default #f))
   (needed-for-boot? %file-system-needed-for-boot? ; Boolean
                     (default #f))
   (check?           file-system-check?            ; Boolean
@@ -300,18 +305,21 @@ store--e.g., if FS is the root file system."
   "Return a list corresponding to file-system FS that can be passed to the
 initrd code."
   (match fs
-    (($ <file-system> device mount-point type flags options _ _ check?)
+    (($ <file-system> device mount-point type flags options mount?
+                      mount-may-fail? needed-for-boot? check?)
+     ;; Note: Add new fields towards the end for compatibility.
      (list (cond ((uuid? device)
                   `(uuid ,(uuid-type device) ,(uuid-bytevector device)))
                  ((file-system-label? device)
                   `(file-system-label ,(file-system-label->string device)))
                  (else device))
-           mount-point type flags options check?))))
+           mount-point type flags options mount-may-fail? check?))))
 
 (define (spec->file-system sexp)
   "Deserialize SEXP, a list, to the corresponding <file-system> object."
   (match sexp
-    ((device mount-point type flags options check?)
+    ((device mount-point type flags options mount-may-fail? check?
+             _ ...)                               ;placeholder for new fields
      (file-system
        (device (match device
                  (('uuid (? symbol? type) (? bytevector? bv))
@@ -322,6 +330,7 @@ initrd code."
                   device)))
        (mount-point mount-point) (type type)
        (flags flags) (options options)
+       (mount-may-fail? mount-may-fail?)
        (check? check?)))))
 
 (define (specification->file-system-mapping spec writable?)
@@ -366,6 +375,24 @@ TARGET in the other system."
     (device "binfmt_misc")
     (mount-point "/proc/sys/fs/binfmt_misc")
     (type "binfmt_misc")
+    (check? #f)))
+
+(define %debug-file-system
+  (file-system
+    (type "debugfs")
+    (device "none")
+    (mount-point "/sys/kernel/debug")
+    (check? #f)
+    (create-mount-point? #t)))
+
+(define %efivars-file-system
+  ;; Support for EFI variables file system.
+  (file-system
+    (device "efivarfs")
+    (mount-point "/sys/firmware/efi/efivars")
+    (type "efivarfs")
+    (mount-may-fail? #t)
+    (needed-for-boot? #f)
     (check? #f)))
 
 (define %tty-gid
@@ -467,7 +494,9 @@ TARGET in the other system."
   ;; List of basic file systems to be mounted.  Note that /proc and /sys are
   ;; currently mounted by the initrd.
   (list %pseudo-terminal-file-system
+        %debug-file-system
         %shared-memory-file-system
+        %efivars-file-system
         %immutable-store))
 
 ;; File systems for Linux containers differ from %base-file-systems in that

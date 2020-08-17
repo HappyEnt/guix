@@ -54,6 +54,7 @@
 ;;; Copyright © 2020 Vinicius Monego <monego@posteo.net>
 ;;; Copyright © 2020 Brice Waegeneire <brice@waegenei.re>
 ;;; Copyright © 2020 Arun Isaac <arunisaac@systemreboot.net>
+;;; Copyright © 2020 Michael Rohleder <mike@rohleder.de>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -449,7 +450,7 @@ It has miners for Facebook, Flickr, Google, ownCloud and SkyDrive.")
 (define-public gssdp
   (package
    (name "gssdp")
-   (version "1.2.2")
+   (version "1.2.3")
    (source (origin
             (method url-fetch)
             (uri (string-append "mirror://gnome/sources/" name "/"
@@ -457,7 +458,7 @@ It has miners for Facebook, Flickr, Google, ownCloud and SkyDrive.")
                                 name "-" version ".tar.xz"))
             (sha256
              (base32
-              "195hi10vrsvh6i927mm6rm1ld5sxah3h5sr3bsjm90vb8lxrxfya"))))
+              "1s57i8a8wnnxnsfl27cq4503dkdlzbrhry5zpg23sfqfffvdqqx2"))))
    (build-system meson-build-system)
    (native-inputs
     `(("gettext" ,gettext-minimal)
@@ -480,7 +481,7 @@ a debugging tool, @command{gssdp-device-sniffer}.")
 (define-public gupnp
   (package
    (name "gupnp")
-   (version "1.2.2")
+   (version "1.2.4")
    (source (origin
             (method url-fetch)
             (uri (string-append "mirror://gnome/sources/" name "/"
@@ -488,7 +489,7 @@ a debugging tool, @command{gssdp-device-sniffer}.")
                                 name "-" version ".tar.xz"))
             (sha256
              (base32
-              "12cr3isww4zl0d4himpd2fhl2wmy3jh8sbxp4snp51sw7savv04s"))))
+              "1ld7mrpdv9cszmfzh7i19qx4li25j3fr7x1jp38l8phzlmz3187p"))))
    (build-system meson-build-system)
    (native-inputs
     `(("gettext" ,gettext-minimal)
@@ -1988,6 +1989,7 @@ database is translated at Transifex.")
        ("gobject-introspection" ,gobject-introspection)
        ("python" ,python)
        ("cups" ,cups)
+       ("gtk+" ,gtk+)
        ("python-dbus" ,python-dbus)
        ("python-pygobject" ,python-pygobject)
        ("python-pycups" ,python-pycups)
@@ -3046,14 +3048,14 @@ Hints specification (EWMH).")
 (define-public goffice
   (package
     (name "goffice")
-    (version "0.10.46")
+    (version "0.10.47")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://gnome/sources/goffice/"
                                   (version-major+minor version)  "/"
                                   "goffice-" version ".tar.xz"))
               (sha256
-               (base32 "1a8kba36zwzr0ilafc0d1nsxxma1qibviiifd0jhbxp180x6v385"))))
+               (base32 "0xmigfdzvmlpa0fw79mf3xwchmxc8rlidryn5syv8bz7msmrb215"))))
     (build-system gnu-build-system)
     (outputs '("out"
                "doc"))                  ; 4.0 MiB of gtk-doc
@@ -3301,7 +3303,7 @@ libraries written in C.")
 (define-public vala-0.48
   (package
     (inherit vala)
-    (version "0.48.6")
+    (version "0.48.7")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://gnome/sources/vala/"
@@ -3309,12 +3311,12 @@ libraries written in C.")
                                   "vala-" version ".tar.xz"))
               (sha256
                (base32
-                "01wppzgacdmp8dgf8047myz1any2yffmrhgl8kqf1q0c0gnhi3fi"))))))
+                "0lswkb7gj0chas9n3l3dbrm9l71hs77adhvm2v600id2ipi37pi8"))))))
 
 (define-public vte
   (package
     (name "vte")
-    (version "0.60.2")
+    (version "0.60.3")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://gnome/sources/vte/"
@@ -3322,7 +3324,7 @@ libraries written in C.")
                                   "vte-" version ".tar.xz"))
               (sha256
                (base32
-                "19ccbw0yca78h5qcnm8claj4fg1pj68nj1fsjqqfpzhj7w72i81m"))))
+                "0al2v6fn061v4j1wwvppim1q283y2a6s0iyl29hxhmx3h48nxdzy"))))
     (build-system meson-build-system)
     (arguments
      `(#:configure-flags
@@ -3374,28 +3376,7 @@ editors, IDEs, etc.")
 GTK+, this fork provides additional functions exposed for keyboard text
 selection and URL hints.")))
 
-;; provides vte 2.90, required for some terminal emulators
-;; tilda bug: https://github.com/lanoxx/tilda/issues/94
-;; pantheon-terminal bug: https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=788021
-;; roxterm bug: http://sourceforge.net/p/roxterm/bugs/107/
-;; pantheon-terminal, roxterm are not currently packaged
-(define-public vte-0.36
-  (package (inherit vte)
-    (name "vte")
-    (version "0.36.5")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append "mirror://gnome/sources/" name "/"
-                                  (version-major+minor version) "/"
-                                  name "-" version ".tar.xz"))
-              (sha256
-               (base32
-                "1psfnqsmxx4qzc55qwvb8jai824ix4pqcdqhgxk0g2zh82bcxhn2"))))
-    (propagated-inputs
-     `(("gtk" ,gtk+)
-       ("ncurses" ,ncurses)))))
-
-;; stable version for gtk2, required by xfce4-terminal.
+;; Stable version for gtk2, required by gnurobots and lxterminal as of 2020-07.
 (define-public vte/gtk+-2
   (package (inherit vte)
     (name "vte")
@@ -5362,7 +5343,10 @@ part of udev-extras, then udev, then systemd.  It's now a project on its own.")
                                   "gvfs-" version ".tar.xz"))
               (sha256
                (base32
-                "1cfnzamr4mvgpf6yhm28lh9cafy9z6842s8jpbqnfizfxybg8ylj"))))
+                "1cfnzamr4mvgpf6yhm28lh9cafy9z6842s8jpbqnfizfxybg8ylj"))
+              ;; This patch may be removed when upgrading to version 1.46.x.
+              (patches
+               (search-patches "gvfs-add-support-for-libplist-2.2.patch"))))
     (build-system meson-build-system)
     (arguments
      '(#:glib-or-gtk? #t
@@ -8667,7 +8651,7 @@ compiled.")
 (define-public gfbgraph
   (package
     (name "gfbgraph")
-    (version "0.2.3")
+    (version "0.2.4")
     (source (origin
               (method url-fetch)
               (uri (string-append
@@ -8676,17 +8660,23 @@ compiled.")
                     "gfbgraph-" version ".tar.xz"))
               (sha256
                (base32
-                "1dp0v8ia35fxs9yhnqpxj3ir5lh018jlbiwifjfn8ayy7h47j4fs"))))
+                "0yck7dwvjk16a52nafjpi0a39rxwmg0w833brj45acz76lgkjrb0"))))
     (build-system glib-or-gtk-build-system)
     (arguments
-     `(#:tests? #f ; Tests appear to require the network.
-       ;; FIXME --enable-gtk-doc fails even with gtk-doc as a native-input.
-       #:configure-flags '("--disable-gtk-doc"
-                           "--disable-static"
+     `(#:tests? #f                      ; tests appear to require the network
+       #:configure-flags '("--disable-static"
+                           "--enable-gtk-doc"
                            "--enable-introspection")))
     (native-inputs
-     `(("pkg-config" ,pkg-config)
-       ("gobject-introspection" ,gobject-introspection)))
+     `(("gobject-introspection" ,gobject-introspection)
+       ("gtk-doc" ,gtk-doc)
+       ("pkg-config" ,pkg-config)
+
+       ;; The 0.2.4 ‘release’ tarball isn't bootstrapped.
+       ("autoconf" ,autoconf)
+       ("automake" ,automake)
+       ("libtool" ,libtool)
+       ("which" ,which)))
     (inputs
      `(("json-glib" ,json-glib)
        ("gnome-online-accounts:lib" ,gnome-online-accounts "lib")
@@ -10070,7 +10060,7 @@ integrate seamlessly with the GNOME desktop.")
 (define-public gnome-boxes
   (package
     (name "gnome-boxes")
-    (version "3.36.5")
+    (version "3.36.6")
     (source
      (origin
        (method url-fetch)
@@ -10078,7 +10068,7 @@ integrate seamlessly with the GNOME desktop.")
                            (version-major+minor version) "/"
                            "gnome-boxes-" version ".tar.xz"))
        (sha256
-        (base32 "1khvyhgd3p41fvvknga1hdl0p1ks4kj4cwsiaw28v1sy6nzclm2c"))))
+        (base32 "0c3cw90xqqcpacc2z06ljs0gg8saxizfgjzg9alhpwgz3gl4c5pg"))))
     (build-system meson-build-system)
     (arguments
      '(#:glib-or-gtk? #t
@@ -10096,6 +10086,8 @@ integrate seamlessly with the GNOME desktop.")
        ("pkg-config" ,pkg-config)))
     (inputs
      `(("libarchive" ,libarchive)
+       ("glib-networking" ,glib-networking) ;for TLS support
+       ("gsettings-desktop-schemas" ,gsettings-desktop-schemas)
        ("gtk" ,gtk+)
        ("gtk-vnc" ,gtk-vnc)
        ("libosinfo" ,libosinfo)
@@ -10114,7 +10106,10 @@ integrate seamlessly with the GNOME desktop.")
     (home-page "https://wiki.gnome.org/Apps/Boxes")
     (synopsis "View, access, and manage remote and virtual systems")
     (description "GNOME Boxes is a simple application to view, access, and
-manage remote and virtual systems.")
+manage remote and virtual systems.  Note that this application requires the
+@code{libvirt} and @code{virtlog} daemons to run.  Use the command
+@command{info '(guix) Virtualization Services'} to learn how to configure
+these services on the Guix System.")
     (license (list
               ;; For data/icons/empty-boxes.png.
               license:cc-by2.0
@@ -10373,61 +10368,57 @@ provided there is a DBus service present:
     (license license:gpl2)))
 
 (define-public parlatype
-  ;; This is one commit away from 2.0, because the latter introduced
-  ;; a regression in ASR.
-  (let ((commit "7d22ead13ef7578f99d24146663cc1bdb7d8c2a9")
-        (revision "0"))
-    (package
-      (name "parlatype")
-      (version (git-version "2.0" revision commit))
-      (source
-       (origin
-         (method git-fetch)
-         (uri (git-reference
-               (url "https://github.com/gkarsay/parlatype")
-               (commit commit)))
-         (file-name (git-file-name name version))
-         (sha256
-          (base32 "0r3k3qczbzi7bs5s1rddhpsnadyr805df40bqkx0srlxgh5mfghf"))))
-      (build-system meson-build-system)
-      (arguments
-       `(#:glib-or-gtk? #t
-         #:tests? #f                    ;require internet access
-         #:phases
-         (modify-phases %standard-phases
-           (add-after 'install 'wrap-parlatype
-             ;; Add gstreamer plugin provided in this package to system's
-             ;; plugins.
-             (lambda* (#:key outputs #:allow-other-keys)
-               (let* ((out (assoc-ref outputs "out"))
-                      (gst-plugin-path (string-append
-                                        out "/lib/gstreamer-1.0/"
-                                        ":"
-                                        (getenv "GST_PLUGIN_SYSTEM_PATH"))))
-                 (wrap-program (string-append out "/bin/parlatype")
-                   `("GST_PLUGIN_SYSTEM_PATH" ":" = (,gst-plugin-path))))
-               #t)))))
-      (native-inputs
-       `(("appstream-glib" ,appstream-glib)
-         ("desktop-file-utils" ,desktop-file-utils) ;for desktop-file-validate
-         ("gettext" ,gettext-minimal)
-         ("glib" ,glib "bin")           ;for glib-compile-resources
-         ("pkg-config" ,pkg-config)
-         ("yelp-tools" ,yelp-tools)))
-      (inputs
-       `(("gst-plugins-base" ,gst-plugins-base)
-         ("gst-plugins-good" ,gst-plugins-good)
-         ("gstreamer" ,gstreamer)
-         ("gtk+" ,gtk+)
-         ("pocketsphinx" ,pocketsphinx)
-         ("pulseaudio" ,pulseaudio)
-         ("sphinxbase" ,sphinxbase)))
-      (home-page "http://gkarsay.github.io/parlatype/")
-      (synopsis "GNOME audio player for transcription")
-      (description "Parlatype is an audio player for the GNOME desktop
+  (package
+    (name "parlatype")
+    (version "2.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/gkarsay/parlatype.git")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1c15ja0rwz3jj8bnqdq0nmqka39iwrhy8krdv2a2x8nl4shfpmv0"))))
+    (build-system meson-build-system)
+    (arguments
+     `(#:glib-or-gtk? #t
+       #:tests? #f                      ;require internet access
+       #:phases
+       (modify-phases %standard-phases
+         (add-after 'install 'wrap-parlatype
+           ;; Add gstreamer plugin provided in this package to system's
+           ;; plugins.
+           (lambda* (#:key outputs #:allow-other-keys)
+             (let* ((out (assoc-ref outputs "out"))
+                    (gst-plugin-path (string-append
+                                      out "/lib/gstreamer-1.0/"
+                                      ":"
+                                      (getenv "GST_PLUGIN_SYSTEM_PATH"))))
+               (wrap-program (string-append out "/bin/parlatype")
+                 `("GST_PLUGIN_SYSTEM_PATH" ":" = (,gst-plugin-path))))
+             #t)))))
+    (native-inputs
+     `(("appstream-glib" ,appstream-glib)
+       ("desktop-file-utils" ,desktop-file-utils) ;for desktop-file-validate
+       ("gettext" ,gettext-minimal)
+       ("glib" ,glib "bin")             ;for glib-compile-resources
+       ("pkg-config" ,pkg-config)
+       ("yelp-tools" ,yelp-tools)))
+    (inputs
+     `(("gst-plugins-base" ,gst-plugins-base)
+       ("gst-plugins-good" ,gst-plugins-good)
+       ("gstreamer" ,gstreamer)
+       ("gtk+" ,gtk+)
+       ("pocketsphinx" ,pocketsphinx)
+       ("pulseaudio" ,pulseaudio)
+       ("sphinxbase" ,sphinxbase)))
+    (home-page "http://gkarsay.github.io/parlatype/")
+    (synopsis "GNOME audio player for transcription")
+    (description "Parlatype is an audio player for the GNOME desktop
 environment.  Its main purpose is the manual transcription of spoken
 audio files.")
-      (license license:gpl3+))))
+    (license license:gpl3+)))
 
 (define-public jsonrpc-glib
   (package

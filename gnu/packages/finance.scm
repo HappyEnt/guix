@@ -96,7 +96,6 @@
   #:use-module (gnu packages time)
   #:use-module (gnu packages tls)
   #:use-module (gnu packages upnp)
-  #:use-module (gnu packages version-control)
   #:use-module (gnu packages web)
   #:use-module (gnu packages xml)
   #:use-module (gnu packages gnuzilla))
@@ -548,7 +547,7 @@ other machines/servers.  Electroncash does not download the Bitcoin Cash blockch
   ;; the system's dynamically linked library.
   (package
     (name "monero")
-    (version "0.16.0.1")
+    (version "0.16.0.3")
     (source
      (origin
        (method git-fetch)
@@ -568,12 +567,10 @@ other machines/servers.  Electroncash does not download the Bitcoin Cash blockch
               "external/unbound"))
            #t))
        (sha256
-        (base32
-         "0n2cviqm8radpynx70fc0819k1xknjc58cvb4whlc49ilyvh8ky6"))))
+        (base32 "1r9x3712vhb24dxxirfiwj5f9x0h4m7x0ngiiavf5983dfdlgz33"))))
     (build-system cmake-build-system)
     (native-inputs
      `(("doxygen" ,doxygen)
-       ("git" ,git)
        ("graphviz" ,graphviz)
        ("pkg-config" ,pkg-config)
        ("protobuf" ,protobuf)
@@ -667,7 +664,7 @@ the Monero command line client and daemon.")
 (define-public monero-gui
   (package
     (name "monero-gui")
-    (version "0.16.0.2")
+    (version "0.16.0.3")
     (source
      (origin
        (method git-fetch)
@@ -676,8 +673,7 @@ the Monero command line client and daemon.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32
-         "1b1m8vhs0hdh81ysm8s8vfwqskqsihylb51wz16kc98ba40r9gqg"))))
+        (base32 "0iwjp8x5swy8i8pzrlm5v55awhm54cf48pm1vz98lcq361lhfzk6"))))
     (build-system qt-build-system)
     (native-inputs
      `(("monero-source" ,(package-source monero))
@@ -884,14 +880,13 @@ Ledger Blue/Nano S.")
 (define-public python-trezor
   (package
     (name "python-trezor")
-    (version "0.12.0")
+    (version "0.12.1")
     (source
       (origin
         (method url-fetch)
         (uri (pypi-uri "trezor" version))
         (sha256
-          (base32
-            "0ycmpwjv5xp25993divjhaq5j766zgcy22xx39xfc1pcvldq5g7n"))))
+          (base32 "1w19m9lws55k9sjhras47hpfpqwq1jm5vy135nj65yhkblygqg19"))))
     (build-system python-build-system)
     (propagated-inputs
      `(("python-click" ,python-click)
@@ -1033,14 +1028,13 @@ agent.")
 (define-public python-stdnum
   (package
     (name "python-stdnum")
-    (version "1.13")
+    (version "1.14")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "python-stdnum" version))
        (sha256
-        (base32
-         "0q4128rjdgavywhzlm2gz2n5ybc9b9sxs81g50dvxf5q7z9q63qj"))))
+        (base32 "070vd9zgvq0jchs4xc4j1h4r1l1lg4wwb8xs3p25k8c2xjw94fpx"))))
     (build-system python-build-system)
     (arguments
      '(#:phases (modify-phases %standard-phases
@@ -1049,10 +1043,8 @@ agent.")
                       (invoke "nosetests"))))))
     (native-inputs
      `(("python-nose" ,python-nose)))
-    (home-page
-     "https://arthurdejong.org/python-stdnum/")
-    (synopsis
-     "Python module to handle standardized number and code formats")
+    (home-page "https://arthurdejong.org/python-stdnum/")
+    (synopsis "Python module to handle standardized number and code formats")
     (description
      "This is a Python library that aims to provide functions to handle,
 parse and validate standard numbers.
@@ -1239,7 +1231,7 @@ Trezor wallet.")
 (define-public bitcoin-abc
   (package
     (name "bitcoin-abc")
-    (version "0.21.10")
+    (version "0.21.12")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://download.bitcoinabc.org/"
@@ -1247,7 +1239,7 @@ Trezor wallet.")
                                   version ".tar.gz"))
               (sha256
                (base32
-                "0cgr416cp7p14mlnfryxfjfcxys5hksfjhi0i4amxl4fbnpgjwk0"))))
+                "1amzwy3gpl8ai90dsy7g0z51qq8vxfzbf642wn4bfynb8jmw3kx5"))))
     (build-system cmake-build-system)
     (native-inputs
      `(("pkg-config" ,pkg-config)

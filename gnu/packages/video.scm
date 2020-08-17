@@ -24,7 +24,7 @@
 ;;; Copyright © 2017, 2018, 2019 Rutger Helling <rhelling@mykolab.com>
 ;;; Copyright © 2018 Roel Janssen <roel@gnu.org>
 ;;; Copyright © 2018, 2019, 2020 Marius Bakke <mbakke@fastmail.com>
-;;; Copyright © 2018, 2019 Pierre Neidhardt <mail@ambrevar.xyz>
+;;; Copyright © 2018, 2019, 2020 Pierre Neidhardt <mail@ambrevar.xyz>
 ;;; Copyright © 2018, 2019, 2020 Leo Famulari <leo@famulari.name>
 ;;; Copyright © 2018 Brendan Tildesley <mail@brendan.scot>
 ;;; Copyright © 2018 Arun Isaac <arunisaac@systemreboot.net>
@@ -137,6 +137,7 @@
   #:use-module (gnu packages perl)
   #:use-module (gnu packages perl-check)
   #:use-module (gnu packages perl-web)
+  #:use-module (gnu packages photo)
   #:use-module (gnu packages pkg-config)
   #:use-module (gnu packages popt)
   #:use-module (gnu packages pretty-print)
@@ -162,7 +163,6 @@
   #:use-module (gnu packages tls)
   #:use-module (gnu packages time)
   #:use-module (gnu packages upnp)
-  #:use-module (gnu packages version-control)
   #:use-module (gnu packages vulkan)
   #:use-module (gnu packages web)
   #:use-module (gnu packages webkit)
@@ -318,6 +318,30 @@ television and DVD.  It is also known as AC-3.")
     (description "Libaom is the reference implementation of AV1.  It includes a
 shared library and encoder and decoder command-line executables.")
     (license license:bsd-2)))
+
+(define-public libde265
+  (package
+    (name "libde265")
+    (version "1.0.5")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/strukturag/libde265")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1qisj8ryzbknam3hk81rq70fsd9mcpxm898bqygvbsmbwyvmz3pg"))))
+    (build-system cmake-build-system)
+    (arguments
+     `(#:tests? #f)) ;there are no tests
+    (home-page "https://www.libde265.org/")
+    (synopsis "Open h.265 video codec implementation")
+    (description
+     "libde265 is an implementation of the h.265 video codec.  It is written
+from scratch and has a plain C API to enable a simple integration into other
+software.")
+    (license license:lgpl3+)))
 
 (define-public libmpeg2
   (package
@@ -818,14 +842,14 @@ SMPTE 314M.")
 (define-public libmatroska
   (package
     (name "libmatroska")
-    (version "1.6.0")
+    (version "1.6.2")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "https://dl.matroska.org/downloads/"
                            "libmatroska/libmatroska-" version ".tar.xz"))
        (sha256
-        (base32 "0cs03ghf7h65yvv8yf915bx4a47i6d3w2mjbs5zpz000spmrrj7y"))))
+        (base32 "140r3q6n4a0n11zaf76lvyxd9gp435dgm8gn7mj0gar2hjm7ji5w"))))
     (build-system cmake-build-system)
     (inputs
      `(("libebml" ,libebml)))
@@ -1225,7 +1249,7 @@ videoformats depend on the configuration flags of ffmpeg.")
 (define-public vlc
   (package
     (name "vlc")
-    (version "3.0.11")
+    (version "3.0.11.1")
     (source (origin
               (method url-fetch)
               (uri (string-append
@@ -1234,13 +1258,12 @@ videoformats depend on the configuration flags of ffmpeg.")
                     "/vlc-" version ".tar.xz"))
               (sha256
                (base32
-                "06a9hfl60f6l0fs5c9ma5s8np8kscm4ala6m2pdfji9lyfna351y"))))
+                "1f46h0hv7fk35zg4iczlp7ib7h2jmh8m4r5klw3g2558ib9134qq"))))
     (build-system gnu-build-system)
     (native-inputs
      `(("flex" ,flex)
        ("bison" ,bison)
        ("gettext" ,gettext-minimal)
-       ("git" ,git)                     ; needed for a test
        ("pkg-config" ,pkg-config)))
     ;; FIXME: Add optional inputs once available.
     (inputs
@@ -2367,7 +2390,7 @@ from sites like Twitch.tv and pipes them into a video player of choice.")
 (define-public mlt
   (package
     (name "mlt")
-    (version "6.20.0")
+    (version "6.22.1")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -2376,7 +2399,7 @@ from sites like Twitch.tv and pipes them into a video player of choice.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "14kayzas2wisyw0z27qkcm4qnxbdb7bqa0hg7gaj5kbm3nvsnafk"))))
+                "0jxv848ykw0csbnayrd710ylw46m0picfv7rpzsxz1vh4jzs395k"))))
     (build-system gnu-build-system)
     (arguments
      `(#:tests? #f                      ; no tests
@@ -2405,6 +2428,9 @@ from sites like Twitch.tv and pipes them into a video player of choice.")
        ("libxml2" ,libxml2)
        ("jack" ,jack-1)
        ("ladspa" ,ladspa)
+       ("libexif" ,libexif)
+       ("libvorbis" ,libvorbis)
+       ("rubberband" ,rubberband)
        ("libsamplerate" ,libsamplerate)
        ("pulseaudio" ,pulseaudio)
        ("qtbase" ,qtbase)
@@ -3065,7 +3091,7 @@ practically any type of media.")
 (define-public libmediainfo
   (package
     (name "libmediainfo")
-    (version "20.03")
+    (version "20.08")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://mediaarea.net/download/source/"
@@ -3073,7 +3099,7 @@ practically any type of media.")
                                   name "_" version ".tar.xz"))
               (sha256
                (base32
-                "0wkzj5s34m8dvy7hif4h8f90q8ncrzd930gij1zzw3h5nw732j38"))))
+                "19n8h9jq42b6r3dbag77fzwfksfywszmzpi636w87fvc1nqldlqj"))))
     ;; TODO add a Big Buck Bunny webm for tests.
     (native-inputs
      `(("autoconf" ,autoconf)
@@ -3123,7 +3149,7 @@ MPEG-2, MPEG-4, DVD (VOB)...
 (define-public mediainfo
   (package
     (name "mediainfo")
-    (version "20.03")
+    (version "20.08")
     (source (origin
               (method url-fetch)
               ;; Warning: This source has proved unreliable 1 time at least.
@@ -3134,7 +3160,7 @@ MPEG-2, MPEG-4, DVD (VOB)...
                                   name "_" version ".tar.xz"))
               (sha256
                (base32
-                "1f1shnycf0f1fwka9k9s250l228xjkg0k4k73h8bpld8msighgnw"))))
+                "1baf2dj5s3g1x4ssqli1b2r1203syk42m09zhp36qcinmfixv11l"))))
     (native-inputs
      `(("autoconf" ,autoconf)
        ("automake" ,automake)
@@ -4031,7 +4057,7 @@ result in several formats:
         ("rust-thiserror" ,rust-thiserror-1.0)
         ("rust-toml" ,rust-toml-0.5)
         ("rust-y4m" ,rust-y4m-0.5)
-        ("rust-cc" ,rust-cc-1.0)
+        ("rust-cc" ,rust-cc-1)
         ("rust-nasm-rs" ,rust-nasm-rs-0.1)
         ("rust-rustc-version" ,rust-rustc-version-0.2)
         ("rust-vergen" ,rust-vergen-3.1))
@@ -4220,3 +4246,27 @@ mplayer; and as a @dfn{Personal Video Recorder} (PVR), subscribing to search
 terms and recording programmes automatically.  It can also stream or record live
 BBC iPlayer output.")
     (license license:gpl3+)))
+
+(define-public ogmtools
+  (package
+    (name "ogmtools")
+    (version "1.5")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append "https://www.bunkus.org/videotools/ogmtools/ogmtools-"
+                                  version
+                                  ".tar.bz2"))
+              (sha256
+               (base32
+                "1spx81p5wf59ksl3r3gvf78d77sh7gj8a6lw773iv67bphfivmn8"))))
+    (build-system gnu-build-system)
+    (inputs
+     `(("libvorbis" ,libvorbis)
+       ("libdvdread" ,libdvdread)))
+    (synopsis "Information, extraction or creation for OGG media streams")
+    (description
+     "These tools allow information about (@code{ogminfo}) or extraction from
+\(@code{ogmdemux}) or creation of (@code{ogmmerge}) OGG media streams.  It
+includes @code{dvdxchap} tool for extracting chapter information from DVD.")
+    (license license:gpl2)
+    (home-page "https://www.bunkus.org/videotools/ogmtools/")))

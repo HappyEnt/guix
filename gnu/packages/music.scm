@@ -28,6 +28,7 @@
 ;;; Copyright © 2020 Vincent Legoll <vincent.legoll@gmail.com>
 ;;; Copyright © 2020 Lars-Dominik Braun <lars@6xq.net>
 ;;; Copyright © 2020 Giacomo Leidi <goodoldpaul@autistici.org>
+;;; Copyright © 2020 Michael Rohleder <mike@rohleder.de>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -503,7 +504,7 @@ settings (aliasing, linear interpolation and cubic interpolation).")
 (define-public hydrogen
   (package
     (name "hydrogen")
-    (version "1.0.0-rc1")
+    (version "1.0.0")
     (source
      (origin
        (method git-fetch)
@@ -512,7 +513,7 @@ settings (aliasing, linear interpolation and cubic interpolation).")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1ibbdzyk30nj83jrq7py78hwpjgy0lq7ji6gi2pdp1pqzz1mqp0v"))))
+        (base32 "1kwlqfah0yk135i0rzmbbgnqdzxrzg9yslii5asl4ip9x4dc1w3r"))))
     (build-system cmake-build-system)
     (arguments
      `(#:test-target "tests"
@@ -1194,6 +1195,39 @@ be used alone or in concert with Non Mixer and Non Sequencer to form a
 complete studio.")
     (license license:gpl2+)))
 
+(define-public tascam-gtk
+  ;; This commit represents the latest version at the time of this writing.
+  (let ((commit "17b8575ff88dfd2ede0f7ef9c5c5597ab8a00702")
+        (revision "0"))
+    (package
+      (name "tascam-gtk")
+      (version (git-version "0.4" revision commit))
+      (source (origin
+                (method git-fetch)
+                (uri (git-reference
+                      (url "https://github.com/onkelDead/tascam-gtk.git")
+                      (commit commit)))
+                (file-name (git-file-name name version))
+                (sha256
+                 (base32
+                  "07k7rccqqg7lnygkh97a200l1i6s1rl92n01v0q6n4257sinir6f"))))
+      (build-system gnu-build-system)
+      (inputs
+       `(("liblo" ,liblo)
+         ("gtkmm" ,gtkmm)
+         ("alsa-lib" ,alsa-lib)
+         ("libxmlplusplus" ,libxmlplusplus-2.6)))
+      (native-inputs
+       `(("glib:bin" ,glib "bin")
+         ("pkg-config" ,pkg-config)))
+      (home-page "https://github.com/onkelDead/tascam-gtk")
+      (synopsis "GTK+ based application to control Tascam US-16x08 DSP mixer")
+      (description "This is a mixer application to control the Tascam US-16x08
+audio interface.  This device contains about 280 control elements and this
+mixer application aims to provide comfortable access to the DSP effects the
+device supports.")
+      (license license:expat))))
+
 (define-public bsequencer
   (package
     (name "bsequencer")
@@ -1467,7 +1501,7 @@ users to select LV2 plugins and run them with jalv.")
 (define-public synthv1
   (package
     (name "synthv1")
-    (version "0.9.15")
+    (version "0.9.16")
     (source (origin
               (method url-fetch)
               (uri
@@ -1475,7 +1509,7 @@ users to select LV2 plugins and run them with jalv.")
                               "/synthv1-" version ".tar.gz"))
               (sha256
                (base32
-                "047y2l7ipzv00ly54f074v6p043xjml7vz0svc7z81bhx74vs0ix"))))
+                "1k5sm6s2d5di5yk0bxwy3nizq9m1ym46b4qz2m45nm3zspkbzybp"))))
     (build-system gnu-build-system)
     (arguments
      `(#:tests? #f))                    ; there are no tests
@@ -1499,7 +1533,7 @@ oscillators and stereo effects.")
 (define-public drumkv1
   (package
     (name "drumkv1")
-    (version "0.9.15")
+    (version "0.9.16")
     (source (origin
               (method url-fetch)
               (uri
@@ -1507,7 +1541,7 @@ oscillators and stereo effects.")
                               "/drumkv1-" version ".tar.gz"))
               (sha256
                (base32
-                "108jk8p1sbm99plipf98ssij6dxaip1lmznibg8y2c4x0v2la6ab"))))
+                "1r55575w9r0ifysw9mgxjvv0fszvx8ykjgim3zczf3mb5s9ngavv"))))
     (build-system gnu-build-system)
     (arguments
      `(#:tests? #f))                    ; there are no tests
@@ -1532,7 +1566,7 @@ effects.")
 (define-public samplv1
   (package
     (name "samplv1")
-    (version "0.9.15")
+    (version "0.9.16")
     (source (origin
               (method url-fetch)
               (uri
@@ -1540,7 +1574,7 @@ effects.")
                               "/samplv1-" version ".tar.gz"))
               (sha256
                (base32
-                "0r3bz64jqv5j4rqaxkbiqkxdf8n3hlcwjx1p19qfzik1lbwv9nw5"))))
+                "0k5vpjd4wv7h0s3f7gg07a2ksw0b010yvkwmadzzvv2qfb928grm"))))
     (build-system gnu-build-system)
     (arguments
      `(#:tests? #f))                    ; there are no tests
@@ -1565,7 +1599,7 @@ effects.")
 (define-public padthv1
   (package
     (name "padthv1")
-    (version "0.9.15")
+    (version "0.9.16")
     (source (origin
               (method url-fetch)
               (uri
@@ -1573,7 +1607,7 @@ effects.")
                               "/padthv1-" version ".tar.gz"))
               (sha256
                (base32
-                "18ma429kamifcvjmsv0hysxk7qn2r9br4fia929bvfccapck98y1"))))
+                "1f2v60dpja0rnml60g463fjiz0f84v32yjwpvr56z79h1i6fssmv"))))
     (build-system gnu-build-system)
     (arguments
      `(#:tests? #f))                    ; there are no tests
@@ -2537,14 +2571,14 @@ from the command line.")
 (define-public qtractor
   (package
     (name "qtractor")
-    (version "0.9.15")
+    (version "0.9.16")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://downloads.sourceforge.net/qtractor/"
                                   "qtractor-" version ".tar.gz"))
               (sha256
                (base32
-                "0k7a6llwrzs07flr9mvzvay9ygc2x64syg8npyabsw5a4d85fwsx"))))
+                "1l19g7cvgb7gfjmaihnd899k5hhxyf4sz22380y830xjfs2fvqxc"))))
     (build-system gnu-build-system)
     (arguments
      `(#:tests? #f))                    ; no "check" target
@@ -4018,7 +4052,7 @@ audio samples and various soft sythesizers.  It can receive input from a MIDI ke
 (define-public musescore
   (package
     (name "musescore")
-    (version "3.4.2")
+    (version "3.5")
     (source
      (origin
        (method git-fetch)
@@ -4027,13 +4061,14 @@ audio samples and various soft sythesizers.  It can receive input from a MIDI ke
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "14a9sg87nx7xca1qfbkplnpbx9pyg9k9vy87dq0g401ag6g6bi66"))
+        (base32 "1s8767imzv9hclpzvvvsqb3iyiv4y2klr6agf95zwym2xafy8p26"))
        (modules '((guix build utils)))
        (snippet
         ;; Un-bundle OpenSSL and remove unused libraries.
         '(begin
            (for-each delete-file-recursively
                      '("thirdparty/freetype"
+                       "thirdparty/google_analytics"
                        "thirdparty/openssl"
                        "thirdparty/portmidi"))
            #t))))
@@ -4704,7 +4739,7 @@ discard bad quality ones.
 (define-public fmit
   (package
     (name "fmit")
-    (version "1.2.13")
+    (version "1.2.14")
     (source (origin
 	      (method git-fetch)
 	      (uri (git-reference
@@ -4713,7 +4748,7 @@ discard bad quality ones.
               (file-name (git-file-name name version))
 	      (sha256
                (base32
-                "1qyskam053pvlap1av80rgp12pzhr92rs88vqs6s0ia3ypnixcc6"))))
+                "1q062pfwz2vr9hbfn29fv54ip3jqfd9r99nhpr8w7mn1csy38azx"))))
     (build-system gnu-build-system)
     (arguments
      '(#:phases

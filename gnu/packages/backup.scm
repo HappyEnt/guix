@@ -82,7 +82,7 @@
 (define-public duplicity
   (package
     (name "duplicity")
-    (version "0.8.14")
+    (version "0.8.15")
     (source
      (origin
       (method url-fetch)
@@ -91,7 +91,7 @@
                           "-series/" version "/+download/duplicity-"
                           version ".tar.gz"))
       (sha256
-       (base32 "1af7rppsd8kj66xhbc04x1di3rpncrz0prxq1z7npg11c769vb1x"))))
+       (base32 "1kg467mxg5a97v1rlv4shk32krgv8ys4nczq4b11av4bp1lgysdc"))))
     (build-system python-build-system)
     (native-inputs
      `(("gettext" ,gnu-gettext)         ; for msgfmt
@@ -1072,7 +1072,7 @@ interractive mode.")
 (define-public burp
   (package
     (name "burp")
-    (version "2.3.30")
+    (version "2.3.32")
     (source
      (origin
        (method git-fetch)
@@ -1080,7 +1080,7 @@ interractive mode.")
              (url "https://github.com/grke/burp")
              (commit version)))
        (sha256
-        (base32 "1f9i5d415psbr03fqd47p162qy25sypra1w8w16ym6jk1pvdjsgx"))
+        (base32 "0cxxf9ni34c9662ffmr2qc8xmh4g9pmg3swqvhn49mqgr5ra6k2g"))
        (file-name (git-file-name name version))))
     (build-system gnu-build-system)
     (arguments

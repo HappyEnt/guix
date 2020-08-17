@@ -12,14 +12,14 @@
 ;;; Copyright © 2016 Raymond Nicholson <rain1@openmailbox.org>
 ;;; Copyright © 2016 Mathieu Lirzin <mthl@gnu.org>
 ;;; Copyright © 2016, 2018, 2019, 2020 Nicolas Goaziou <mail@nicolasgoaziou.fr>
-;;; Copyright © 2016, 2018, 2019 Ricardo Wurmus <rekado@elephly.net>
+;;; Copyright © 2016, 2018, 2019, 2020 Ricardo Wurmus <rekado@elephly.net>
 ;;; Copyright © 2016 David Craven <david@craven.ch>
 ;;; Copyright © 2016 John Darrington <jmd@gnu.org>
 ;;; Copyright © 2016, 2017, 2018, 2019, 2020 Marius Bakke <mbakke@fastmail.com>
 ;;; Copyright © 2016, 2018 Rene Saavedra <pacoon@protonmail.com>
 ;;; Copyright © 2016 Carlos Sánchez de La Lama <csanchezdll@gmail.com>
 ;;; Copyright © 2016, 2017 Nikita <nikita@n0.is>
-;;; Copyright © 2017, 2018 Leo Famulari <leo@famulari.name>
+;;; Copyright © 2017, 2018, 2020 Leo Famulari <leo@famulari.name>
 ;;; Copyright © 2017 José Miguel Sánchez García <jmi2k@openmailbox.com>
 ;;; Copyright © 2017 Gábor Boskovits <boskovits@gmail.com>
 ;;; Copyright © 2017, 2019 Mathieu Othacehe <m.othacehe@gmail.com>
@@ -101,6 +101,8 @@
   #:use-module (gnu packages haskell-xyz)
   #:use-module (gnu packages libunwind)
   #:use-module (gnu packages libusb)
+  #:use-module (gnu packages llvm)
+  #:use-module (gnu packages lua)
   #:use-module (gnu packages man)
   #:use-module (gnu packages maths)
   #:use-module (gnu packages multiprecision)
@@ -200,27 +202,33 @@ defconfig.  Return the appropriate make target if applicable, otherwise return
                               "deblob-check"))
           (sha256 deblob-check-hash))))
 
+(define deblob-scripts-5.8
+  (linux-libre-deblob-scripts
+   "5.8"
+   (base32 "07z7sglyrfh0706icqqf3shadf638pvyid9386r661ds5lbsa2mw")
+   (base32 "1nzf1wzva52bm41j2ba0m1vr0cpfwnybdwv5ff6km49l0gziaqx7")))
+
 (define deblob-scripts-5.7
   (linux-libre-deblob-scripts
-   "5.7.10"
+   "5.7.14"
    (base32 "1gharhw104wxp9dxjkzzvsqc2xn44mc9yvacc3v7jh7b6bb0a64a")
    (base32 "1n198gx18rxc7xflgiwya43inkwayc91pgb129kngfza8sm6v8ks")))
 
 (define deblob-scripts-5.4
   (linux-libre-deblob-scripts
-   "5.4.53"
+   "5.4.57"
    (base32 "0ckxn7k5zgcqk30dq943bnamr6a6zjbw2aqjl3x30f4kvh5f6k25")
    (base32 "10qb890is4z58vr8czh3xx69q62l3b3j38y410kgiw8nii3zx5lr")))
 
 (define deblob-scripts-4.19
   (linux-libre-deblob-scripts
-   "4.19.134"
+   "4.19.138"
    (base32 "02zs405awaxydbapka4nz8h6lmnc0dahgczqsrs5s2bmzjyyqkcy")
    (base32 "1w2wgxblpq09i33qmqgw5v3r5rm9vkkygr6m0sgv4zgczk9s29wr")))
 
 (define deblob-scripts-4.14
   (linux-libre-deblob-scripts
-   "4.14.189"
+   "4.14.193"
    (base32 "091jk9jkn9jf39bxpc7395bhcb7p96nkg3a8047380ki06lnfxh6")
    (base32 "1qij18inijj6c3ma8hv98yjagnzxdxyn134da9fd23ky8q6hbvky")))
 
@@ -377,50 +385,58 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
     (sha256 hash)))
 
 
-(define-public linux-libre-5.7-version "5.7.10")
+(define-public linux-libre-5.8-version "5.8.1")
+(define-public linux-libre-5.8-pristine-source
+  (let ((version linux-libre-5.8-version)
+        (hash (base32 "09574qbcrncb34dx9pd65iqs06758zim4nkncnjzmxwgjgza9lpq")))
+   (make-linux-libre-source version
+                            (%upstream-linux-source version hash)
+                            deblob-scripts-5.8)))
+
+(define-public linux-libre-5.7-version "5.7.15")
 (define-public linux-libre-5.7-pristine-source
   (let ((version linux-libre-5.7-version)
-        (hash (base32 "0i1x347q1rs9r11f7qic62d5465dzngxs0n44ryknmxpcl6469a7")))
+        (hash (base32 "04jj7vmwd1fjpfnwrhnc92qnskj7i150dyxvilfmkg3ki521gsqf")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-5.7)))
 
-(define-public linux-libre-5.4-version "5.4.53")
+(define-public linux-libre-5.4-version "5.4.58")
 (define-public linux-libre-5.4-pristine-source
   (let ((version linux-libre-5.4-version)
-        (hash (base32 "08bd7lgj2c26h3rm8lm7w6dvi8zhjiilmrxf1rpp5m90jbwvd9zs")))
+        (hash (base32 "0iqnn98hj3lq1avlrbjv9qdyfwffv01vd0a465xkhxck26py4bvh")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-5.4)))
 
-(define-public linux-libre-4.19-version "4.19.134")
+(define-public linux-libre-4.19-version "4.19.139")
 (define-public linux-libre-4.19-pristine-source
   (let ((version linux-libre-4.19-version)
-        (hash (base32 "0vrsiqqsiv0z4jhafqch2g27ig28nmw69hw32a8lc5fkcm7shzbx")))
+        (hash (base32 "01anspwh3vskmcqf4xclx0jx6h0h33zfgmmvrzxq17wlzqhvyklw")))
     (make-linux-libre-source version
                              (%upstream-linux-source version hash)
                              deblob-scripts-4.19)))
 
-(define-public linux-libre-4.14-version "4.14.189")
+(define-public linux-libre-4.14-version "4.14.193")
 (define-public linux-libre-4.14-pristine-source
   (let ((version linux-libre-4.14-version)
-        (hash (base32 "1qgr6hb714xi7rav4za4vk4l7c0ma3ndf0f2ca3q8ly5gd2j3rd7")))
+        (hash (base32 "00wziff12xphafyspb02rnjim5a15zywnhdk70ks9q9h8hfv83qb")))
     (make-linux-libre-source version
                              (%upstream-linux-source version hash)
                              deblob-scripts-4.14)))
 
-(define-public linux-libre-4.9-version "4.9.231")
+(define-public linux-libre-4.9-version "4.9.232")
 (define-public linux-libre-4.9-pristine-source
   (let ((version linux-libre-4.9-version)
-        (hash (base32 "1sz8xk767yy4lxqvy4229yrgkwnm43hdrbr54aa1flns5yh3p12g")))
+        (hash (base32 "0q2gpkazfw93r79aq21kv1y3hwxawl0swyvd3nd73p254gl75x2q")))
     (make-linux-libre-source version
                              (%upstream-linux-source version hash)
                              deblob-scripts-4.9)))
 
-(define-public linux-libre-4.4-version "4.4.231")
+(define-public linux-libre-4.4-version "4.4.232")
 (define-public linux-libre-4.4-pristine-source
   (let ((version linux-libre-4.4-version)
-        (hash (base32 "1c6p5hv18isa328pvpa3qmmsg4qsssf2mwsx3hzn489rb8ycdxp7")))
+        (hash (base32 "0d7x30sy9c27n9bqf5f5mf64c6j5iljnw1gm7g8z00xgvrjqibjf")))
     (make-linux-libre-source version
                              (%upstream-linux-source version hash)
                              deblob-scripts-4.4)))
@@ -452,6 +468,11 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
     (inherit source)
     (patches (append (origin-patches source)
                      patches))))
+
+(define-public linux-libre-5.8-source
+  (source-with-patches linux-libre-5.8-pristine-source
+                       (list %boot-logo-patch
+                             %linux-libre-arm-export-__sync_icache_dcache-patch)))
 
 (define-public linux-libre-5.7-source
   (source-with-patches linux-libre-5.7-pristine-source
@@ -556,6 +577,10 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
     (synopsis "GNU Linux-Libre kernel headers")
     (description "Headers of the Linux-Libre kernel.")
     (license license:gpl2)))
+
+(define-public linux-libre-headers-5.8
+  (make-linux-libre-headers* linux-libre-5.8-version
+                             linux-libre-5.8-source))
 
 (define-public linux-libre-headers-5.7
   (make-linux-libre-headers* linux-libre-5.7-version
@@ -828,16 +853,22 @@ It has been modified to remove all non-free binary blobs.")
 ;;; Generic kernel packages.
 ;;;
 
+(define-public linux-libre-5.7
+  (make-linux-libre* linux-libre-5.7-version
+                     linux-libre-5.7-source
+                     '("x86_64-linux" "i686-linux" "armhf-linux" "aarch64-linux" "riscv64-linux")
+                     #:configuration-file kernel-config))
+
+(define-public linux-libre-version         linux-libre-5.7-version)
+(define-public linux-libre-pristine-source linux-libre-5.7-pristine-source)
+(define-public linux-libre-source          linux-libre-5.7-source)
+(define-public linux-libre                 linux-libre-5.7)
+
 (define-public linux-libre-5.4
   (make-linux-libre* linux-libre-5.4-version
                      linux-libre-5.4-source
                      '("x86_64-linux" "i686-linux" "armhf-linux" "aarch64-linux" "riscv64-linux")
                      #:configuration-file kernel-config))
-
-(define-public linux-libre-version         linux-libre-5.4-version)
-(define-public linux-libre-pristine-source linux-libre-5.4-pristine-source)
-(define-public linux-libre-source          linux-libre-5.4-source)
-(define-public linux-libre                 linux-libre-5.4)
 
 (define-public linux-libre-4.19
   (make-linux-libre* linux-libre-4.19-version
@@ -886,9 +917,12 @@ It has been modified to remove all non-free binary blobs.")
                         ("CONFIG_RTC_DRV_RK808" . #t))
                       %default-extra-linux-options)))
 
-(define-public linux-libre-arm-generic-5.7
-  (make-linux-libre* linux-libre-5.7-version
-                     linux-libre-5.7-source
+(define-public linux-libre-arm-veyron
+  (deprecated-package "linux-libre-arm-veyron" linux-libre-arm-generic))
+
+(define-public linux-libre-arm-generic-5.4
+  (make-linux-libre* linux-libre-5.4-version
+                     linux-libre-5.4-source
                      '("armhf-linux")
                      #:defconfig "multi_v7_defconfig"
                      #:extra-version "arm-generic"
@@ -897,9 +931,6 @@ It has been modified to remove all non-free binary blobs.")
                       `(;; needed to fix the RTC on rockchip platforms
                         ("CONFIG_RTC_DRV_RK808" . #t))
                       %default-extra-linux-options)))
-
-(define-public linux-libre-arm-veyron
-  (deprecated-package "linux-libre-arm-veyron" linux-libre-arm-generic))
 
 (define-public linux-libre-arm-generic-4.19
   (make-linux-libre* linux-libre-4.19-version
@@ -948,9 +979,21 @@ It has been modified to remove all non-free binary blobs.")
                         ("CONFIG_RTC_DRV_RK808" . #t))
                       %default-extra-linux-options)))
 
-(define-public linux-libre-arm64-generic-5.7
-  (make-linux-libre* linux-libre-5.7-version
-                     linux-libre-5.7-source
+(define-public linux-libre-arm64-generic-5.8
+  (make-linux-libre* linux-libre-5.8-version
+                     linux-libre-5.8-source
+                     '("aarch64-linux")
+                     #:defconfig "defconfig"
+                     #:extra-version "arm64-generic"
+                     #:extra-options
+                     (append
+                      `(;; needed to fix the RTC on rockchip platforms
+                        ("CONFIG_RTC_DRV_RK808" . #t))
+                      %default-extra-linux-options)))
+
+(define-public linux-libre-arm64-generic-5.4
+  (make-linux-libre* linux-libre-5.4-version
+                     linux-libre-5.4-source
                      '("aarch64-linux")
                      #:defconfig "defconfig"
                      #:extra-version "arm64-generic"
@@ -1300,6 +1343,49 @@ at login.  Local and dynamic reconfiguration are its key features.")
        (base32
         "1n9lnf9gjs72kbj1g354v1xhi2j27aqaah15vykh7cnkq08i4arl"))
       (patches (search-patches "linux-pam-no-setfsuid.patch"))))))
+
+(define-public python-pamela
+  (package
+    (name "python-pamela")
+    (version "1.0.0")
+    (source
+      (origin
+        ;; Tests not distributed in pypi release.
+        (method git-fetch)
+        (uri (git-reference
+               (url "https://github.com/minrk/pamela.git")
+               (commit version)))
+        (file-name (git-file-name name version))
+        (sha256
+         (base32
+          "0cg3w6np1fbjpvzhv54xg567hpf38szwp2d4gvzb9r736nxbv0vr"))))
+    (build-system python-build-system)
+    (arguments
+     '(#:tests? #f ; Test suite isn't designed to be run inside a container.
+       #:phases
+       (modify-phases %standard-phases
+         (add-after 'unpack 'hardcode-pam.so
+           (lambda* (#:key inputs #:allow-other-keys)
+             (let ((pam (assoc-ref inputs "linux-pam")))
+               (substitute* "pamela.py"
+                 (("find_library\\(\"pam\")")
+                  (string-append "'" pam "/lib/libpam.so'")))
+               #t)))
+         (replace 'check
+           (lambda* (#:key tests? #:allow-other-keys)
+             (if tests?
+               (if (file-exists? "test_pamela.py")
+                 (invoke "py.test" "--assert=plain" "test_pamela.py")
+                 (invoke "python" "-m" "pamela" "-a" "`whoami`"))
+               #t))))))
+    (inputs
+     `(("linux-pam" ,linux-pam)))
+    (native-inputs
+     `(("python-pytest" ,python-pytest)))
+    (home-page "https://github.com/minrk/pamela")
+    (synopsis "PAM interface using ctypes")
+    (description "This package provides a PAM interface using @code{ctypes}.")
+    (license license:expat)))
 
 
 ;;;
@@ -1887,7 +1973,7 @@ Zerofree requires the file system to be unmounted or mounted read-only.")
 (define-public strace
   (package
     (name "strace")
-    (version "5.7")
+    (version "5.8")
     (home-page "https://strace.io")
     (source (origin
              (method url-fetch)
@@ -1895,7 +1981,7 @@ Zerofree requires the file system to be unmounted or mounted read-only.")
                                  "/strace-" version ".tar.xz"))
              (sha256
               (base32
-               "1n6cfz3i2krkyvxpdp3kmxhf7sy5xp0danzaiirbk5fdkfgvb15j"))))
+               "1abs3svkg9985f4jrxx34sj1dcpsf95vv1a0g01c777zgygncjnz"))))
     (build-system gnu-build-system)
     (arguments
      '(#:phases
@@ -2191,7 +2277,7 @@ that the Ethernet protocol is much simpler than the IP protocol.")
 (define-public iproute
   (package
     (name "iproute2")
-    (version "5.7.0")
+    (version "5.8.0")
     (source (origin
               (method url-fetch)
               (uri (string-append
@@ -2199,7 +2285,7 @@ that the Ethernet protocol is much simpler than the IP protocol.")
                     version ".tar.xz"))
               (sha256
                (base32
-                "088gs56iqhdlpw1iqjwrss4zxd4zbl2wl8s2implrrdajjxcfpbj"))))
+                "0vk4vickrpahdhl3zazr2qn2bf99v5549ncirjpwiy4h0a4izkfg"))))
     (build-system gnu-build-system)
     (arguments
      `( ;; There is a test suite, but it wants network namespaces and sudo.
@@ -3138,8 +3224,8 @@ from the module-init-tools project.")
                             (string-append "PREFIX=" prefix)
                             (string-append "SYSCONFDIR=" prefix "/etc")))
        #:test-target "test"))
-    (native-inputs `(("go" ,go)               ;for the test suite
-                     ("pandoc" ,ghc-pandoc))) ;to generate the manpage
+    (native-inputs `(("go" ,go)           ;for the test suite
+                     ("pandoc" ,pandoc))) ;to generate the manpage
     (home-page "https://github.com/rfjakob/earlyoom")
     (synopsis "Simple out of memory (OOM) daemon for the Linux kernel")
     (description "Early OOM is a minimalist out of memory (OOM) daemon that
@@ -3836,7 +3922,8 @@ in a digital read-out.")
 
        ;; There are build scripts written in these languages.
        ("perl" ,perl)
-       ("python" ,python-2)))
+       ("python2" ,python-2)
+       ("python3" ,python-3)))
     (inputs
      `(("slang" ,slang)                        ;for the interactive TUI
        ;; ("newt" ,newt)
@@ -3940,6 +4027,8 @@ thanks to the use of namespaces.")
                                 "libexec/bootstrap-scripts/functions"
                                 "libexec/bootstrap-scripts/post.sh"
                                 "libexec/functions")
+               (("\\| grep ")
+                (string-append "| " (which "grep") " "))
                (("egrep ")
                 (string-append (which "egrep") " ")))
              #t))
@@ -5050,7 +5139,7 @@ feature, and a laptop with an accelerometer.  It has no effect on SSDs.")
 (define-public thinkfan
   (package
     (name "thinkfan")
-    (version "1.2")
+    (version "1.2.1")
     (source
      (origin
        (method git-fetch)
@@ -5059,7 +5148,7 @@ feature, and a laptop with an accelerometer.  It has no effect on SSDs.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0vmkpj575a1w52zx1jn6kdrk8rc9vp0f1bldi1bajicpgbs6rjd3"))))
+        (base32 "18vgm5w5pjnpipa34j4x87q10695w2jnqwvc2f027afy7mnzw7kz"))))
     (build-system cmake-build-system)
     (arguments
      `(#:modules ((guix build cmake-build-system)
@@ -6346,14 +6435,14 @@ available in the kernel Linux.")
 (define-public cpuid
   (package
     (name "cpuid")
-    (version "20200211")
+    (version "20200427")
     (source (origin
               (method url-fetch)
               (uri (string-append "http://www.etallen.com/cpuid/cpuid-"
                                   version ".src.tar.gz"))
               (sha256
                (base32
-                "06sjbqqp80l7nhsp6khglkzdp9qy4vhbvjxbfilznhsmrqiwlw55"))))
+                "1m31238z2ya8f8pzpyklwp0ksf5xicqrw1z941hhhx913wzldaf1"))))
     (build-system gnu-build-system)
     (arguments
      '(#:make-flags '("CC=gcc")
@@ -7312,3 +7401,130 @@ persistent over reboots.")
 contrast to BCC, do not require the Clang/LLVM runtime or linux kernel
 headers.")
     (license `(,license:lgpl2.1 ,license:bsd-2))))
+
+(define-public bcc
+  (package
+    (name "bcc")
+    (version "0.15.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/iovisor/bcc")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "1d5j9zanffa1c7lpi5fcrdlx1n7hy86xl82fam2xqr0s41q4ipxw"))))
+    (build-system cmake-build-system)
+    (native-inputs
+     `(("bison" ,bison)
+       ("flex" ,flex)))
+    (inputs
+     `(("clang-toolchain" ,clang-toolchain)
+       ("libbpf" ,(package-source libbpf))
+       ;; LibElf required but libelf does not contain
+       ;; archives, only object files.
+       ;; https://github.com/iovisor/bcc/issues/504
+       ("elfutils" ,elfutils)
+       ("linux-libre-headers" ,linux-libre-headers)
+       ("luajit" ,luajit)
+       ("python-wrapper" ,python-wrapper)))
+    (arguments
+     `(;; Tests all require root permissions and a "standard" file hierarchy.
+       #:tests? #f
+       #:configure-flags
+       (let ((revision ,version))
+         `(,(string-append "-DREVISION=" revision)))
+       #:phases
+       (modify-phases %standard-phases
+         ;; FIXME: Use "-DCMAKE_USE_LIBBPF_PACKAGE=ON".
+         (add-after 'unpack 'copy-libbpf
+           (lambda* (#:key inputs #:allow-other-keys)
+             (delete-file-recursively "src/cc/libbpf")
+             (copy-recursively
+              (assoc-ref inputs "libbpf") "src/cc/libbpf")))
+         (add-after 'copy-libbpf 'substitute-libbc
+           (lambda* (#:key outputs #:allow-other-keys)
+             (substitute* "src/python/bcc/libbcc.py"
+               (("(libbcc\\.so.*)\\b" _ libbcc)
+                (string-append
+                 (assoc-ref outputs "out") "/lib/" libbcc)))))
+         (add-after 'install 'wrap-tools
+           (lambda* (#:key outputs #:allow-other-keys)
+             (use-modules (ice-9 textual-ports))
+             (let* ((out (assoc-ref outputs "out"))
+                    (lib (string-append out "/lib"))
+                    (tools (string-append out "/share/bcc/tools"))
+                    (python-executable?
+                     (lambda (filename _)
+                       (call-with-input-file filename
+                         (lambda (port)
+                           (string-contains (get-line port)
+                                            "/bin/python"))))))
+               (for-each
+                (lambda (python-executable)
+                  (format #t "Wrapping: ~A.~%" python-executable)
+                  (wrap-program python-executable
+                    `("PYTHONPATH" ":" prefix
+                      (,(string-append lib
+                                       "/python"
+                                       ,(version-major+minor
+                                         (package-version python))
+                                       "/site-packages")))))
+                (find-files tools python-executable?))
+               #t))))))
+    (home-page "https://github.com/iovisor/bcc")
+    (synopsis "Tools for BPF on Linux")
+    (description
+     "BCC is a toolkit for creating efficient kernel tracing and manipulation
+programs, and includes several useful tools and examples.  It makes use of
+extended BPF (Berkeley Packet Filters), formally known as eBPF, a new feature
+that was first added to Linux 3.15.  Much of what BCC uses requires Linux 4.1
+and above.")
+    (license license:asl2.0)))
+
+(define-public bpftrace
+  (package
+    (name "bpftrace")
+    (version "0.10.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/iovisor/bpftrace")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "023ardywbw5w8815j2ny9rrp2xlpxndqaa7v2njjm8109p7ilsdn"))
+       (patches (search-patches "bpftrace-disable-bfd-disasm.patch"))))
+    (build-system cmake-build-system)
+    (native-inputs
+     `(("bison" ,bison)
+       ("flex" ,flex)))
+    (inputs
+     `(("bcc" ,bcc)
+       ("clang-toolchain" ,clang-toolchain)
+       ("elfutils" ,elfutils)
+       ("libbpf" ,libbpf)
+       ("linux-libre-headers" ,linux-libre-headers)))
+    (arguments
+     `(#:tests? #f ;Tests require googletest sources.
+       #:configure-flags
+       '("-DBUILD_TESTING=OFF"
+         ;; FIXME: libbfd misses some link dependencies, when fixed, remove
+         ;; the associated patch.
+         "-DHAVE_BFD_DISASM=OFF")))
+    (home-page "https://github.com/iovisor/bpftrace")
+    (synopsis "High-level tracing language for Linux eBPF")
+    (description
+     "bpftrace is a high-level tracing language for Linux enhanced Berkeley
+Packet Filter (eBPF) available in recent Linux kernels (4.x).  bpftrace uses
+LLVM as a backend to compile scripts to BPF-bytecode and makes use of BCC for
+interacting with the Linux BPF system, as well as existing Linux tracing
+capabilities: kernel dynamic tracing (kprobes), user-level dynamic
+tracing (uprobes), and tracepoints.  The bpftrace language is inspired by awk
+and C, and predecessor tracers such as DTrace and SystemTap.  bpftrace was
+created by Alastair Robertson.")
+    (license license:asl2.0)))

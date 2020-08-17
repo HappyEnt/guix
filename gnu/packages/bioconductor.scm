@@ -798,14 +798,14 @@ closely reconstructs the mutational profile.")
 (define-public r-nmf
   (package
     (name "r-nmf")
-    (version "0.22.0")
+    (version "0.23.0")
     (source
      (origin
        (method url-fetch)
        (uri (cran-uri "NMF" version))
        (sha256
         (base32
-         "0b2ls3x1nkrnam45hagpys624nzxj3v7kxnp0q216yakvx5h57cq"))))
+         "0ls7q9yc9l1z10jphq5a11wkfgcxc3gm3sfjj376zx3vnc0wl30g"))))
     (properties `((upstream-name . "NMF")))
     (build-system r-build-system)
     (propagated-inputs
@@ -826,6 +826,8 @@ closely reconstructs the mutational profile.")
        ("r-reshape2" ,r-reshape2)
        ("r-rngtools" ,r-rngtools)
        ("r-stringr" ,r-stringr)))
+    (native-inputs
+     `(("r-knitr" ,r-knitr)))
     (home-page "http://renozao.github.io/NMF")
     (synopsis "Algorithms and framework for nonnegative matrix factorization")
     (description
@@ -4087,7 +4089,8 @@ Affymetrix arrays.")
     (properties `((upstream-name . "abseqR")))
     (build-system r-build-system)
     (inputs
-     `(("pandoc" ,ghc-pandoc)))
+     `(("pandoc" ,pandoc)
+       ("pandoc-citeproc" ,pandoc-citeproc)))
     (propagated-inputs
      `(("r-biocparallel" ,r-biocparallel)
        ("r-biocstyle" ,r-biocstyle)
@@ -8116,3 +8119,36 @@ dimensional mass cytometry data.")
 Tool) analysis automatic by constructing a HTTP POST request according to
 user's input and automatically retrieving results from GREAT web server.")
     (license license:expat)))
+
+(define-public r-m3c
+  (package
+    (name "r-m3c")
+    (version "1.10.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (bioconductor-uri "M3C" version))
+       (sha256
+        (base32
+         "0zq8lm4280p8h65i7myscwa4srs5ajh944xv6zni2f5sjyp7ij2y"))))
+    (properties `((upstream-name . "M3C")))
+    (build-system r-build-system)
+    (propagated-inputs
+     `(("r-cluster" ,r-cluster)
+       ("r-corpcor" ,r-corpcor)
+       ("r-doparallel" ,r-doparallel)
+       ("r-dosnow" ,r-dosnow)
+       ("r-foreach" ,r-foreach)
+       ("r-ggplot2" ,r-ggplot2)
+       ("r-matrix" ,r-matrix)
+       ("r-matrixcalc" ,r-matrixcalc)
+       ("r-rtsne" ,r-rtsne)
+       ("r-umap" ,r-umap)))
+    (native-inputs `(("r-knitr" ,r-knitr)))
+    (home-page "https://bioconductor.org/packages/M3C")
+    (synopsis "Monte Carlo reference-based consensus clustering")
+    (description
+     "M3C is a consensus clustering algorithm that uses a Monte Carlo
+simulation to eliminate overestimation of @code{K} and can reject the null
+hypothesis @code{K=1}.")
+    (license license:agpl3+)))

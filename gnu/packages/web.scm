@@ -158,14 +158,14 @@
 (define-public httpd
   (package
     (name "httpd")
-    (version "2.4.43")
+    (version "2.4.46")
     (source (origin
              (method url-fetch)
              (uri (string-append "mirror://apache/httpd/httpd-"
                                  version ".tar.bz2"))
              (sha256
               (base32
-               "0hqgw47r3p3521ygkkqs8s30s5crm683081avj6330gwncm6b5x4"))))
+               "1sj1rwgbcjgkzac3ybjy7j68c9b3dv3ap71m48mrjhf6w7vds3kl"))))
     (build-system gnu-build-system)
     (native-inputs `(("pcre" ,pcre "bin")))       ;for 'pcre-config'
     (inputs `(("apr" ,apr)
@@ -231,14 +231,14 @@ Interface} specification.")
     ;; ’stable’ and recommends that “in general you deploy the NGINX mainline
     ;; branch at all times” (https://www.nginx.com/blog/nginx-1-6-1-7-released/)
     ;; Consider updating the nginx-documentation package together with this one.
-    (version "1.19.1")
+    (version "1.19.2")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://nginx.org/download/nginx-"
                                   version ".tar.gz"))
               (sha256
                (base32
-                "14jlcn8gywa4r9brmm41ddg2dczskslnn4dnr5xmqg7dcin7f150"))))
+                "0wr4ss4gld7x717m4j3a6l6f7ijblrrd55y563lkwhvr7sqpn7vw"))))
     (build-system gnu-build-system)
     (inputs `(("openssl" ,openssl)
               ("pcre" ,pcre)
@@ -362,9 +362,9 @@ documentation.")
 
 (define-public nginx-documentation
   ;; This documentation should be relevant for the current nginx package.
-  (let ((version "1.19.0")
-        (revision 2549)
-        (changeset "c13a55aae487"))
+  (let ((version "1.19.2")
+        (revision 2581)
+        (changeset "324ca14c3003"))
     (package
       (name "nginx-documentation")
       (version (simple-format #f "~A-~A-~A" version revision changeset))
@@ -376,7 +376,7 @@ documentation.")
                (file-name (string-append name "-" version))
                (sha256
                 (base32
-                 "0vwwvk6wf8f6c6n6yffmya9a287s6dbx1p739hdl3hwxfyh2ygc5"))))
+                 "15bdbi6cjqhx8lqsyr3hnwagq2r80bsyh2im80ajmbfv7y47djqi"))))
       (build-system gnu-build-system)
       (arguments
        '(#:tests? #f                    ; no test suite
@@ -770,6 +770,7 @@ data.")
 
 (define-public json-c
   (package
+    (replacement json-c/fixed)
     (name "json-c")
     (version "0.14")
     (source (origin
@@ -790,6 +791,15 @@ parse JSON-formatted strings back into the C representation of JSON objects.
 It aims to conform to RFC 7159.")
     (license license:x11)))
 
+(define json-c/fixed
+  (package
+    (inherit json-c)
+    (name "json-c")
+    (version "0.14")
+    (source (origin
+              (inherit (package-source json-c))
+              (patches (search-patches "json-c-CVE-2020-12762.patch"))))))
+
 ;; TODO: Remove these old versions when all dependents have been updated.
 (define-public json-c-0.13
   (package
@@ -802,6 +812,7 @@ It aims to conform to RFC 7159.")
                    version ".tar.gz"))
              (sha256
               (base32 "0ws8dz9nk8q2c0gbf66kg2r6mrkl7kamd3gpdv9zsyrz9n6n0zmq"))
+              (patches (search-patches "json-c-0.13-CVE-2020-12762.patch"))
              (modules '((guix build utils)))
              (snippet
               '(begin
@@ -824,6 +835,7 @@ It aims to conform to RFC 7159.")
                    version ".tar.gz"))
              (sha256
               (base32 "08qibrq29a5v7g23wi5icy6l4fbfw90h9ccps6vq0bcklx8n84ra"))
+              (patches (search-patches "json-c-0.12-CVE-2020-12762.patch"))
              (modules '((guix build utils)))
              (snippet
               '(begin
@@ -2508,15 +2520,14 @@ stash data in JSON format.")
 (define-public perl-catalyst-view-tt
   (package
     (name "perl-catalyst-view-tt")
-    (version "0.44")
+    (version "0.45")
     (source
      (origin
        (method url-fetch)
-       (uri (string-append "mirror://cpan/authors/id/E/ET/ETHER/"
+       (uri (string-append "mirror://cpan/authors/id/H/HA/HAARG/"
                            "Catalyst-View-TT-" version ".tar.gz"))
      (sha256
-      (base32
-       "06d1zg4nbb6kcyjbnyxrkf8z4zlscxr8650d94f7187jygfl8rvh"))))
+      (base32 "0jzgpkgq5pwq82zlb0nykdyk40dfpsyn9ilz91d0wpixgi9i5pr8"))))
   (build-system perl-build-system)
   (propagated-inputs
    `(("perl-catalyst-runtime" ,perl-catalyst-runtime)
@@ -4683,14 +4694,14 @@ you'd expect.")
 (define-public uhttpmock
   (package
     (name "uhttpmock")
-    (version "0.5.2")
+    (version "0.5.3")
     (source
      (origin
        (method url-fetch)
-       (uri (string-append "http://tecnocode.co.uk/downloads/uhttpmock/"
+       (uri (string-append "https://tecnocode.co.uk/downloads/uhttpmock/"
                            "uhttpmock-" version ".tar.xz"))
        (sha256
-        (base32 "0glyx07kxc3s3cx5vp30kfgscl9q6bghcq1zysfyxm24r0h6j58p"))))
+        (base32 "0bqizz69hxk8rn4z57asz1d45vizl1rj6i5k3rzxn2x3qcik514h"))))
     (build-system glib-or-gtk-build-system)
     (native-inputs
      `(("gobject-introspection" ,gobject-introspection)

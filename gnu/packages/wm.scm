@@ -35,6 +35,7 @@
 ;;; Copyright © 2020 Brice Waegeneire <brice@waegenei.re>
 ;;; Copyright © 2020 Boris A. Dekshteyn <harlequin78@gmail.com>
 ;;; Copyright © 2020 Marcin Karpezo <sirmacik@wioo.waw.pl>
+;;; Copyright © 2020 EuAndreh <eu@euandre.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -77,6 +78,7 @@
   #:use-module (gnu packages freedesktop)
   #:use-module (gnu packages fribidi)
   #:use-module (gnu packages gawk)
+  #:use-module (gnu packages gcc)
   #:use-module (gnu packages gl)
   #:use-module (gnu packages glib)
   #:use-module (gnu packages gperf)
@@ -116,7 +118,7 @@
 (define-public bspwm
   (package
     (name "bspwm")
-    (version "0.9.9")
+    (version "0.9.10")
     (source
      (origin
        (method git-fetch)
@@ -125,7 +127,7 @@
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1i7crmljk1vra1r6alxvj6lqqailjjcv0llyg7a0gm23rbv4a42g"))))
+        (base32 "0qlv7b4c2mmjfd65y100d11x8iqyg5f6lfiws3cgmpjidhdygnxc"))))
     (build-system gnu-build-system)
     (inputs
      `(("libxcb" ,libxcb)
@@ -740,6 +742,29 @@ tiled on several screens.")
 Haskell.  It was originally designed to be used together with Xmonad, but it
 is also usable with any other window manager.  While xmobar is written in
 Haskell, no knowledge of the language is required to install and use it.")
+    (license license:bsd-3)))
+
+(define-public yeganesh
+  (package
+    (name "yeganesh")
+    (version "2.4")
+    (source
+     (origin
+
+       (method url-fetch)
+       (uri (string-append "http://dmwit.com/yeganesh/yeganesh-" version ".tar.gz"))
+       (sha256
+        (base32 "04djfyjab3c5y9z9x8zd0xcx0jyy35zq7cl9ddr4ppf6k5ky6iky"))))
+    (build-system haskell-build-system)
+    (inputs
+     `(("ghc-strict" ,ghc-strict)
+       ("ghc-xdg-basedir" ,ghc-xdg-basedir)))
+    (home-page "http://dmwit.com/yeganesh/")
+    (synopsis "Small wrapper around dmenu")
+    (description "@code{yeganesh} is a small wrapper around demnu.  Like
+dmenu, it accepts input on stdin and writes the chosen result on stdout.
+Unlike dmenu, it mangles the input before it presents its choices.  In
+particular, it displays commonly-chosen options before uncommon ones.")
     (license license:bsd-3)))
 
 (define-public ghc-xmonad-contrib
@@ -1488,7 +1513,7 @@ modules for building a Wayland compositor.")
 (define-public waybar
   (package
     (name "waybar")
-    (version "0.9.1")
+    (version "0.9.3")
     (source
      (origin
        (method git-fetch)
@@ -1497,7 +1522,7 @@ modules for building a Wayland compositor.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0drlv8im5phz39jxp3gxkc40b6f85bb3piff2v3hmnfzh7ib915s"))))
+        (base32 "0ks719khhg2zwpyiwa2079i6962qcxpapm28hmr4ckpsp2n659ck"))))
     (build-system meson-build-system)
     (arguments
      `(#:configure-flags
@@ -1514,9 +1539,11 @@ modules for building a Wayland compositor.")
               ("pulseaudio" ,pulseaudio)
               ("spdlog" ,spdlog)
               ("wayland" ,wayland)))
-    (native-inputs `(("glib:bin" ,glib "bin")
-                     ("pkg-config" ,pkg-config)
-                     ("wayland-protocols" ,wayland-protocols)))
+    (native-inputs
+     `(("gcc" ,gcc-8)                   ; for #include <filesystem>
+       ("glib:bin" ,glib "bin")
+       ("pkg-config" ,pkg-config)
+       ("wayland-protocols" ,wayland-protocols)))
     (home-page "https://github.com/Alexays/Waybar")
     (synopsis "Wayland bar for Sway and Wlroots based compositors")
     (description "Waybar is a highly customisable Wayland bar for Sway and
@@ -1961,3 +1988,55 @@ button is pressed on the root window.")
 a menu for the user to select one of the options, and outputs the option
 selected to stdout.  It can be controlled both via mouse and via keyboard.")
     (license license:public-domain)))
+
+(define-public idesk
+  (package
+    (name "idesk")
+    (version "0.7.5")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append
+             "mirror://sourceforge/idesk/idesk/idesk-" version
+             "/idesk-" version ".tar.bz2"))
+       (sha256
+        (base32
+         "1lxk2yvgysxwl514zc82lwr1dwc8cd62slgr5lzdhjbdrxfymdyl"))
+       (modules '((guix build utils)
+                  (ice-9 format)))
+       (snippet
+        '(let* ((file     "src/DesktopConfig.cpp")
+                (template (string-append file ".XXXXXX"))
+                (out      (mkstemp! template))
+                (st       (stat file))
+                (mode     (stat:mode st)))
+           (call-with-ascii-input-file file
+             (lambda (p)
+               (format out "~{~a~%~}" '("#include <unistd.h>"
+                                        "#include <sys/stat.h>"
+                                        "#include <sys/types.h>"))
+               (dump-port p out)
+               (close out)
+               (chmod template mode)
+               (rename-file template file)
+               #t))))))
+    (build-system gnu-build-system)
+    (inputs
+     `(("libx11" ,libx11)
+       ("libxft" ,libxft)
+       ("libxpm" ,libxpm)
+       ("libpng" ,libpng)
+       ("freetype" ,freetype)
+       ("imlib2" ,imlib2)
+       ("sed" ,sed)))
+    (native-inputs
+     `(("pkg-config" ,pkg-config)))
+    (arguments
+     `(#:tests? #f)) ;no test suite
+    (home-page "https://sourceforge.net/projects/idesk/")
+    (synopsis "Add icons on X desktop and set background image for wallpaper")
+    (description "Idesk is program that draws desktop icons.  Each icon will
+execute a shell command on a configurable action.  The icons can be moved on
+the desktop by dragging them, and the icons will remember their positions on
+start-up.")
+    (license license:bsd-3)))

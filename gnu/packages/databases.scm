@@ -43,6 +43,7 @@
 ;;; Copyright © 2020 Tanguy Le Carrour <tanguy@bioneland.org>
 ;;; Copyright © 2020 Lars-Dominik Braun <ldb@leibniz-psychology.org>
 ;;; Copyright © 2020 Guy Fleury Iteriteka <gfleury@disroot.org>
+;;; Copyright © 2020 Michael Rohleder <mike@rohleder.de>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -613,14 +614,13 @@ RDBMS systems (which are deep in functionality).")
 (define-public mycli
   (package
     (name "mycli")
-    (version "1.21.1")
+    (version "1.22.2")
     (source
       (origin
         (method url-fetch)
         (uri (pypi-uri "mycli" version))
         (sha256
-          (base32
-            "1q9p0yik9cpvpxjs048anvhicfcna84mpl7axv9bwgr48w40lqwg"))))
+          (base32 "1lq2x95553vdmhw13cxcgsd2g2i32izhsb7hxd4m1iwf9b3msbpv"))))
     (build-system python-build-system)
     (arguments
      `(#:tests? #f))                    ; tests expect a running MySQL
@@ -2149,7 +2149,7 @@ database.")
 (define-public lmdb
   (package
     (name "lmdb")
-    (version "0.9.25")
+    (version "0.9.26")
     (source
      (origin
        (method git-fetch)
@@ -2158,7 +2158,7 @@ database.")
              (commit (string-append "LMDB_" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0i60zlca8r6fib23gdgl4c80gxpx24772ggpvz94yr7zaai4k11w"))))
+        (base32 "0323xwb2rqyrr9vr6gbxc2kl89drhqw0ifmyh9pg9qgqmymyhxdx"))))
     (build-system gnu-build-system)
     (arguments
      `(#:test-target "test"
@@ -2703,15 +2703,13 @@ You might also want to install the following optional dependencies:
 (define-public python-alembic
   (package
     (name "python-alembic")
-    (version "1.4.1")
+    (version "1.4.2")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "alembic" version))
-       (patches (search-patches "python-alembic-exceptions-cause.patch"))
        (sha256
-        (base32
-         "0a4hzn76csgbf1px4f5vfm256byvjrqkgi9869nkcjrwjn35c6kr"))))
+        (base32 "1gsdrzx9h7wfva200qvvsc9sn4w79mk2vs0bbnzjhxi1jw2b0nh3"))))
     (build-system python-build-system)
     (arguments
      '(#:phases (modify-phases %standard-phases
@@ -3106,13 +3104,13 @@ is designed to have a low barrier to entry.")
 (define-public python-sqlparse
   (package
     (name "python-sqlparse")
-    (version "0.2.4")
+    (version "0.3.1")
     (source (origin
               (method url-fetch)
               (uri (pypi-uri "sqlparse" version))
               (sha256
                (base32
-                "1v3xh0bkfhb262dbndgzhivpnhdwavdzz8jjhx9vx0xbrx2880nf"))))
+                "0j652a6z7bdf6c77aczfn8m8b2nsr1bcqq48wzghf8vi6wvj0qp1"))))
     (build-system python-build-system)
     (arguments
      `(#:phases

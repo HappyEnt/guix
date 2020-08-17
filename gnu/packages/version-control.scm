@@ -17,7 +17,7 @@
 ;;; Copyright © 2017 André <eu@euandre.org>
 ;;; Copyright © 2017, 2018, 2020 Marius Bakke <mbakke@fastmail.com>
 ;;; Copyright © 2017 Stefan Reichör <stefan@xsteve.at>
-;;; Copyright © 2017 Oleg Pykhalov <go.wigust@gmail.com>
+;;; Copyright © 2017, 2020 Oleg Pykhalov <go.wigust@gmail.com>
 ;;; Copyright © 2018 Sou Bunnbu <iyzsong@member.fsf.org>
 ;;; Copyright © 2018 Christopher Baines <mail@cbaines.net>
 ;;; Copyright © 2018 Timothy Sample <samplet@ngyro.com>
@@ -55,6 +55,7 @@
   #:use-module (guix build-system cmake)
   #:use-module (guix build-system gnu)
   #:use-module (guix build-system go)
+  #:use-module (guix build-system perl)
   #:use-module (guix build-system python)
   #:use-module (guix build-system trivial)
   #:use-module (gnu packages apr)
@@ -73,6 +74,7 @@
   #:use-module (gnu packages flex)
   #:use-module (gnu packages gettext)
   #:use-module (gnu packages gl)
+  #:use-module (gnu packages golang)
   #:use-module (gnu packages groff)
   #:use-module (gnu packages guile)
   #:use-module (gnu packages image)
@@ -155,14 +157,14 @@ as well as the classic centralized workflow.")
 (define-public git
   (package
    (name "git")
-   (version "2.27.0")
+   (version "2.28.0")
    (source (origin
             (method url-fetch)
             (uri (string-append "mirror://kernel.org/software/scm/git/git-"
                                 version ".tar.xz"))
             (sha256
              (base32
-              "1ybk39ylvs32lywq7ra4l2kdr5izc80r9461hwfnw8pssxs9gjkk"))))
+              "17a311vzimqn1glc9d7x82rhb1mb81m5rr4g8xji8idaafid39fz"))))
    (build-system gnu-build-system)
    (native-inputs
     `(("native-perl" ,perl)
@@ -179,7 +181,7 @@ as well as the classic centralized workflow.")
                 version ".tar.xz"))
           (sha256
            (base32
-            "176lkcfhjhqin2w8s814j9wwcian9jr6xx6xzn35i5scn14spjz6"))))
+            "1dvwq0py8a2ywmgc5pzdlsj3608s7r9wyba292728fcs3yj7ynk6"))))
       ;; For subtree documentation.
       ("asciidoc" ,asciidoc-py3)
       ("docbook-xsl" ,docbook-xsl)
@@ -630,6 +632,26 @@ figure out what to do next.
 Gitless is implemented on top of Git and its commits and repositories are
 indistinguishable from Git's.  You (or other contributors) can always fall back
 on @command{git}, and use any regular Git hosting service.")
+    (license license:expat)))
+
+(define-public git-cal
+  (package
+    (name "git-cal")
+    (version "0.9.1")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/k4rthik/git-cal")
+                    (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "08s9sif3qlk5n2dqpzq5yjczggnqlnxldljspjdqgpfydb2dqg3z"))))
+    (build-system perl-build-system)
+    (home-page "https://github.com/k4rthik/git-cal/")
+    (synopsis "GitHub like contributions calendar for terminal")
+    (description "@code{git-cal} is a script to view commits calendar similar
+to GitHub contributions calendar.")
     (license license:expat)))
 
 (define-public libgit2
@@ -1308,7 +1330,7 @@ also walk each side of a merge and test those changes individually.")
 (define-public gitolite
   (package
     (name "gitolite")
-    (version "3.6.11")
+    (version "3.6.12")
     (source
      (origin
        (method git-fetch)
@@ -1317,10 +1339,10 @@ also walk each side of a merge and test those changes individually.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1rkj7gknwjlc5ij9w39zf5mr647bm45la57yjczydmvrb8c56yrh"))))
+        (base32 "05xw1pmagvkrbzga5pgl3xk9qyc6b5x73f842454f3w9ijspa8zy"))))
     (build-system gnu-build-system)
     (arguments
-     '(#:tests? #f ; no tests
+     '(#:tests? #f                      ; no tests
        #:phases (modify-phases %standard-phases
                   (delete 'configure)
                   (delete 'build)
@@ -2630,3 +2652,57 @@ package is provided for users who need to recover @code{tla} repositories and
 for historians.")
     (home-page "https://www.gnu.org/software/gnu-arch/")
     (license license:gpl2)))                      ;version 2 only
+
+(define-public go-github-go-git
+  (package
+    (name "go-github-go-git")
+    (version "5.1.0")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/go-git/go-git")
+                    (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "1vkcmhh2qq8c38sjbnzf0wvg2rzr19wssaq177bsvrjwj1xz1qbs"))))
+    (build-system go-build-system)
+    (arguments
+     `(#:tests? #f ;requires network connection
+       #:import-path "github.com/go-git/go-git/v5"
+       #:phases
+       (modify-phases %standard-phases
+         (add-before 'build 'setup
+           (lambda* (#:key inputs #:allow-other-keys)
+             (let* ((git (assoc-ref inputs "git"))
+                    (git-bin (string-append (assoc-ref inputs "git") "/bin"))
+                    (git-exe (string-append git-bin "/git")))
+               (setenv "GIT_DIST_PATH=" git)
+               (setenv "GIT_EXEC_PATH=" git-bin)
+               (setenv "HOME" (getcwd))
+               (invoke git-exe "config" "--global" "user.email" "gha@example.com")
+               (invoke git-exe "config" "--global" "user.name" "GitHub Actions")
+               #t)
+             #t)))))
+    (native-inputs
+     `(("go-github-com-emirpasic-gods" ,go-github-com-emirpasic-gods)
+       ("go-github-com-go-git-gcfg" ,go-github-com-go-git-gcfg)
+       ("go-github-com-go-git-go-billy" ,go-github-com-go-git-go-billy)
+       ("go-github-com-imdario-mergo" ,go-github-com-imdario-mergo)
+       ("go-github-com-jbenet-go-context" ,go-github-com-jbenet-go-context)
+       ("go-github-com-kevinburke-ssh-config" ,go-github-com-kevinburke-ssh-config)
+       ("go-github-com-mitchellh-go-homedir" ,go-github-com-mitchellh-go-homedir)
+       ("go-github-com-sergi-go-diff" ,go-github-com-sergi-go-diff)
+       ("go-github-com-xanzy-ssh-agentf" ,go-github-com-xanzy-ssh-agent)
+       ("go-golang-org-x-crypto" ,go-golang-org-x-crypto)
+       ("go-golang-org-x-net" ,go-golang-org-x-net)
+       ("go-gopkg-in-warnings" ,go-gopkg-in-warnings)
+       ("go-github-com-go-git-go-git-fixtures" ,go-github-com-go-git-go-git-fixtures)
+       ("go-gopkg-in-check-v1" ,go-gopkg-in-check-v1)
+       ("go-github-com-alcortesm-tgz" ,go-github-com-alcortesm-tgz)
+       ("go-golang-org-x-text" ,go-golang-org-x-text)
+       ("git" ,git)))
+    (home-page "https://github.com/go-git/")
+    (synopsis "Git implementation library")
+    (description "This package provides a Git implementation library.")
+    (license license:asl2.0)))
