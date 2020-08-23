@@ -185,14 +185,14 @@ example, modify the message headers or body, or encrypt or sign the message.")
 (define-public mailutils
   (package
     (name "mailutils")
-    (version "3.9")
+    (version "3.10")
     (source (origin
              (method url-fetch)
              (uri (string-append "mirror://gnu/mailutils/mailutils-"
                                  version ".tar.xz"))
              (sha256
               (base32
-               "1g1xf2lal04nsnf1iym9n9n0wxjpqbcr9nysxpm98v4pniinqwsz"))))
+               "17smrxjdgbbzbzakik30vj46q4iib85ksqhb82jr4vjp57akszh9"))))
     (build-system gnu-build-system)
     (arguments
      `(#:phases
@@ -230,6 +230,13 @@ example, modify the message headers or body, or encrypt or sign the message.")
              (substitute* "comsat/tests/Makefile.in"
                (("\\$\\(SHELL\\) \\$\\(TESTSUITE\\)" all)
                 (string-append "-" all)))
+
+             ;; XXX: The ‘moderator: program discard’ test does not specify
+             ;; an explicit From: but does expect an exact match.  But why are
+             ;; all other tests unaffected?
+             (substitute* "sieve/tests/testsuite"
+               (("gray@")
+                "nixbld@"))
 
              ;; 'frm' tests expect write access to $HOME.
              (setenv "HOME" (getcwd))
@@ -1425,7 +1432,8 @@ facilities for checking incoming mail.")
        ("lz4" ,lz4)
        ("openssl" ,openssl)
        ("sqlite" ,sqlite)
-       ("zlib" ,zlib)))
+       ("zlib" ,zlib)
+       ("zstd" ,zstd "lib")))
     (arguments
      `(#:configure-flags '("--sysconfdir=/etc"
                            "--localstatedir=/var"
@@ -3450,14 +3458,13 @@ current standard.  No backward compatibility issues have been noted.")
 (define-public python-dkimpy
   (package
     (name "python-dkimpy")
-    (version "1.0.4")
+    (version "1.0.5")
     (source
       (origin
         (method url-fetch)
         (uri (pypi-uri "dkimpy" version))
         (sha256
-         (base32
-          "14idcs0wiyc0iyi5bz3xqimxf3x6dizcjfn92s2ka5zxp95xdyvd"))))
+         (base32 "088iz5cqjqh4c7141d94pvn13bh25aizqlrifwv6fs5g16zj094s"))))
     (build-system python-build-system)
     (arguments
      '(#:phases
@@ -3518,20 +3525,23 @@ DKIM and ARC sign messages and output the corresponding signature headers.")
 (define-public python-aiosmtpd
   (package
     (name "python-aiosmtpd")
-    (version "1.2")
+    (version "1.2.1")
     (source
-      (origin
-        (method url-fetch)
-        (uri (pypi-uri "aiosmtpd" version))
-        (sha256
-         (base32
-          "1xdfk741pjmz1cm8dsi4n5vq4517i175rm94696m3f7kcgk7xsmp"))))
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/aio-libs/aiosmtpd")
+             (commit version)))
+       (sha256
+        (base32 "14c30dm6jzxiblnsah53fdv68vqhxwvb9x0aq9bc4vcdas747vr7"))
+       (file-name (git-file-name name version))))
     (build-system python-build-system)
     (arguments
      '(#:phases
        (modify-phases %standard-phases
-         (add-after 'unpack 'delete-failing-test
+         (add-after 'unpack 'delete-failing-tests
            (lambda _
+             ;; This test uses an expired certificate.
              (delete-file "aiosmtpd/tests/test_smtps.py")
              #t))
          (replace 'check

@@ -1646,7 +1646,8 @@ gapped, local, and paired-end alignment modes.")
        (modify-phases %standard-phases
          (delete 'configure))))
     (inputs
-     `(("tbb" ,tbb)
+     `(("python-wrapper" ,python-wrapper)
+       ("tbb" ,tbb)
        ("zlib" ,zlib)))
     (supported-systems '("x86_64-linux"))
     (home-page "http://bowtie-bio.sourceforge.net/index.shtml")
@@ -7510,13 +7511,13 @@ BLAST, KEGG, GenBank, MEDLINE and GO.")
 (define-public r-biocviews
   (package
     (name "r-biocviews")
-    (version "1.56.1")
+    (version "1.56.2")
     (source (origin
               (method url-fetch)
               (uri (bioconductor-uri "biocViews" version))
               (sha256
                (base32
-                "0zcx8gha3x3jc0ra6ii6wwq2vfsmffrrnilknbq8h5xjrl55m6ci"))))
+                "0kw0qfm1fw5yv2rbz6x23431rh0fnzj66f2bls7j285biyjmmx7w"))))
     (properties
      `((upstream-name . "biocViews")))
     (build-system r-build-system)
@@ -7899,13 +7900,13 @@ on Bioconductor or which replace R functions.")
 (define-public r-annotationdbi
   (package
     (name "r-annotationdbi")
-    (version "1.50.1")
+    (version "1.50.3")
     (source (origin
               (method url-fetch)
               (uri (bioconductor-uri "AnnotationDbi" version))
               (sha256
                (base32
-                "00pd8lsdppxlmx0l65phw0jhsm0qkwjc4wsdxpvgc31iiz9yslbj"))))
+                "0qcxfn4pvaksna0nvxr74ysn2wzaxn732pkhd6ffrj8pwhkhy5p3"))))
     (properties
      `((upstream-name . "AnnotationDbi")))
     (build-system r-build-system)
@@ -8064,13 +8065,13 @@ tab-delimited (tabix) files.")
 (define-public r-delayedarray
   (package
     (name "r-delayedarray")
-    (version "0.14.0")
+    (version "0.14.1")
     (source (origin
               (method url-fetch)
               (uri (bioconductor-uri "DelayedArray" version))
               (sha256
                (base32
-                "1lz7a0rrlfv3w44n073mk8pw39z7lfs0njdxp5vpp0rdsmvdf1qk"))))
+                "0xi0i621hrl7k9rsc8x8nc3ib74sk8hxhbyr2lxqclw45pk95s7v"))))
     (properties
      `((upstream-name . "DelayedArray")))
     (build-system r-build-system)
@@ -10027,14 +10028,14 @@ Shiny-based display methods for Bioconductor objects.")
 (define-public r-annotationhub
   (package
     (name "r-annotationhub")
-    (version "2.20.0")
+    (version "2.20.2")
     (source
      (origin
        (method url-fetch)
        (uri (bioconductor-uri "AnnotationHub" version))
        (sha256
         (base32
-         "0r4xzf93bm9cpys5cg70wg0b8hxli80hvqwgh4hzbd45yyf5c4wz"))))
+         "04bz91m2wx1zm61rvpr0syyklz232fw74wrl73d965wi3x8fyda5"))))
     (properties `((upstream-name . "AnnotationHub")))
     (build-system r-build-system)
     (propagated-inputs
@@ -10124,17 +10125,18 @@ microarrays or GRanges for sequencing data.")
 (define-public r-gage
   (package
     (name "r-gage")
-    (version "2.37.0")
+    (version "2.38.3")
     (source
      (origin
        (method url-fetch)
        (uri (bioconductor-uri "gage" version))
        (sha256
         (base32
-         "1zfaas4x6g7wiml6cmxa7b4f43az9s0lrw80k6sf7c96hsh1jijr"))))
+         "1bqmvjiya1df0b3h491lp1jxahiyidvaf9n094z0sk84x5y3xh2p"))))
     (build-system r-build-system)
     (propagated-inputs
      `(("r-annotationdbi" ,r-annotationdbi)
+       ("r-go-db" ,r-go-db)
        ("r-graph" ,r-graph)
        ("r-keggrest" ,r-keggrest)))
     (home-page (string-append "https://bmcbioinformatics.biomedcentral.com/"
@@ -10187,14 +10189,14 @@ provide added flexibility for data combination and manipulation.")
 (define-public r-complexheatmap
   (package
     (name "r-complexheatmap")
-    (version "2.4.2")
+    (version "2.4.3")
     (source
      (origin
        (method url-fetch)
        (uri (bioconductor-uri "ComplexHeatmap" version))
        (sha256
         (base32
-         "01jxxwxhf9n8baxgja4rb592p5210s4ppd7a5b4xby5aalhzkr0l"))))
+         "1gx0hzrkla92pgmfkrm2zp0ccnhizq6rs26zgzpi5x8a5lvghh5q"))))
     (properties
      `((upstream-name . "ComplexHeatmap")))
     (build-system r-build-system)
@@ -12970,7 +12972,7 @@ expression report comparing samples in an easily configurable manner.")
 (define-public pigx-chipseq
   (package
     (name "pigx-chipseq")
-    (version "0.0.42")
+    (version "0.0.43")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://github.com/BIMSBbioinfo/pigx_chipseq/"
@@ -12978,7 +12980,7 @@ expression report comparing samples in an easily configurable manner.")
                                   "/pigx_chipseq-" version ".tar.gz"))
               (sha256
                (base32
-                "0xbvgqpk32a8iczhvac56cacr46rdkqb0allhhpvmj940idf72bi"))))
+                "0426i31b7mqqkbss5dgrvf5prkj4z1qrd7yrpd27vybs01xhdlks"))))
     (build-system gnu-build-system)
     ;; parts of the tests rely on access to the network
     (arguments '(#:tests? #f))

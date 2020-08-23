@@ -94,6 +94,38 @@
   #:use-module (guix deprecation)
   #:use-module (srfi srfi-1))
 
+(define-public iqa
+  (package
+    (name "iqa")
+    (version "1.1.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri
+        (string-append "https://sourceforge.net/projects/iqa/files/"
+                       "1.1.2%20Release/iqa_1.1.2_src.tar.gz/download"))
+       (sha256
+        (base32 "00mgwy031ammab6bwmd1whhvqv3fxy1cs1igabq0n3ag12zhjs77"))))
+    (build-system gnu-build-system)
+    (arguments
+     `(#:test-target "test"
+       #:phases
+       (modify-phases %standard-phases
+         (delete 'configure)
+         (replace 'install
+           (lambda* (#:key outputs #:allow-other-keys)
+             (let* ((out (assoc-ref outputs "out"))
+                    (lib (string-append out "/lib")))
+               (install-file "build/debug/libiqa.a" lib)
+               #t))))))
+    (synopsis "Image Quality Assessment")
+    (description "IQA is a C library for objectively measuring image/video
+quality.  It implements many popular algorithms, such as MS-SSIM, MS-SSIM*,
+SIMM, MSE, and PSNR.  It is designed to be fast, accurate, and reliable.  All
+code is Valgrind-clean and unit tested.")
+    (home-page "https://sourceforge.net/projects/iqa/")
+    (license license:bsd-4)))
+
 (define-public libpng
   (package
    (name "libpng")
@@ -748,6 +780,28 @@ only a few lines of the uncompressed image in memory and is able to stream
 images of initially unknown height.")
     (license (list license:isc          ; pbmtools/p?m.5
                    license:gpl2+))))    ; the rest
+
+(define-public openjpeg-data
+  (package
+    (name "openjpeg-data")
+    (version "2020.05.19")
+    (source
+     (origin
+       (method git-fetch)
+       (uri
+        (git-reference
+         (url "https://github.com/uclouvain/openjpeg-data.git")
+         (commit "c5c4a8c")))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1jp84gbhw8q5b8mhc322ql9410hjf32w9hg10x4isfa9j59mnncb"))))
+    (build-system copy-build-system)
+    (synopsis "Test files for OpenJPEG")
+    (description "OpenJPEG-Data contains all files required to run the openjpeg
+test suite, including conformance tests (following Rec. ITU-T T.803 | ISO/IEC
+15444-4 procedures), non-regression tests and unit tests.")
+    (home-page "https://github.com/uclouvain/openjpeg-data")
+    (license license:bsd-2)))
 
 (define-public openjpeg
   (package

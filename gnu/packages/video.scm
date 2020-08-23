@@ -172,6 +172,478 @@
   #:use-module (gnu packages xml)
   #:use-module (gnu packages xorg))
 
+(define-public transcode
+  (package
+    (name "transcode")
+    (version "1.1.7")
+    (source
+     (origin
+       (method url-fetch)
+       (uri
+        (string-append "https://sources.archlinux.org/other/community/"
+                       name "/" name "-" version ".tar.bz2"))
+       (sha256
+        (base32 "14ha9xjsjrj131f35jd56z5v1jb4rbsrj1nril5shqnxw3c74khy"))
+       (patches
+        (search-patches "transcode-ffmpeg.patch"))))
+    (build-system gnu-build-system)
+    (arguments
+     `(#:configure-flags
+       (list
+        "--enable-libv4l2"
+        "--enable-libmpeg2"
+        "--enable-libmpeg2convert"
+        "--enable-v4l"
+        ;;; XXX: Not available.
+        ;"--enable-bktr"
+        ;"--enable-sunau"
+        "--enable-oss"
+        "--enable-alsa"
+        ;;; XXX: Not available.
+        ;"--enable-libpostproc"
+        "--enable-freetype2"
+        "--enable-xvid"
+        "--enable-x264"
+        "--enable-ogg"
+        "--enable-vorbis"
+        "--enable-theora"
+        ;;; XXX: Not available.
+        ;"--enable-pvm3"
+        "--enable-libdv"
+        "--enable-libquicktime"
+        "--enable-lzo"
+        "--enable-a52"
+        "--enable-faac"
+        "--enable-libxml2"
+        ;;; XXX: Not available.
+        ;"--enable-ibp"
+        ;;"--enable-mjpegtools"
+        "--enable-sdl"
+        "--enable-imagemagick"
+        ;;; XXX: Not available.
+        ;"--enable-libjpegmmx"
+        "--enable-libjpeg")))
+        ;;; XXX: Not available.
+        ;"--enable-bsdav"
+        ;"--enable-pv3"
+        ;"--enable-nuv"
+    (native-inputs
+     `(("autoconf" ,autoconf)
+       ("automake" ,automake)
+       ("iconv" ,libiconv)
+       ("libtool" ,libtool)
+       ("libxml2" ,libxml2)
+       ("perl" ,perl)
+       ("pkg-config" ,pkg-config)
+       ("python" ,python-wrapper)))
+    (inputs
+     `(("alsa-lib" ,alsa-lib)
+       ("faac" ,faac)
+       ("ffmpeg" ,ffmpeg)
+       ("freetype" ,freetype)
+       ("imagemagick" ,imagemagick)
+       ("lame" ,lame)
+       ("liba52" ,liba52)
+       ("libdv" ,libdv)
+       ("libdvdread" ,libdvdread)
+       ("libjpeg" ,libjpeg-turbo)
+       ("libmpeg2" ,libmpeg2)
+       ("libogg" ,libogg)
+       ("libquicktime" ,libquicktime)
+       ("libtheora" ,libtheora)
+       ("libvorbis" ,libvorbis)
+       ("lzo" ,lzo)
+       ("mjepgtools" ,mjpegtools)
+       ("sdl" ,sdl)
+       ("v4l-utils" ,v4l-utils)
+       ("x11" ,libx11)
+       ("x264" ,libx264)
+       ("xaw" ,libxaw)
+       ("xext" ,libxext)
+       ("xpm" ,libxpm)
+       ("xv" ,libxv)
+       ("xvid" ,xvid)
+       ("zlib" ,zlib)))
+    (synopsis "Audio/Video Transcoder")
+    (description "Transcode is a fast, versatile and command-line based
+audio/video everything to everything converter primarily focussed on producing
+AVI video files with MP3 audio, but also including a program to read all the
+video and audio streams from a DVD.")
+    (home-page
+     "http://linuxfromscratch.org/blfs/view/svn/multimedia/transcode.html")
+    (license license:gpl2+)))
+
+(define-public svt-hevc
+  (package
+    (name "svt-hevc")
+    (version "1.4.3")
+    (source
+     (origin
+       (method git-fetch)
+       (uri
+        (git-reference
+         (url "https://github.com/OpenVisualCloud/SVT-HEVC.git")
+         (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1sqh3dciqm2p1b66kngcpxqy5fx3ramxlxy8gfcbdwn2i3rsqhs7"))))
+    (build-system cmake-build-system)
+    (arguments
+     `(#:tests? #f)) ; Test script is stand-alone
+    (native-inputs
+     `(("yasm" ,yasm)))
+    (synopsis "SVT HEVC encoder")
+    (description "Scalable Video Technology (SVT) is a software-based video
+coding technology that is highly optimized for Intel's Xeon processors.  Using
+the SVT-HEVC encoder, it is possible to spread video encoding processing across
+multiple Intel's Xeon processors to achieve a real advantage of processing
+efficiency.")
+    (home-page "https://01.org/svt")
+    (license (license:non-copyleft "file:///LICENSE.md"))))
+
+(define-public mediasdk
+  (package
+    (name "mediasdk")
+    (version "20.1.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri
+        (git-reference
+         (url "https://github.com/Intel-Media-SDK/MediaSDK.git")
+         (commit (string-append "intel-" name "-" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0blwcxr5j8762nylx2cxrq0h53bpgnk859dbs6crq4wr9fcxlx9z"))))
+    (build-system cmake-build-system)
+    (arguments
+     `(#:configure-flags
+       (list
+        "-DENABLE_X11=ON"
+        "-DENABLE_X11_DRI3=ON"
+        "-DENABLE_WAYLAND=ON"
+        "-DENABLE_TEXTLOG=ON"
+        "-DENABLE_STAT=ON"
+        "-DBUILD_TESTS=ON"
+        "-DBUILD_TOOLS=ON"
+        (string-append "-DCMAKE_EXE_LINKER_FLAGS=-Wl,-rpath="
+                       (assoc-ref %outputs "out") "/lib"))))
+    (native-inputs
+     `(("pkg-config" ,pkg-config)
+       ("python" ,python-wrapper)))
+    (inputs
+     `(("libdrm" ,libdrm)
+       ("libva" ,libva)
+       ("pciaccess" ,libpciaccess)
+       ("wayland" ,wayland)
+       ("x11" ,libx11)))
+    (synopsis "Intel Media SDK")
+    (description "MediaSDK provides a plain C API to access hardware-accelerated
+video decode, encode and filtering on Intel's Gen graphics hardware platforms.")
+    (home-page "http://mediasdk.intel.com/")
+    (license (license:non-copyleft "file:///LICENSE"))))
+
+(define-public schroedinger
+  (package
+    (name "schroedinger")
+    (version "1.0.11")
+    (source
+     (origin
+       (method url-fetch)
+       (uri
+        (string-append "https://launchpad.net/" name "/trunk/" version
+                       "/+download/" name "-" version ".tar.gz"))
+       (sha256
+        (base32 "04prr667l4sn4zx256v1z36a0nnkxfdqyln48rbwlamr6l3jlmqy"))))
+    (build-system gnu-build-system)
+    (outputs '("out" "doc"))
+    (arguments
+     `(#:phases
+       (modify-phases %standard-phases
+         (add-after 'install 'move-docs
+           (lambda* (#:key outputs #:allow-other-keys)
+             (let* ((out (assoc-ref outputs "out"))
+                    (doc (assoc-ref outputs "doc")))
+               (mkdir-p (string-append doc "/share"))
+               (rename-file
+                (string-append out "/share/gtk-doc")
+                (string-append doc "/share/gtk-doc"))
+               #t))))))
+    (native-inputs
+     `(("dash" ,dash)
+       ("gtk-doc" ,gtk-doc)
+       ("pkg-config" ,pkg-config)))
+    (inputs
+     `(("glew" ,glew)
+       ("opengl" ,mesa)))
+    (propagated-inputs
+     `(("orc" ,orc)))
+    (synopsis "Dirac video codec")
+    (description "Schroedinger is a project implementing the Dirac video codec in
+ANSI C code.  It is meant to be highly optimized and portable.  It is developed
+as a joint effort between the BBC and Fluendo.")
+    (home-page "https://launchpad.net/schroedinger")
+    (license
+     ;; This library is licensed under 4 different licenses,
+     ;; and you can choose to use it under the terms of any one of them.
+     (list
+      license:gpl2+
+      license:lgpl2.0+
+      license:expat
+      license:mpl1.1))))
+
+(define-public libquicktime
+  (package
+    (name "libquicktime")
+    (version "1.2.4")
+    (source
+     (origin
+       (method url-fetch)
+       (uri
+        (string-append "https://sourceforge.net/projects/" name "/files/"
+                       name "/" version "/" name "-" version ".tar.gz"))
+       (sha256
+        (base32 "0s3kshzl3zfjw3phzv73r91fkr9z8q8kc3dhsys4f4xk6ff3alqw"))
+       (patches
+        (search-patches "libquicktime-ffmpeg.patch"))))
+    (build-system gnu-build-system)
+    (native-inputs
+     `(("gettext" ,gettext-minimal)
+       ("doxygen" ,doxygen)
+       ("pkg-config" ,pkg-config)))
+    (inputs
+     `(("alsa" ,alsa-lib)
+       ("ffmpeg" ,ffmpeg)
+       ("gtk+-2" ,gtk+-2)
+       ("lame" ,lame)
+       ("libdv" ,libdv)
+       ("libjpeg" ,libjpeg-turbo)
+       ("libpng" ,libpng)
+       ("libvorbis" ,libvorbis)
+       ("opengl" ,mesa)
+       ("schroedinger" ,schroedinger)
+       ("x11" ,libx11)
+       ("x264" ,libx264)
+       ("xaw" ,libxaw)
+       ("xv" ,libxv)))
+    (synopsis "Quick Time Library")
+    (description "The goal of this project is to enhance the quicktime4linux
+library.")
+    (home-page "http://libquicktime.sourceforge.net/")
+    (license license:lgpl2.1+)))
+
+(define-public mjpegtools
+  (package
+    (name "mjpegtools")
+    (version "2.1.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri
+        (string-append "https://sourceforge.net/projects/" name "/files/"
+                       name "/" version "/" name "-" version ".tar.gz"))
+       (sha256
+        (base32 "0kvhxr5hkabj9v7ah2rzkbirndfqdijd9hp8v52c1z6bxddf019w"))))
+    (build-system gnu-build-system)
+    (inputs
+     `(("gtk+-2" ,gtk+-2)
+       ("libdv" ,libdv)
+       ("libpng" ,libpng)
+       ("libquicktime" ,libquicktime)
+       ("sdl" ,sdl)))
+    (synopsis "Tools for handling MPEG")
+    (description "Mjpeg tools is a suite of programs which support video capture,
+editing, playback, and compression to MPEG of MJPEG video.  Edit, play and
+compression software is hardware independent.")
+    (home-page "http://mjpeg.sourceforge.net/")
+    (license license:gpl2+)))
+
+(define-public libmms
+  (package
+    (name "libmms")
+    (version "0.6.4")
+    (source
+     (origin
+       (method url-fetch)
+       (uri
+        (string-append "https://sourceforge.net/projects/" name "/files/"
+                       name "/" version "/" name "-" version ".tar.gz"))
+       (sha256
+        (base32 "0kvhxr5hkabj9v7ah2rzkbirndfqdijd9hp8v52c1z6bxddf019w"))))
+    (build-system gnu-build-system)
+    (synopsis "MMS stream protocol library")
+    (description "Libmms is a library for streaming media files using the mmst
+and mmsh protocols.")
+    (home-page "https://sourceforge.net/projects/libmms/")
+    (license license:lgpl2.1+)))
+
+(define-public libvideogfx
+  (package
+    (name "libvideogfx")
+    (version "1.0.9")
+    (source
+     (origin
+       (method git-fetch)
+       (uri
+        (git-reference
+         (url "https://github.com/farindk/libvideogfx.git")
+         (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "154b0j8cfg879pg08xcbwvbz8z9nrfnyj31i48vxir1psas70ynq"))))
+    (build-system gnu-build-system)
+    (arguments
+     `(#:phases
+       (modify-phases %standard-phases
+         (add-after 'unpack 'fix-build-errors
+           (lambda _
+             (substitute* "libvideogfx/graphics/fileio/ffmpeg.cc"
+               (("av_close_input_file\\(")
+                "avformat_close_input(&"))
+             (substitute* "libvideogfx/graphics/fileio/png.cc"
+               (("is != NULL") "is.good()"))
+             #t)))))
+    (native-inputs
+     `(("autoconf" ,autoconf)
+       ("automake" ,automake)
+       ("libtool" ,libtool)
+       ("pkg-config" ,pkg-config)))
+    (inputs
+     `(("ffmpeg" ,ffmpeg-2.8)
+       ("jpeg" ,libjpeg-turbo)
+       ("png" ,libpng)
+       ("x11" ,libx11)
+       ("xext" ,libxext)))
+    (synopsis "Video processing library")
+    (description "LibVideoGfx is a C++ library for low-level video processing.
+It aims at speeding up the development process for image and video processing
+applications by providing high-level classes for commonly required tasks.")
+    (home-page "https://dirk-farin.net/software/libvideogfx/index.html")
+    (license license:lgpl2.1+)))
+
+(define-public libde265
+  (package
+    (name "libde265")
+    (version "1.0.5")
+    (source
+     (origin
+       (method git-fetch)
+       (uri
+        (git-reference
+         (url "https://github.com/strukturag/libde265.git")
+         (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1qisj8ryzbknam3hk81rq70fsd9mcpxm898bqygvbsmbwyvmz3pg"))))
+    (build-system gnu-build-system)
+    (arguments
+     `(#:configure-flags
+       (list "--disable-static")))
+    (native-inputs
+     `(("autoconf" ,autoconf)
+       ("automake" ,automake)
+       ("libtool" ,libtool)
+       ("pkg-config" ,pkg-config)
+       ("python" ,python-wrapper)))
+    (inputs
+     `(;; XXX: Build fails with libvideogfx.
+       ;; ("libvideogfx" ,libvideogfx)
+       ("qt" ,qtbase)
+       ("sdl" ,sdl)))
+    (synopsis "H.265 video codec implementation")
+    (description "Libde265 is an implementation of the h.265 video codec.  It is
+written from scratch and has a plain C API to enable a simple integration into
+other software.")
+    (home-page "https://www.libde265.org/")
+    (license
+     (list
+      ;; Applications.
+      license:expat
+      ;; Library.
+      license:lgpl3+))))
+
+(define-public tslib
+  (package
+    (name "tslib")
+    (version "1.22")
+    (source
+     (origin
+       (method git-fetch)
+       (uri
+        (git-reference
+         (url "https://github.com/libts/tslib.git")
+         (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "197p6vy539wvfrv23agbvmay4rjya1jnisi46llm0nx4cvqh48by"))))
+    (build-system gnu-build-system)
+    (arguments
+     `(#:test-target "tests"
+       #:configure-flags
+       (list "--with-sdl2")))
+    (native-inputs
+     `(("autoconf" ,autoconf)
+       ("automake" ,automake)
+       ("libtool" ,libtool)
+       ("pkg-config" ,pkg-config)))
+    (inputs
+     `(("linux-headers" ,linux-libre-headers)
+       ("sdl2" ,sdl2)))
+    (synopsis "Touchscreen access library")
+    (description "TSLib is a cross-platform library that provides access to
+touchscreen devices and the ability to apply filters to their input events.")
+    (home-page "http://www.tslib.org/")
+    (license license:lgpl2.1+)))
+
+(define-public libmpeg3
+  (package
+    (name "libmpeg3")
+    (version "1.8")
+    (source
+     (origin
+       (method url-fetch)
+       (uri
+        (string-append "https://sourceforge.net/projects/heroines/files/"
+                       "releases/081108/" name "-" version "-src.tar.bz2"))
+       (sha256
+        (base32 "1i53vv0wm5qfwgg1z7j9g14s6c7gxxkiy4vbdkq3lijjyyz50vv5"))))
+    (build-system gnu-build-system)
+    (arguments
+     `(#:test-target "test"
+       #:make-flags
+       (list
+        (string-append "A52DIR=" (assoc-ref %build-inputs "liba52"))
+        (string-append "DST=" (assoc-ref %outputs "out") "/bin"))
+     #:phases
+     (modify-phases %standard-phases
+       (add-after 'unpack 'delete-bundled-a52dec
+         (lambda _
+           (delete-file-recursively "a52dec-0.7.3")
+           (substitute* "Makefile"
+             (("include Makefile\\.a52")
+              "")
+             (("\\(A52DIR\\)/include")
+              "(A52DIR)/include/a52dec")
+             (("LIBS = " match)
+              (string-append match "-la52 ")))
+           #t))
+       (add-before 'install 'create-destination-directory
+         (lambda* (#:key outputs #:allow-other-keys)
+           (let* ((out (string-append (assoc-ref outputs "out"))))
+             (mkdir-p (string-append out "/bin"))
+             #t))))))
+  (native-inputs
+   `(("nasm" ,nasm)))
+  (inputs
+   `(("liba52" ,liba52)))
+  (synopsis "Advanced MPEG editing and manipulation library")
+  (description "Libmpeg3 decodes MP2, MP3, AC3, MPEG-1 video, MPEG-2 video,
+and DVD footage in a single library.  It supports many esoteric features like
+parallel video decoding, frame-accurate editing, YUV 4:2:2, and ATSC transport
+stream decoding")
+  (home-page "http://heroinewarrior.com/libmpeg3.php")
+  (license license:gpl2+)))
+
 (define-public aalib
   (package
     (name "aalib")
@@ -318,30 +790,6 @@ television and DVD.  It is also known as AC-3.")
     (description "Libaom is the reference implementation of AV1.  It includes a
 shared library and encoder and decoder command-line executables.")
     (license license:bsd-2)))
-
-(define-public libde265
-  (package
-    (name "libde265")
-    (version "1.0.5")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/strukturag/libde265")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "1qisj8ryzbknam3hk81rq70fsd9mcpxm898bqygvbsmbwyvmz3pg"))))
-    (build-system cmake-build-system)
-    (arguments
-     `(#:tests? #f)) ;there are no tests
-    (home-page "https://www.libde265.org/")
-    (synopsis "Open h.265 video codec implementation")
-    (description
-     "libde265 is an implementation of the h.265 video codec.  It is written
-from scratch and has a plain C API to enable a simple integration into other
-software.")
-    (license license:lgpl3+)))
 
 (define-public libmpeg2
   (package
@@ -1186,6 +1634,53 @@ audio/video codec library.")
                   ,flags))))))
     (inputs (alist-delete "dav1d" (alist-delete "libaom" (alist-delete "rav1e"
                            (package-inputs ffmpeg)))))))
+
+(define-public ffmpeg-2.8
+  (package
+    (inherit ffmpeg)
+    (version "2.8.16")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append "https://ffmpeg.org/releases/ffmpeg-"
+                                  version ".tar.xz"))
+              (sha256
+               (base32
+                "14n0xg22yz1r4apif2idm91s3avcmkz4sl8gyj5763gcy415k2bb"))))
+    (arguments
+     `(#:tests? #f               ; XXX: Enable them later, if required
+       #:configure-flags
+       (list
+        "--disable-static"
+        "--enable-shared"
+        "--extra-cflags=-DFF_API_OLD_ENCODE_VIDEO -DFF_API_OLD_ENCODE_AUDIO")
+       #:phases
+       (modify-phases %standard-phases
+         (replace 'configure
+           (lambda* (#:key outputs configure-flags #:allow-other-keys)
+             (let ((out (assoc-ref outputs "out")))
+               (substitute* "configure"
+                 (("#! /bin/sh") (string-append "#!" (which "sh"))))
+                ;; configure does not work followed by "SHELL=..." and
+                ;; "CONFIG_SHELL=..."; set environment variables instead.
+               (setenv "SHELL" (which "bash"))
+               (setenv "CONFIG_SHELL" (which "bash"))
+               (apply invoke
+                      "./configure"
+                      (string-append "--prefix=" out)
+                      ;; Add $libdir to the RUNPATH of all the binaries.
+                      (string-append "--extra-ldflags=-Wl,-rpath="
+                                     out "/lib")
+                      configure-flags))))
+         (add-before
+             'check 'set-ld-library-path
+           (lambda _
+             ;; Allow $(top_builddir)/ffmpeg to find its dependencies when
+             ;; running tests.
+             (let* ((dso  (find-files "." "\\.so$"))
+                    (path (string-join (map dirname dso) ":")))
+               (format #t "setting LD_LIBRARY_PATH to ~s~%" path)
+               (setenv "LD_LIBRARY_PATH" path)
+               #t))))))))
 
 (define-public ffmpeg-for-stepmania
   (hidden-package

@@ -47,6 +47,7 @@
   #:use-module (gnu packages bash)
   #:use-module (gnu packages bison)
   #:use-module (gnu packages boost)
+  #:use-module (gnu packages cdrom)
   #:use-module (gnu packages check)
   #:use-module (gnu packages compression)
   #:use-module (gnu packages crypto)
@@ -55,6 +56,7 @@
   #:use-module (gnu packages flex)
   #:use-module (gnu packages fonts)
   #:use-module (gnu packages fontutils)
+  #:use-module (gnu packages freedesktop)
   #:use-module (gnu packages gettext)
   #:use-module (gnu packages ghostscript)
   #:use-module (gnu packages gl)
@@ -62,13 +64,18 @@
   #:use-module (gnu packages gnome)
   #:use-module (gnu packages gnunet)
   #:use-module (gnu packages graphviz)
+  #:use-module (gnu packages gstreamer)
   #:use-module (gnu packages gtk)
   #:use-module (gnu packages haskell-xyz)
   #:use-module (gnu packages image)
+  #:use-module (gnu packages image-processing)
   #:use-module (gnu packages imagemagick)
   #:use-module (gnu packages jemalloc)
   #:use-module (gnu packages kde-frameworks)
+  #:use-module (gnu packages linux)
+  #:use-module (gnu packages lua)
   #:use-module (gnu packages maths)
+  #:use-module (gnu packages mp3)
   #:use-module (gnu packages multiprecision)
   #:use-module (gnu packages pdf)
   #:use-module (gnu packages perl)
@@ -86,10 +93,14 @@
   #:use-module (gnu packages tbb)
   #:use-module (gnu packages upnp)
   #:use-module (gnu packages video)
+  #:use-module (gnu packages xiph)
   #:use-module (gnu packages xml)
   #:use-module (gnu packages xorg)
+  #:use-module (gnu packages xdisorg)
+  #:use-module (guix build-system copy)
   #:use-module (guix build-system cmake)
   #:use-module (guix build-system gnu)
+  #:use-module (guix build-system meson)
   #:use-module (guix build-system python)
   #:use-module (guix build-system qt)
   #:use-module (guix download)
@@ -98,6 +109,212 @@
   #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix packages)
   #:use-module (guix utils))
+
+(define-public eglexternalplatform
+  (package
+    (name "eglexternalplatform")
+    (version "1.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri
+        (git-reference
+         (url "https://github.com/NVIDIA/eglexternalplatform.git")
+         (commit version)))
+       (file-name
+        (git-file-name name version))
+       (sha256
+        (base32 "0lr5s2xa1zn220ghmbsiwgmx77l156wk54c7hybia0xpr9yr2nhb"))))
+    (build-system copy-build-system)
+    (arguments
+     `(#:phases
+       (modify-phases %standard-phases
+         (add-after 'unpack 'patch-pkgconfig
+           (lambda* (#:key outputs #:allow-other-keys)
+             (substitute* "eglexternalplatform.pc"
+               (("/usr")
+                (assoc-ref outputs "out")))
+             #t))
+         (add-after 'install 'revise
+           (lambda* (#:key outputs #:allow-other-keys)
+             (let* ((out (assoc-ref outputs "out")))
+               (mkdir-p (string-append out "/include/EGL"))
+               (rename-file
+                (string-append out "/interface")
+                (string-append out "/include/EGL"))
+               (mkdir-p (string-append out "/share/pkgconfig"))
+               (rename-file
+                (string-append out "/eglexternalplatform.pc")
+                (string-append out "/share/pkgconfig/eglexternalplatform.pc"))
+               (for-each delete-file-recursively
+                         (list
+                          (string-append out "/samples")
+                          (string-append out "/COPYING")
+                          (string-append out "/README.md"))))
+             #t)))))
+    (synopsis "EGL External Platform interface")
+    (description "EGLExternalPlatform is an specification of the EGL External
+Platform interface for writing EGL platforms and their interactions with modern
+window systems on top of existing low-level EGL platform implementations.  This
+keeps window system implementation specifics out of EGL drivers by using
+application-facing EGL functions.")
+    (home-page "https://github.com/NVIDIA/eglexternalplatform")
+    (license license:expat)))
+
+(define-public egl-wayland
+  (package
+    (name "egl-wayland")
+    (version "1.1.5")
+    (source
+     (origin
+       (method git-fetch)
+       (uri
+        (git-reference
+         (url "https://github.com/NVIDIA/egl-wayland.git")
+         (commit version)))
+       (file-name
+        (git-file-name name version))
+       (sha256
+        (base32 "09r6a69z75j3hb9751g3ap4gm1xn71aw3j7z0c7jns292cnaa76n"))))
+    (build-system meson-build-system)
+    (native-inputs
+     `(("pkg-config" ,pkg-config)))
+    (inputs
+     `(("mesa" ,mesa)
+       ("wayland" ,wayland)))
+    (propagated-inputs
+     `(("eglexternalplatform" ,eglexternalplatform)))
+    (synopsis "EGLStream-based Wayland external platform")
+    (description "EGL-Wayland is an implementation of a EGL External Platform
+library to add client-side Wayland support to EGL on top of EGLDevice and
+EGLStream families of extensions.")
+    (home-page "https://github.com/NVIDIA/egl-wayland")
+    (license license:expat)))
+
+(define-public mmm
+  (package
+    (name "mmm")
+    (version "0.1.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri
+        (git-reference
+         (url "https://github.com/hodefoting/mmm.git")
+         (commit version)))
+       (file-name
+        (git-file-name name version))
+       (sha256
+        (base32 "1xmcv6rwinqsbr863rgl9005h2jlmd7k2qrwsc1h4fb8r61ykpjl"))))
+    (build-system meson-build-system)
+    (native-inputs
+     `(("luajit" ,luajit)
+       ("pkg-config" ,pkg-config)))
+    (inputs
+     `(("alsa" ,alsa-lib)
+       ("sdl" ,sdl)
+       ("sdl2" ,sdl2)))
+    (synopsis "Memory Mapped Machine")
+    (description "MMM is a shared memory protocol for virtualising access to
+framebuffer graphics, audio output and input event.")
+    (home-page "https://github.com/hodefoting/mrg")
+    (license license:isc)))
+
+(define-public directfb
+  (package
+    (name "directfb")
+    (version "1.7.7")
+    (source
+     (origin
+       (method git-fetch)
+       (uri
+        (git-reference
+         (url "https://github.com/deniskropp/DirectFB.git")
+         (commit "DIRECTFB_1_7_7")))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0bs3yzb7hy3mgydrj8ycg7pllrd2b6j0gxj596inyr7ihssr3i0y"))))
+    (build-system gnu-build-system)
+    (arguments
+     `(#:phases
+       (modify-phases %standard-phases
+         (add-after 'unpack 'disable-configure-during-bootstrap
+           (lambda _
+             (substitute* "autogen.sh"
+               (("^.*\\$srcdir/configure.*") ""))
+             #t)))))
+    (native-inputs
+     `(("autoconf" ,autoconf)
+       ("automake" ,automake)
+       ("libtool" ,libtool)
+       ("perl" ,perl)
+       ("pkg-config" ,pkg-config)))
+    (inputs
+     `(("alsa" ,alsa-lib)
+       ("ffmpeg" ,ffmpeg)
+       ("freetype" ,freetype)
+       ("glu" ,glu)
+       ("gstreamer" ,gstreamer)
+       ("imlib2" ,imlib2)
+       ("jasper" ,jasper)
+       ("jpeg" ,libjpeg-turbo)
+       ("libcddb" ,libcddb)
+       ("libdrm" ,libdrm)
+       ("libtimidity" ,libtimidity)
+       ("linux-headers" ,linux-libre-headers)
+       ("mad" ,libmad)
+       ("mng" ,libmng)
+       ("mpeg2" ,libmpeg2)
+       ("mpeg3" ,libmpeg3)
+       ("opengl" ,mesa)
+       ("png" ,libpng)
+       ("sdl" ,sdl)
+       ("svg" ,librsvg)
+       ("tiff" ,libtiff)
+       ("tslib" ,tslib)
+       ("vdpau" ,libvdpau)
+       ("vorbisfile" ,libvorbis)
+       ("wayland" ,wayland)
+       ("webp" ,libwebp)
+       ("x11" ,libx11)
+       ("xcomposite" ,libxcomposite)
+       ("xext" ,libxext)
+       ("xproto" ,xorgproto)
+       ("zlib" ,zlib)))
+    (propagated-inputs
+     `(("flux" ,flux)))
+    (synopsis "DFB Graphics Library")
+    (description "DirectFB is a graphics library which was designed with embedded
+systems in mind.  It offers maximum hardware accelerated performance at a
+minimum of resource usage and overhead.")
+    (home-page "http://www.directfb.org/")
+    (license license:lgpl2.1+)))
+
+(define-public flux
+  (package
+    (name "flux")
+    (version "1.4.4")
+    (source
+     (origin
+       (method git-fetch)
+       (uri
+        (git-reference
+         (url "https://github.com/deniskropp/flux.git")
+         (commit "e45758a")))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "11f3ypg0sdq5kj69zgz6kih1yrzgm48r16spyvzwvlswng147410"))))
+    (build-system gnu-build-system)
+    (native-inputs
+     `(("autoconf" ,autoconf)
+       ("automake" ,automake)
+       ("libtool" ,libtool)
+       ("pkg-config" ,pkg-config)))
+    (synopsis "Interface description language")
+    (description "Flux is an interface description language used by DirectFB.
+Fluxcomp compiles .flux files to .cpp or .c files.")
+    (home-page "http://www.directfb.org/")
+    (license license:lgpl2.1+))) ; Same as DirectFB
 
 (define-public fox
   (package
@@ -212,14 +429,14 @@ with the @command{autotrace} utility or as a C library, @code{libautotrace}.")
 (define-public blender
   (package
     (name "blender")
-    (version "2.83.3")
+    (version "2.83.5")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://download.blender.org/source/"
                                   "blender-" version ".tar.xz"))
               (sha256
                (base32
-                "18m27abp4j3xv48dr6ddr2mqcvx2vkjffr487z90059yv9k0yh2p"))))
+                "0xyawly00a59hfdb6b7va84k5fhcv2mxnzd77vs22bzi9y7sap43"))))
     (build-system cmake-build-system)
     (arguments
       (let ((python-version (version-major+minor (package-version python))))
@@ -272,6 +489,7 @@ with the @command{autotrace} utility or as a C library, @code{libautotrace}.")
        ("libx11" ,libx11)
        ("libxi" ,libxi)
        ("libxrender" ,libxrender)
+       ("opencolorio" ,opencolorio)
        ("openimageio" ,openimageio)
        ("openexr" ,openexr)
        ("opensubdiv" ,opensubdiv)

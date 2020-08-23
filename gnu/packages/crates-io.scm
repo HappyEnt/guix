@@ -2315,7 +2315,7 @@ in a byte slice, fast.")
 (define-public rust-bytemuck-1
   (package
     (name "rust-bytemuck")
-    (version "1.2.0")
+    (version "1.3.1")
     (source
       (origin
         (method url-fetch)
@@ -2324,10 +2324,10 @@ in a byte slice, fast.")
          (string-append name "-" version ".tar.gz"))
         (sha256
          (base32
-          "0cclc9v10hc1abqrxgirg3qbwa3ra3s0dai3xiwv9v4j4bgi7yip"))))
+          "1scaac5xbfynzbpvz9yjbmg9ag2jalxfijapwlqh7xldf4li0ynv"))))
     (build-system cargo-build-system)
     (home-page "https://github.com/Lokathor/bytemuck")
-    (synopsis "crate for mucking around with piles of bytes")
+    (synopsis "Crate for mucking around with piles of bytes")
     (description
      "This package provides a crate for mucking around with piles of bytes.")
     (license license:zlib)))
@@ -6077,6 +6077,27 @@ from macros.")
        (sha256
         (base32
          "1xhs2qj02k9m4mm5fgh19y88850y9jsnwwlblf2ffc91gjs6xfjj"))))
+    (build-system cargo-build-system)
+    (home-page "https://github.com/marcianx/downcast-rs")
+    (synopsis "Trait object downcasting support using only safe Rust")
+    (description
+     "Trait object downcasting support using only safe Rust.  It supports type
+parameters, associated types, and type constraints.")
+    (license (list license:expat license:asl2.0))))
+
+(define-public rust-downcast-rs-1.2
+  (package
+    (name "rust-downcast-rs")
+    (version "1.2.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "downcast-rs" version))
+       (file-name
+        (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32
+         "0l36kgxqd5djhqwf5abxjmgasdw8n0qsjvw3jdvhi91nj393ba4y"))))
     (build-system cargo-build-system)
     (home-page "https://github.com/marcianx/downcast-rs")
     (synopsis "Trait object downcasting support using only safe Rust")
@@ -18046,6 +18067,50 @@ interactive applications.")
      "This package provides a library for window abstraction.")
     (license license:expat)))
 
+(define-public rust-pin-project-0.4
+  (package
+    (name "rust-pin-project")
+    (version "0.4.22")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "pin-project" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "05wwxy46j9z27ibbiisjqk0rivf0z00h4al1f92mwjp9pz6sdqqj"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:tests? #f ; XXX: Fix-me.
+       #:cargo-inputs
+       (("rust-pin-project-internal" ,rust-pin-project-internal-0.4))))
+    (home-page "https://crates.io/crates/pin-project")
+    (synopsis "A crate for safe and ergonomic pin-projection")
+    (description "A crate for safe and ergonomic pin-projection.")
+    (license (list license:asl2.0 license:expat))))
+
+(define-public rust-pin-project-internal-0.4
+  (package
+    (name "rust-pin-project-internal")
+    (version "0.4.22")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "pin-project-internal" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "1xxac6f3ip45zqbfcmmk748ywjw9sbavz1fcswvqgn3rrx2zs3va"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:tests? #f ; XXX: Fix-me.
+       #:cargo-inputs
+       (("rust-proc-macro2" ,rust-proc-macro2-1)
+        ("rust-quote" ,rust-quote-1)
+        ("rust-syn" ,rust-syn-1))))
+    (home-page "https://crates.io/crates/pin-project-internal")
+    (synopsis "An internal crate to support pin_project")
+    (description "An internal crate to support pin_project")
+    (license (list license:asl2.0 license:expat))))
+
 (define-public rust-pin-project-lite-0.1
   (package
     (name "rust-pin-project-lite")
@@ -20832,20 +20897,20 @@ uses finite automata and guarantees linear time matching on all inputs.")
 (define-public rust-rgb-0.8
   (package
     (name "rust-rgb")
-    (version "0.8.18")
+    (version "0.8.20")
     (source
-      (origin
-        (method url-fetch)
-        (uri (crate-uri "rgb" version))
-        (file-name
-         (string-append name "-" version ".tar.gz"))
-        (sha256
-         (base32
-          "15hrf0gb1l1a8rhx7b6gzrcmb43xlll4r1ym0mq55c7068dhc537"))))
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "rgb" version))
+       (file-name (string-append name "-" version ".crate"))
+       (sha256
+        (base32
+         "1620mn5dp1rr9fpvd9wbr3b8l2g4zrij8zjri1x34cg1bas59vwh"))))
     (build-system cargo-build-system)
     (arguments
      `(#:cargo-inputs
-       (("rust-serde" ,rust-serde-1))
+       (("rust-bytemuck" ,rust-bytemuck-1)
+        ("rust-serde", rust-serde-1))
        #:cargo-development-inputs
        (("rust-serde-json" ,rust-serde-json-1))))
     (home-page "https://lib.rs/crates/rgb")
@@ -23371,6 +23436,57 @@ for the serde framework.")
      "This package provides a fork of @code{std::sync::Arc} with some extra
 functionality and without weak references.")
     (license (list license:expat license:asl2.0))))
+
+(define-public rust-serial-test-derive-0.4
+  (package
+    (name "rust-serial-test-derive")
+    (version "0.4.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "serial_test_derive" version))
+       (file-name
+        (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32
+         "05b5xr36zi8damfg3bmbh1kwdxc3k1y2r8b8pmi7q8jb0bc3i0yh"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:cargo-inputs
+       (("rust-env-logger" ,rust-env-logger-0.7)
+        ("rust-proc-macro2" ,rust-proc-macro2-1)
+        ("rust-quote" ,rust-quote-1)
+        ("rust-syn" ,rust-syn-1))))
+    (home-page
+     "https://github.com/palfrey/serial_test_derive/")
+    (synopsis "Serialising Rust tests")
+    (description "Serialising Rust tests")
+    (license license:expat)))
+
+(define-public rust-serial-test-0.4
+  (package
+    (name "rust-serial-test")
+    (version "0.4.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "serial_test" version))
+       (file-name
+        (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32
+         "1mkz246ax07nar0bmh3m98kl27lacja98vywi9cjqbsb8g3zgxgy"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:cargo-inputs
+       (("rust-lazy-static" ,rust-lazy-static-1)
+("rust-parking-lot" ,rust-parking-lot-0.10)
+("rust-serial-test-derive" ,rust-serial-test-derive-0.4))))
+    (home-page
+     "https://github.com/palfrey/serial_test/")
+    (synopsis "Serialising Rust tests")
+    (description "Serialising Rust tests")
+    (license license:expat)))
 
 (define-public rust-servo-fontconfig-0.4
   (package
@@ -26501,6 +26617,29 @@ in Rust.")
     (description
      "Simple, lightweight template engine.")
     (license (list license:asl2.0 license:expat))))
+
+(define-public rust-tinyvec-0.3
+  (package
+    (name "rust-tinyvec")
+    (version "0.3.3")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "tinyvec" version))
+       (file-name
+        (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32
+         "1vgg2z317kq75bpd0nfda2v507qjpd7g2cjahjgivn2s78nkv5ak"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:cargo-development-inputs
+       (("rust-criterion" ,rust-criterion-0.3))))
+    (home-page "https://crates.io/crates/tinyvec")
+    (synopsis "Tiny vec-like types for Rust")
+    (description
+     "A 100% safe crate of vec-like types.")
+    (license license:zlib)))
 
 (define-public rust-tokio-0.2
   (package

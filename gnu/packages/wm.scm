@@ -1524,9 +1524,6 @@ modules for building a Wayland compositor.")
        (sha256
         (base32 "0ks719khhg2zwpyiwa2079i6962qcxpapm28hmr4ckpsp2n659ck"))))
     (build-system meson-build-system)
-    (arguments
-     `(#:configure-flags
-       (list (string-append "-Dout=" (assoc-ref %outputs "out")))))
     (inputs `(("date" ,date)
               ("fmt" ,fmt)
               ("gtk-layer-shell" ,gtk-layer-shell)
@@ -1543,6 +1540,7 @@ modules for building a Wayland compositor.")
      `(("gcc" ,gcc-8)                   ; for #include <filesystem>
        ("glib:bin" ,glib "bin")
        ("pkg-config" ,pkg-config)
+       ("scdoc" ,scdoc)
        ("wayland-protocols" ,wayland-protocols)))
     (home-page "https://github.com/Alexays/Waybar")
     (synopsis "Wayland bar for Sway and Wlroots based compositors")

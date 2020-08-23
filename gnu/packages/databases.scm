@@ -2450,13 +2450,13 @@ etc., and an SQL engine for performing simple SQL queries.")
 (define-public python-lmdb
   (package
     (name "python-lmdb")
-    (version "0.98")
+    (version "0.99")
     (source (origin
               (method url-fetch)
               (uri (pypi-uri "lmdb" version))
               (sha256
                (base32
-                "027pgbdhhdcbwj53vrzr6a60gjhmz4s75gl3180fd4q8pwlbq986"))
+                "12fwlzfd82471ss9xzbqwcqc6f5miy51y72y2yya9j5cm9589szr"))
               (modules '((guix build utils)))
               (snippet
                ;; Delete bundled lmdb source files.
@@ -2549,7 +2549,19 @@ implementation for Python.")
        ;; TODO: Removing the libsrc/zlib source directory breaks the build.
        ;; This indicates that the internal zlib code may still be used.
        #:configure-flags '("--without-internal-zlib"
-                           "--with-readline")))
+                           "--with-readline"
+                           "--enable-static=no")
+       #:phases
+       (modify-phases %standard-phases
+         ;; Even with "--enable-static=no", "libvirtuoso-t.a" is left in
+         ;; the build output.  The following phase removes it.
+         (add-after 'install 'remove-static-libs
+           (lambda* (#:key outputs #:allow-other-keys)
+             (let ((lib (string-append (assoc-ref outputs "out") "/lib")))
+               (for-each (lambda (file)
+                           (delete-file (string-append lib "/" file)))
+                         '("libvirtuoso-t.a"
+                           "libvirtuoso-t.la"))))))))
     (inputs
      `(("openssl" ,openssl-1.0)
        ("net-tools" ,net-tools)

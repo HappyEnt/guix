@@ -1784,14 +1784,14 @@ component analysis (with robust methods, and parallelized functions).")
 (define-public r-ape
   (package
     (name "r-ape")
-    (version "5.4")
+    (version "5.4-1")
     (source
      (origin
        (method url-fetch)
        (uri (cran-uri "ape" version))
        (sha256
         (base32
-         "0f74x9vx9sxpns2hlq4w2x80cd2gw42isfgncvs9pqbjf4hiyqnr"))))
+         "1r7fwyz30ippcl1ibqiv1xryf44x5crcks5kx19h146ffj76qcgh"))))
     (build-system r-build-system)
     (propagated-inputs
      `(("r-lattice" ,r-lattice)
@@ -3667,14 +3667,14 @@ Laplace approximation and adaptive Gauss-Hermite quadrature.")
 (define-public r-jomo
   (package
     (name "r-jomo")
-    (version "2.7-1")
+    (version "2.7-2")
     (source
      (origin
        (method url-fetch)
        (uri (cran-uri "jomo" version))
        (sha256
         (base32
-         "0cdy9m4ylarkk9d0v1s61k2d877l4bbxly8a4jwhfy43fdvskz1w"))))
+         "1sbcpacxnxbzwa8rr9x2bq7hh0s3sw6yznr90dkp43n6xk5xaqir"))))
     (build-system r-build-system)
     (propagated-inputs
      `(("r-lme4" ,r-lme4)
@@ -3819,14 +3819,14 @@ programming} (SQP) based solver).")
 (define-public r-hardyweinberg
   (package
     (name "r-hardyweinberg")
-    (version "1.6.3")
+    (version "1.6.6")
     (source
      (origin
        (method url-fetch)
        (uri (cran-uri "HardyWeinberg" version))
        (sha256
         (base32
-         "1irz44q6nf95h37av868f47aakwv3jgwgw217xfsfw0afkm7s25f"))))
+         "1qn1bbzfk4w3mqrzisshw5xx7x249sgmj6qdi39lkqb58a4mf4kh"))))
     (properties `((upstream-name . "HardyWeinberg")))
     (build-system r-build-system)
     (propagated-inputs
@@ -6522,14 +6522,14 @@ results to the user.")
 (define-public r-hdf5r
   (package
     (name "r-hdf5r")
-    (version "1.3.2")
+    (version "1.3.3")
     (source
      (origin
        (method url-fetch)
        (uri (cran-uri "hdf5r" version))
        (sha256
         (base32
-         "0c2p06k9bp9rf0fyavnxw5d8jr2bbgx3gjblahz581cpvsfksj9i"))))
+         "0i8m4yjxggrs05slq2afvz2ckl1yc9wq7gd1s7dq2gjn46zkry50"))))
     (build-system r-build-system)
     (inputs
      `(("hdf5" ,hdf5)
@@ -8023,31 +8023,22 @@ distributed on a compute cluster.")
 (define-public r-abjutils
   (package
     (name "r-abjutils")
-    (version "0.2.3")
+    (version "0.3.1")
     (source
      (origin
        (method url-fetch)
        (uri (cran-uri "abjutils" version))
        (sha256
-        (base32 "0n4zps65y3zg0gfzlv97w91si52a9izkncirskbkj5x9hk0nhxcv"))))
+        (base32 "18mmlkqsrjfclk8islfjdsp8sbw6dpjj5x45kqilxdiss69gg5zd"))))
     (build-system r-build-system)
     (propagated-inputs
-     `(("r-devtools" ,r-devtools)
-       ("r-dplyr" ,r-dplyr)
-       ("r-furrr" ,r-furrr)
-       ("r-future" ,r-future)
-       ("r-glue" ,r-glue)
-       ("r-httr" ,r-httr)
+     `(("r-dplyr" ,r-dplyr)
        ("r-magrittr" ,r-magrittr)
-       ("r-progress" ,r-progress)
        ("r-purrr" ,r-purrr)
-       ("r-readr" ,r-readr)
        ("r-rlang" ,r-rlang)
        ("r-rstudioapi" ,r-rstudioapi)
-       ("r-scales" ,r-scales)
        ("r-stringi" ,r-stringi)
        ("r-stringr" ,r-stringr)
-       ("r-tibble" ,r-tibble)
        ("r-tidyr" ,r-tidyr)))
     (home-page "https://github.com/abjur/abjutils/")
     (synopsis "Collection of tools for jurimetrical analysis")
@@ -8807,14 +8798,14 @@ Hothorn, Westfall, 2010, CRC Press).")
 (define-public r-emmeans
   (package
     (name "r-emmeans")
-    (version "1.4.8")
+    (version "1.5.0")
     (source
      (origin
        (method url-fetch)
        (uri (cran-uri "emmeans" version))
        (sha256
         (base32
-         "0h884qn4cip03w0h5psrz5y9zkm2wppklrhdz2chm2xk13zqnq5k"))))
+         "09nap4aazpbsswqzk0d4kjngwd8sib222s31yd08sd1sqw432c6k"))))
     (build-system r-build-system)
     (propagated-inputs
      `(("r-estimability" ,r-estimability)
@@ -8858,14 +8849,13 @@ Cohen (1988).")
 (define-public r-libcoin
   (package
     (name "r-libcoin")
-    (version "1.0-5")
+    (version "1.0-6")
     (source
      (origin
        (method url-fetch)
        (uri (cran-uri "libcoin" version))
        (sha256
-        (base32
-         "1cm9x1dlg9f7fh7n5nw3x4a7rl88c7ylrlc8x3rx4mq5w1j42x0a"))))
+        (base32 "0njfdbz4mkyasxm80p0fb0qibvzz7kdzddn8ybj2k6y8bx0w3bs8"))))
     (build-system r-build-system)
     (propagated-inputs `(("r-mvtnorm" ,r-mvtnorm)))
     (home-page "https://cran.r-project.org/web/packages/libcoin")
@@ -14014,21 +14004,61 @@ generalized least squares for serially or spatially correlated observations,
 generalized linear models, and quantile regression.")
     (license license:gpl2+)))
 
+(define-public r-arsenal
+  (package
+    (name "r-arsenal")
+    (version "3.5.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (cran-uri "arsenal" version))
+       (sha256
+        (base32
+         "0avi434wkk3w7axd89a4jwsbb11fi0239mkkla6zasnjwbqgjim0"))))
+    (properties `((upstream-name . "arsenal")))
+    (build-system r-build-system)
+    (propagated-inputs `(("r-knitr" ,r-knitr)))
+    (native-inputs `(("r-knitr" ,r-knitr)))
+    (home-page "https://github.com/mayoverse/arsenal")
+    (synopsis "Functions for large-scale statistical summaries")
+    (description
+     "This package provides an arsenal of R functions for large-scale
+statistical summaries, which are streamlined to work within the latest
+reporting tools in R and RStudio and which use formulas and versatile
+summary statistics for summary tables and models.  The primary functions
+include
+
+@enumerate
+@item @code{tableby}, a Table-1-like summary of multiple variable types by the
+  levels of one or more categorical variables;
+@item @code{paired}, a Table-1-like summary of multiple variable types paired
+  across two time points;
+@item @code{modelsum}, which performs simple model fits on one or more
+  endpoints for many variables (univariate or adjusted for covariates);
+@item @code{freqlist}, a powerful frequency table across many categorical
+  variables;
+@item @code{comparedf}, a function for comparing @code{data.frames}; and
+@item @code{write2}, a function to output tables to a document.
+@end enumerate
+")
+    (license license:gpl2+)))
+
 (define-public r-haplo-stats
   (package
     (name "r-haplo-stats")
-    (version "1.7.9")
+    (version "1.8.2")
     (source
      (origin
        (method url-fetch)
        (uri (cran-uri "haplo.stats" version))
        (sha256
         (base32
-         "19kxascqq5qz0zdxx0w837ji207y1z2ggxkl4vmlbay03k2dw2mx"))))
+         "13gc980jk1pas7mz9b4nmwqd64qhh2c0xhq1z06z67jgv7k8n7dc"))))
     (properties `((upstream-name . "haplo.stats")))
     (build-system r-build-system)
     (propagated-inputs
-     `(("r-rms" ,r-rms)))
+     `(("r-arsenal" ,r-arsenal)
+       ("r-rms" ,r-rms)))
     (native-inputs
      `(("r-r-rsp" ,r-r-rsp))) ; for vignettes
     (home-page "https://www.mayo.edu/research/labs/statistical-genetics-genetic-epidemiology/software")
@@ -17309,14 +17339,14 @@ package.")
 (define-public r-showtext
   (package
     (name "r-showtext")
-    (version "0.8-1")
+    (version "0.9")
     (source
      (origin
        (method url-fetch)
        (uri (cran-uri "showtext" version))
        (sha256
         (base32
-         "1n1cd9f4zrv45k5953akclqh1jh7fy122dqkgmbfi5h122v6p2h0"))))
+         "11fx2vv8jlvcnybh18y7v4bn2c67aqsqwfq7y8dpywbwr4zg8jid"))))
     (properties `((upstream-name . "showtext")))
     (build-system r-build-system)
     (inputs
@@ -20572,14 +20602,14 @@ perform @dfn{exploratory mediation} (XMed).")
 (define-public r-stanheaders
   (package
     (name "r-stanheaders")
-    (version "2.21.0-5")
+    (version "2.21.0-6")
     (source
      (origin
        (method url-fetch)
        (uri (cran-uri "StanHeaders" version))
        (sha256
         (base32
-         "1zyph2x47x9a5baj5d79a1lzj7gajirisajvkrcngrjvw8bq7810"))))
+         "1wwcrss4y6xbi81cg6ldhm57wz5paflzzp3yxh8b6shf9l2jla50"))))
     (properties `((upstream-name . "StanHeaders")))
     (build-system r-build-system)
     (inputs `(("pandoc" ,pandoc)))
@@ -22351,13 +22381,13 @@ Try a demo of the LSD by running @code{demotour()}.")
 (define-public r-fourcseq
   (package
     (name "r-fourcseq")
-    (version "1.21.0")
+    (version "1.22.1")
     (source
      (origin
        (method url-fetch)
        (uri (bioconductor-uri "FourCSeq" version))
        (sha256
-        (base32 "0lhcjw2hmmdafq52c5fvpm1crnzynbslamzh7r6ygifmzaz2pa8x"))))
+        (base32 "14q1ijnqnbd9xs60sfvyqjfiypjrvhacpwp2v85yfhcxw870cx5b"))))
     (properties `((upstream-name . "FourCSeq")))
     (build-system r-build-system)
     (propagated-inputs
@@ -23059,3 +23089,31 @@ clusters.  The method is sufficiently flexible so that a wide range of
 Gaussian and non-Gaussian structures can be clustered with automatic selection
 of K.")
     (license license:agpl3+)))
+
+(define-public r-nabor
+  (package
+    (name "r-nabor")
+    (version "0.5.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (cran-uri "nabor" version))
+       (sha256
+        (base32
+         "1nj39cdfwrmhgsi3cq8imxv3n6xzc1v6dzdb2cf2hybjk368v4s7"))))
+    (properties `((upstream-name . "nabor")))
+    (build-system r-build-system)
+    (propagated-inputs
+     `(("r-bh" ,r-bh)
+       ("r-rcpp" ,r-rcpp)
+       ("r-rcppeigen" ,r-rcppeigen)))
+    (home-page "https://cran.r-project.org/web/packages/nabor/")
+    (synopsis "Wrapper for K nearest neighbour library for low dimensions")
+    (description
+     "This package provides an R wrapper for libnabo, an exact or approximate
+k nearest neighbour library which is optimised for low dimensional
+spaces (e.g. 3D).  @code{nabor} includes a @code{knn} function that is
+designed as a drop-in replacement for the RANN function @code{nn2}.  In
+addition, objects which include the k-d tree search structure can be returned
+to speed up repeated queries of the same set of target points.")
+    (license license:bsd-3)))

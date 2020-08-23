@@ -194,37 +194,41 @@ defconfig.  Return the appropriate make target if applicable, otherwise return
           (uri (string-append "https://linux-libre.fsfla.org"
                               "/pub/linux-libre/releases/" version "-gnu/"
                               "deblob-" (version-major+minor version)))
+          (file-name (string-append "linux-libre-deblob-"
+                                    (version-major+minor version)))
           (sha256 deblob-hash))
         (origin
           (method url-fetch)
           (uri (string-append "https://linux-libre.fsfla.org"
                               "/pub/linux-libre/releases/" version "-gnu/"
                               "deblob-check"))
+          (file-name (string-append "linux-libre-deblob-check-"
+                                    (version-major+minor version)))
           (sha256 deblob-check-hash))))
 
 (define deblob-scripts-5.8
   (linux-libre-deblob-scripts
-   "5.8"
+   "5.8.2"
    (base32 "07z7sglyrfh0706icqqf3shadf638pvyid9386r661ds5lbsa2mw")
-   (base32 "1nzf1wzva52bm41j2ba0m1vr0cpfwnybdwv5ff6km49l0gziaqx7")))
+   (base32 "0j6jba5fcddqlb42f95gjl78jisfla4nswqila074gglcrbnl9q7")))
 
 (define deblob-scripts-5.7
   (linux-libre-deblob-scripts
-   "5.7.14"
+   "5.7.16"
    (base32 "1gharhw104wxp9dxjkzzvsqc2xn44mc9yvacc3v7jh7b6bb0a64a")
-   (base32 "1n198gx18rxc7xflgiwya43inkwayc91pgb129kngfza8sm6v8ks")))
+   (base32 "19mzampqx6j85fbdnl347wsy8zw2fnm189llsjc7jwfm10qc2kms")))
 
 (define deblob-scripts-5.4
   (linux-libre-deblob-scripts
-   "5.4.57"
+   "5.4.59"
    (base32 "0ckxn7k5zgcqk30dq943bnamr6a6zjbw2aqjl3x30f4kvh5f6k25")
-   (base32 "10qb890is4z58vr8czh3xx69q62l3b3j38y410kgiw8nii3zx5lr")))
+   (base32 "1b3q88i2qfdxyvpi9f7jds0qlb8hfpw87mgia096ax6822c2cmyb")))
 
 (define deblob-scripts-4.19
   (linux-libre-deblob-scripts
-   "4.19.138"
+   "4.19.140"
    (base32 "02zs405awaxydbapka4nz8h6lmnc0dahgczqsrs5s2bmzjyyqkcy")
-   (base32 "1w2wgxblpq09i33qmqgw5v3r5rm9vkkygr6m0sgv4zgczk9s29wr")))
+   (base32 "1jiaw0as1ippkrjdpd52657w5mz9qczg3y2hlra7m9k0xawwiqlf")))
 
 (define deblob-scripts-4.14
   (linux-libre-deblob-scripts
@@ -234,13 +238,13 @@ defconfig.  Return the appropriate make target if applicable, otherwise return
 
 (define deblob-scripts-4.9
   (linux-libre-deblob-scripts
-   "4.9.231"
+   "4.9.232"
    (base32 "1wvldzlv7q2xdbadas87dh593nxr4a8p5n0f8zpm72lja6w18hmg")
    (base32 "0fxajshb75siq39lj5h8xvhdj8lcmddkslwlyj65rhlwk6g2r4b2")))
 
 (define deblob-scripts-4.4
   (linux-libre-deblob-scripts
-   "4.4.231"
+   "4.4.232"
    (base32 "0x2j1i88am54ih2mk7gyl79g25l9zz4r08xhl482l3fvjj2irwbw")
    (base32 "0hhin1jpfkd6nwrb6xqxjzl3hdxy4pn8a15hy2d3d83yw6pflbsf")))
 
@@ -385,58 +389,58 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
     (sha256 hash)))
 
 
-(define-public linux-libre-5.8-version "5.8.1")
+(define-public linux-libre-5.8-version "5.8.3")
 (define-public linux-libre-5.8-pristine-source
   (let ((version linux-libre-5.8-version)
-        (hash (base32 "09574qbcrncb34dx9pd65iqs06758zim4nkncnjzmxwgjgza9lpq")))
+        (hash (base32 "0y8prifvkywqsx5lk80bh31m505vinmicpvdrirgg0c9scg7x8lf")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-5.8)))
 
-(define-public linux-libre-5.7-version "5.7.15")
+(define-public linux-libre-5.7-version "5.7.17")
 (define-public linux-libre-5.7-pristine-source
   (let ((version linux-libre-5.7-version)
-        (hash (base32 "04jj7vmwd1fjpfnwrhnc92qnskj7i150dyxvilfmkg3ki521gsqf")))
+        (hash (base32 "09ajavdyvr0025rwvwfp9yv2z8q779nan1i6dck2kkdxr48kd36c")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-5.7)))
 
-(define-public linux-libre-5.4-version "5.4.58")
+(define-public linux-libre-5.4-version "5.4.60")
 (define-public linux-libre-5.4-pristine-source
   (let ((version linux-libre-5.4-version)
-        (hash (base32 "0iqnn98hj3lq1avlrbjv9qdyfwffv01vd0a465xkhxck26py4bvh")))
+        (hash (base32 "08x2a78n23371k7l5p677mihnl58dpjh7r7bvyiwj3y4hlisplmd")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-5.4)))
 
-(define-public linux-libre-4.19-version "4.19.139")
+(define-public linux-libre-4.19-version "4.19.141")
 (define-public linux-libre-4.19-pristine-source
   (let ((version linux-libre-4.19-version)
-        (hash (base32 "01anspwh3vskmcqf4xclx0jx6h0h33zfgmmvrzxq17wlzqhvyklw")))
+        (hash (base32 "0511vb9rfpy5l6cz69v0v97rw2rk2pscc4hkz2pfmgikagm1shm4")))
     (make-linux-libre-source version
                              (%upstream-linux-source version hash)
                              deblob-scripts-4.19)))
 
-(define-public linux-libre-4.14-version "4.14.193")
+(define-public linux-libre-4.14-version "4.14.194")
 (define-public linux-libre-4.14-pristine-source
   (let ((version linux-libre-4.14-version)
-        (hash (base32 "00wziff12xphafyspb02rnjim5a15zywnhdk70ks9q9h8hfv83qb")))
+        (hash (base32 "1q7ssi2790bqjn8s8ra5ihma70hmxykahink7iq5h78738id191y")))
     (make-linux-libre-source version
                              (%upstream-linux-source version hash)
                              deblob-scripts-4.14)))
 
-(define-public linux-libre-4.9-version "4.9.232")
+(define-public linux-libre-4.9-version "4.9.233")
 (define-public linux-libre-4.9-pristine-source
   (let ((version linux-libre-4.9-version)
-        (hash (base32 "0q2gpkazfw93r79aq21kv1y3hwxawl0swyvd3nd73p254gl75x2q")))
+        (hash (base32 "19dcwylhy5iqq3dmppqf7s9wy9d16m103djn1n183c9acnqclv9a")))
     (make-linux-libre-source version
                              (%upstream-linux-source version hash)
                              deblob-scripts-4.9)))
 
-(define-public linux-libre-4.4-version "4.4.232")
+(define-public linux-libre-4.4-version "4.4.233")
 (define-public linux-libre-4.4-pristine-source
   (let ((version linux-libre-4.4-version)
-        (hash (base32 "0d7x30sy9c27n9bqf5f5mf64c6j5iljnw1gm7g8z00xgvrjqibjf")))
+        (hash (base32 "1z77dikgkvkp9ggwxp07hl8vxsf9kq57rhfdpbvhny1x13fqkrlp")))
     (make-linux-libre-source version
                              (%upstream-linux-source version hash)
                              deblob-scripts-4.4)))
@@ -853,16 +857,22 @@ It has been modified to remove all non-free binary blobs.")
 ;;; Generic kernel packages.
 ;;;
 
+(define-public linux-libre-5.8
+  (make-linux-libre* linux-libre-5.8-version
+                     linux-libre-5.8-source
+                     '("x86_64-linux" "i686-linux" "armhf-linux" "aarch64-linux" "riscv64-linux")
+                     #:configuration-file kernel-config))
+
+(define-public linux-libre-version         linux-libre-5.8-version)
+(define-public linux-libre-pristine-source linux-libre-5.8-pristine-source)
+(define-public linux-libre-source          linux-libre-5.8-source)
+(define-public linux-libre                 linux-libre-5.8)
+
 (define-public linux-libre-5.7
   (make-linux-libre* linux-libre-5.7-version
                      linux-libre-5.7-source
                      '("x86_64-linux" "i686-linux" "armhf-linux" "aarch64-linux" "riscv64-linux")
                      #:configuration-file kernel-config))
-
-(define-public linux-libre-version         linux-libre-5.7-version)
-(define-public linux-libre-pristine-source linux-libre-5.7-pristine-source)
-(define-public linux-libre-source          linux-libre-5.7-source)
-(define-public linux-libre                 linux-libre-5.7)
 
 (define-public linux-libre-5.4
   (make-linux-libre* linux-libre-5.4-version
@@ -3371,16 +3381,16 @@ devices that can inject events directly into the input subsystem.")
 (define-public lvm2
   (package
     (name "lvm2")
-    (version "2.03.09")
+    (version "2.03.10")
     (source (origin
               (method url-fetch)
-              (uri (list (string-append "ftp://sourceware.org/pub/lvm2/LVM2."
+              (uri (list (string-append "https://sourceware.org/ftp/lvm2/LVM2."
                                         version ".tgz")
                          (string-append "ftp://sources.redhat.com/pub/lvm2/releases/LVM2."
                                         version ".tgz")))
               (sha256
                (base32
-                "0xdr9qbqw6kja267wmx6ajnfv1nhw056gpxx9v2qmfh3bj6qnfn0"))
+                "1l0fkn9abrgk5mfn6jfh9qhdr86b59l1c5pk6lp8jh0491d69las"))
               (modules '((guix build utils)))
               (snippet
                '(begin
@@ -5943,17 +5953,17 @@ running boot option, and more.")
 (define-public sysstat
   (package
     (name "sysstat")
-    (version "12.3.1")
+    (version "12.4.0")
     (source (origin
               (method url-fetch)
               (uri (string-append "http://pagesperso-orange.fr/sebastien.godard/"
                                   "sysstat-" version ".tar.xz"))
               (sha256
                (base32
-                "1hf1sy7akribmgavadqccxpy49yv0zfb3m81d2bj6jf8pyzwcrbq"))))
+                "05idnvkhvzaynj9awx7q54x1v42jblzrxq0fn5zd1v4mjwrnqmbq"))))
     (build-system gnu-build-system)
     (arguments
-     `(#:tests? #f ; No test suite.
+     `(#:tests? #f                      ; no test suite.
        ;; Without this flag, it tries to install the man pages with group 'root'
        ;; and fails because /etc/passwd lacks an entry for the root user.
        #:configure-flags

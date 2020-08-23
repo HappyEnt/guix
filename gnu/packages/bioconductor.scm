@@ -1504,14 +1504,14 @@ browser.")
 (define-public r-oligoclasses
   (package
     (name "r-oligoclasses")
-    (version "1.50.0")
+    (version "1.50.4")
     (source
      (origin
        (method url-fetch)
        (uri (bioconductor-uri "oligoClasses" version))
        (sha256
         (base32
-         "05jy9qz3ir4maxackr1xqlfi1czhy1qd22wwibjdhfh5dp534cpn"))))
+         "1d8c3i8v8kcm1afgpz6zc1iysip7993y8456cqxl37f7n6n0ax67"))))
     (properties `((upstream-name . "oligoClasses")))
     (build-system r-build-system)
     (propagated-inputs
@@ -1539,14 +1539,14 @@ packages.")
 (define-public r-oligo
   (package
     (name "r-oligo")
-    (version "1.52.0")
+    (version "1.52.1")
     (source
      (origin
        (method url-fetch)
        (uri (bioconductor-uri "oligo" version))
        (sha256
         (base32
-         "102szyiicws4c6l3k282236ml1m1vl9zmars4q1kdjfnvsyclfc4"))))
+         "1gpvr33pwzz1glzajcipvjcplb7yxvjj00q0ybqcc3wa47bhfkwd"))))
     (properties `((upstream-name . "oligo")))
     (build-system r-build-system)
     (inputs `(("zlib" ,zlib)))
@@ -3624,14 +3624,14 @@ information about samples and features can be added to the plot.")
 (define-public r-gosemsim
   (package
     (name "r-gosemsim")
-    (version "2.14.0")
+    (version "2.14.1")
     (source
      (origin
        (method url-fetch)
        (uri (bioconductor-uri "GOSemSim" version))
        (sha256
         (base32
-         "0mg4d8whq90iyl2jjj5dx3kyar17yqn00jvia3b4a8lhmjw8l1hk"))))
+         "0v4q9xr1cm5xr08pgbzrss41kh3yz7xyh31n55l0sjmr1629ykln"))))
     (properties `((upstream-name . "GOSemSim")))
     (build-system r-build-system)
     (propagated-inputs
@@ -3812,14 +3812,14 @@ All the visualization methods are developed based on ggplot2 graphics.")
 (define-public r-clusterprofiler
   (package
     (name "r-clusterprofiler")
-    (version "3.16.0")
+    (version "3.16.1")
     (source
      (origin
        (method url-fetch)
        (uri (bioconductor-uri "clusterProfiler" version))
        (sha256
         (base32
-         "0m7919gzrd2fddb4kcznwpshhab1ha2yppnkxg11zmh40wcdawyi"))))
+         "11zsgb8wbdv8r4c04iczz4aala4yw4ai7rz8igdzz87c0940nxkb"))))
     (properties
      `((upstream-name . "clusterProfiler")))
     (build-system r-build-system)
@@ -3834,6 +3834,7 @@ All the visualization methods are developed based on ggplot2 graphics.")
        ("r-magrittr" ,r-magrittr)
        ("r-plyr" ,r-plyr)
        ("r-qvalue" ,r-qvalue)
+       ("r-rlang" ,r-rlang)
        ("r-rvcheck" ,r-rvcheck)
        ("r-tidyr" ,r-tidyr)))
     (native-inputs
@@ -4290,14 +4291,14 @@ Bioconductor.")
 (define-public r-motifstack
   (package
     (name "r-motifstack")
-    (version "1.32.0")
+    (version "1.32.1")
     (source
      (origin
        (method url-fetch)
        (uri (bioconductor-uri "motifStack" version))
        (sha256
         (base32
-         "008f2mjcyyiz84ilrsldpqwvxy2lp93hjggrq4nrqwi78nyx3ls5"))))
+         "02vmkgn36n5xpmizy33znlzgmi3w5hnhsibgisbnhwwgxpkrwpcd"))))
     (properties `((upstream-name . "motifStack")))
     (build-system r-build-system)
     (propagated-inputs
@@ -5239,14 +5240,14 @@ This algorithm is based on the publication by Hart et al., 2013 (Pubmed ID
 (define-public r-rbowtie2
   (package
     (name "r-rbowtie2")
-    (version "1.10.0")
+    (version "1.10.1")
     (source
      (origin
        (method url-fetch)
        (uri (bioconductor-uri "Rbowtie2" version))
        (sha256
         (base32
-         "1z2dn0q3wcw8b9ibx388kh7p5km16i71sw9miqj3daw7g0v5bxp3"))))
+         "19v7wfvrd53j618c1xbiqnlsf2kxw697myryx0vb9s2aspknyzz7"))))
     (properties `((upstream-name . "Rbowtie2")))
     (build-system r-build-system)
     (inputs
@@ -5317,14 +5318,14 @@ Infinium HumanMethylation 450k assay.")
 (define-public r-biocfilecache
   (package
     (name "r-biocfilecache")
-    (version "1.12.0")
+    (version "1.12.1")
     (source
      (origin
        (method url-fetch)
        (uri (bioconductor-uri "BiocFileCache" version))
        (sha256
         (base32
-         "02chrzwccmazi7rdfpyriizhbgxyxlmprlw32w05wk54as6wrxv8"))))
+         "02yayjyliaqxcwqa0n2ccmsfflskqzf0gvdibh2r3nz5bi66imkf"))))
     (properties `((upstream-name . "BiocFileCache")))
     (build-system r-build-system)
     (propagated-inputs
@@ -5379,14 +5380,14 @@ Gaussian distributions.")
 (define-public r-rbowtie
   (package
     (name "r-rbowtie")
-    (version "1.28.0")
+    (version "1.28.1")
     (source
      (origin
        (method url-fetch)
        (uri (bioconductor-uri "Rbowtie" version))
        (sha256
         (base32
-         "06y1qp915dlwjdi2fs3344sgya55pcv07f3i61y0cxb0bhbcgvrz"))))
+         "0589ggbfx6di42wvqyhnzgrhmb52swr3r5z22w6b8x0z2y7hl8b3"))))
     (properties `((upstream-name . "Rbowtie")))
     (build-system r-build-system)
     (inputs
@@ -5784,14 +5785,14 @@ annotations.")
 (define-public r-rsubread
   (package
     (name "r-rsubread")
-    (version "2.2.4")
+    (version "2.2.6")
     (source
      (origin
        (method url-fetch)
        (uri (bioconductor-uri "Rsubread" version))
        (sha256
         (base32
-         "0yznfqgp5cbz68n3rrfvm752267da16kl538zdrb1g1aw9zdfqc6"))))
+         "04h79qhq93d8id0rr5xnj9vf82ygwxzdlnck78yv738xd0jjvnpm"))))
     (properties `((upstream-name . "Rsubread")))
     (build-system r-build-system)
     (inputs `(("zlib" ,zlib)))
@@ -7051,14 +7052,14 @@ arrays based on fast wavelet-based functional models.")
 (define-public r-variancepartition
   (package
     (name "r-variancepartition")
-    (version "1.18.2")
+    (version "1.18.3")
     (source
      (origin
        (method url-fetch)
        (uri (bioconductor-uri "variancePartition" version))
        (sha256
         (base32
-         "19bhkb8vd44m3nkznw075fx3y2p3a1bsazbhcfiqw9n4190k9bgv"))))
+         "1jrlhi2c5ibvq8a41g5hwdq4kk4rdd7m464rz5767zaaci7l2ay0"))))
     (properties
      `((upstream-name . "variancePartition")))
     (build-system r-build-system)
@@ -7765,14 +7766,14 @@ different graph related packages produced by Bioconductor.")
 (define-public r-experimenthub
   (package
     (name "r-experimenthub")
-    (version "1.14.0")
+    (version "1.14.2")
     (source
      (origin
        (method url-fetch)
        (uri (bioconductor-uri "ExperimentHub" version))
        (sha256
         (base32
-         "18d6kjfavy5b769gpkblihdkz2nz2hsgyjki8mp1sywi0ik08ncd"))))
+         "1kgvprchz1fg8pl1irj62mk2gyb4jcc9iimpypv4c2iccy5bp84x"))))
     (properties `((upstream-name . "ExperimentHub")))
     (build-system r-build-system)
     (propagated-inputs
@@ -7958,14 +7959,14 @@ analytics on packages.")
 (define-public r-biocset
   (package
     (name "r-biocset")
-    (version "1.2.1")
+    (version "1.2.2")
     (source
      (origin
        (method url-fetch)
        (uri (bioconductor-uri "BiocSet" version))
        (sha256
         (base32
-         "14dmkc878lskbm001kgjyqmrwnn6s032z4h64f617f1xd9zx9wrj"))))
+         "041hq3rp0kv7kjwcjjrksk8lw3sj6j1v3wdcr8z611k0g0z6p0cj"))))
     (properties `((upstream-name . "BiocSet")))
     (build-system r-build-system)
     (propagated-inputs

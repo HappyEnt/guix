@@ -76,10 +76,61 @@
   #:use-module (guix download)
   #:use-module (guix git-download)
   #:use-module (guix build-system cmake)
+  #:use-module (guix build-system glib-or-gtk)
   #:use-module (guix build-system gnu)
   #:use-module (guix build-system go)
+  #:use-module (guix build-system meson)
   #:use-module (guix build-system python)
   #:use-module (guix build-system trivial))
+
+(define-public pedansee
+  (package
+    (name "pedansee")
+    (version "0.0.3")
+    (source
+     (origin
+       (method url-fetch)
+       (uri
+        (string-append "https://www.flyn.org/projects/"
+                       name "/" name "-" version ".tar.gz"))
+       (sha256
+        (base32 "0lsg791x6n95pxg6vif8qfc46nqcamhjq3g0dl5xqf6imy7n3acd"))))
+    (build-system glib-or-gtk-build-system)
+    (native-inputs
+     `(("clang" ,clang)
+       ("pkg-config" ,pkg-config)
+       ("python" ,python-wrapper)))
+    (inputs
+     `(("glib" ,glib)))
+    (synopsis "Code checker for C")
+    (description "Pedansee checks C source files for compliance with a particular
+programming style.  The style is currently defined by the pedansee source code
+in the form of functions which walk each source file’s syntax tree.  You can
+modify some aspects of this style through the use of regular expressions.")
+    (home-page "https://www.flyn.org/projects/pedansee/")
+    (license license:gpl3+)))
+
+(define-public mutest
+  (package
+    (name "mutest")
+    (version "0.0.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri
+        (git-reference
+         (url "https://github.com/ebassi/mutest.git")
+         (commit "e6246c9")))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0gdqwq6fvk06wld4rhnw5752hahrvhd69zrci045x25rwx90x26q"))))
+    (build-system meson-build-system)
+    (synopsis "Small C testing library")
+    (description "Mutest aims to be a small unit testing library for C projects,
+with an API heavily modelled on high level Behavior-Driver Development frameworks
+like Jasmine or Mocha.")
+    (home-page "https://ebassi.github.io/mutest/mutest.md.html")
+    (license license:expat)))
 
 (define-public check
   (package

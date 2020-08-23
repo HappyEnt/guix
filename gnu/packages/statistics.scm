@@ -429,14 +429,14 @@ D.V. Hinkley (1997, CUP), originally written by Angelo Canty for S.")
 (define-public r-mass
   (package
     (name "r-mass")
-    (version "7.3-51.6")
+    (version "7.3-52")
     (source
      (origin
        (method url-fetch)
        (uri (cran-uri "MASS" version))
        (sha256
         (base32
-         "1viyxy22qp8abzzzlbck55b0i81rrdygim1dq2pm52s2v13mq0z2"))))
+         "0c4scl7r4m0bikr0wmdrnn7wfzy1vg5v7gsq6bms2vknzs9ymhxp"))))
     (properties `((upstream-name . "MASS")))
     (build-system r-build-system)
     (home-page "http://www.stats.ox.ac.uk/pub/MASS4/")
@@ -621,13 +621,13 @@ nonlinear mixed-effects models.")
 (define-public r-mgcv
   (package
    (name "r-mgcv")
-   (version "1.8-31")
+   (version "1.8-32")
    (source
     (origin
      (method url-fetch)
      (uri (cran-uri "mgcv" version))
      (sha256
-      (base32 "1if34mqsn9r7g0l82lxvvx0wjhi9paqdymyd73nschxcl1if8vbk"))))
+      (base32 "1859lnwkmggk36616cnhk3b9qv1qkgf0cz5mfavv3jry7bad3xbg"))))
    (build-system r-build-system)
    (propagated-inputs
     `(("r-matrix" ,r-matrix)
@@ -1672,13 +1672,13 @@ and printing capabilities than traditional data frames.")
 (define-public r-dplyr
   (package
     (name "r-dplyr")
-    (version "1.0.1")
+    (version "1.0.2")
     (source (origin
               (method url-fetch)
               (uri (cran-uri "dplyr" version))
               (sha256
                (base32
-                "0ghdz1nfbq8yf70gr5yng8pnwbhqr0r3mh1rjw03kp12q6nmgxsm"))))
+                "0jnw18nw20gw3jvq3kvkf9mqn6b7mvgmys8g6350k5jwpygk5cbw"))))
     (build-system r-build-system)
     (propagated-inputs
      `(("r-ellipsis" ,r-ellipsis)
@@ -1808,13 +1808,13 @@ and density estimation.")
 (define-public r-chron
   (package
     (name "r-chron")
-    (version "2.3-55")
+    (version "2.3-56")
     (source (origin
               (method url-fetch)
               (uri (cran-uri "chron" version))
               (sha256
                (base32
-                "09gbs7c1ynlg0kl1m6nkbn75ysk16g13r17snnaws64qwywiywqg"))))
+                "0p9zz96jfyf139924hdwkzhr8knkjvx6547ac53rknm3a6wwngl6"))))
     (build-system r-build-system)
     (home-page "https://cran.r-project.org/web/packages/chron")
     (synopsis "Chronological R objects which can handle dates and times")
@@ -4981,14 +4981,14 @@ VGLMs can be loosely thought of as multivariate generalised linear models.")
 (define-public r-pbapply
   (package
     (name "r-pbapply")
-    (version "1.4-2")
+    (version "1.4-3")
     (source
      (origin
        (method url-fetch)
        (uri (cran-uri "pbapply" version))
        (sha256
         (base32
-         "1xmk4p006v8gij26rs6kp5prjyf2n32nqjxiyp8a6kvgyc4z46dc"))))
+         "08gb6c8p1r9z8wrfidj2dfn6irm43k6f4448d1d6nxmy6msjirlg"))))
     (build-system r-build-system)
     (home-page "https://github.com/psolymos/pbapply")
     (synopsis "Adding progress bar to apply functions")
@@ -5683,76 +5683,87 @@ to any arbitrary string.  In this case, it is up to you to set valid values.")
     (license license:gpl3+)))
 
 (define-public python-rpy2
-  ;; We need to take this changeset instead of the RELEASE_3_0_4 tag, because
-  ;; it fixes a regression when using ggplot 3.2.0.
-  (let ((changeset "19868a8")
-        (revision "1"))
-    (package
-      (name "python-rpy2")
-      (version (git-version "3.0.4" revision changeset))
-      (source
-       (origin
-         (method hg-fetch)
-         (uri (hg-reference
-               (url "https://bitbucket.org/rpy2/rpy2")
-               (changeset changeset)))
-         (file-name (git-file-name name version))
-         (sha256
-          (base32
-           "1bb0wslcbj3wjvyk3jb9yyzdi6adfqh5vfgcvn22dyzxzbhcs8kk"))))
-      (build-system python-build-system)
-      (arguments
-       '(#:modules ((ice-9 ftw)
-                    (srfi srfi-1)
-                    (srfi srfi-26)
-                    (guix build utils)
-                    (guix build python-build-system))
-         #:phases
-         (modify-phases %standard-phases
-           (replace 'check
-             (lambda* (#:key outputs inputs #:allow-other-keys)
-               (let ((cwd (getcwd)))
-                 (setenv "TZ" "UTC")
-                 (setenv "PYTHONPATH"
-                         (string-append cwd "/build/"
-                                        (find (cut string-prefix? "lib" <>)
-                                              (scandir (string-append cwd "/build")))
-                                        ":"
-                                        (getenv "PYTHONPATH"))))
-               (invoke "pytest" "-v" "rpy/tests/"))))))
-      (propagated-inputs
-       `(("python-cffi" ,python-cffi)
-         ("python-six" ,python-six)
-         ("python-jinja2" ,python-jinja2)
-         ("python-numpy" ,python-numpy)
-         ("python-pandas" ,python-pandas)
-         ("python-pytz" ,python-pytz)
-         ("python-ipython" ,python-ipython)
-         ("python-tzlocal" ,python-tzlocal)))
-      (inputs
-       `(("readline" ,readline)
-         ("icu4c" ,icu4c)
-         ("pcre" ,pcre)
-         ("r-minimal" ,r-minimal)
-         ("r-survival" ,r-survival)
-         ("r-ggplot2" ,r-ggplot2)
-         ("r-rsqlite" ,r-rsqlite)
-         ("r-dplyr" ,r-dplyr)
-         ("r-dbplyr" ,r-dbplyr)
-         ("python-numpy" ,python-numpy)))
-      (native-inputs
-       `(("zlib" ,zlib)
-         ("python-pytest" ,python-pytest)))
-      (home-page "https://rpy2.github.io")
-      (synopsis "Python interface to the R language")
-      (description "rpy2 is a redesign and rewrite of rpy.  It is providing a
+  (package
+    (name "python-rpy2")
+    (version "3.3.5")
+    (source
+      (origin
+        (method url-fetch)
+        (uri (pypi-uri "rpy2" version))
+        (sha256
+         (base32
+          "1bs36rds5fq8821l5q85q2b25161rs9ppw5c26x0hjwj487gpcfj"))
+        ;; These patches should be removed with the next release.
+        (patches
+          (list
+            (origin
+              (method url-fetch)
+              (uri "https://github.com/rpy2/rpy2/commit/04c57598f00145d868ea8da31ac1b1e7c49f7570.patch")
+              (file-name "python-rpy2-fix-test-failure.patch")
+              (sha256
+               (base32
+                "1lqd3yxjfx1rxrybcmnapy0r6ambg9myrb98q4nlfhpxanwfdbbh")))
+            (origin
+              (method url-fetch)
+              (uri "https://github.com/rpy2/rpy2/commit/685f67d0a6b47ea80e718116a10755019446aef7.patch")
+              (file-name "python-rpy2-r-console-test-fix.patch")
+              (sha256
+               (base32
+                "18wpvfaa4c13d44cb4sw88c3c7403xdy5m8h82wfq8fjmcq3cmzn")))))))
+    (build-system python-build-system)
+    (arguments
+     '(#:modules ((ice-9 ftw)
+                  (srfi srfi-1)
+                  (srfi srfi-26)
+                  (guix build utils)
+                  (guix build python-build-system))
+       #:phases
+       (modify-phases %standard-phases
+         (replace 'check
+           (lambda* (#:key outputs inputs #:allow-other-keys)
+             (let ((cwd (getcwd)))
+               (setenv "TZ" "UTC")
+               (setenv "PYTHONPATH"
+                       (string-append cwd "/build/"
+                                      (find (cut string-prefix? "lib" <>)
+                                            (scandir (string-append cwd "/build")))
+                                      ":"
+                                      (getenv "PYTHONPATH"))))
+             ;; test_vector_complex has issues when run in our environment.
+             (invoke "pytest" "-v" "rpy2/tests/" "-k" "not test_vector_complex"))))))
+    (propagated-inputs
+     `(("python-cffi" ,python-cffi)
+       ("python-six" ,python-six)
+       ("python-jinja2" ,python-jinja2)
+       ("python-numpy" ,python-numpy)
+       ("python-pandas" ,python-pandas)
+       ("python-pytz" ,python-pytz)
+       ("python-ipython" ,python-ipython)
+       ("python-tzlocal" ,python-tzlocal)))
+    (inputs
+     `(("readline" ,readline)
+       ("icu4c" ,icu4c)
+       ("pcre" ,pcre)
+       ("r-minimal" ,r-minimal)
+       ("r-survival" ,r-survival)
+       ("r-ggplot2" ,r-ggplot2)
+       ("r-rsqlite" ,r-rsqlite)
+       ("r-dplyr" ,r-dplyr)
+       ("r-dbplyr" ,r-dbplyr)
+       ("python-numpy" ,python-numpy)))
+    (native-inputs
+     `(("zlib" ,zlib)
+       ("python-pytest" ,python-pytest)))
+    (home-page "https://rpy2.github.io")
+    (synopsis "Python interface to the R language")
+    (description "rpy2 is a redesign and rewrite of rpy.  It is providing a
 low-level interface to R from Python, a proposed high-level interface,
 including wrappers to graphical libraries, as well as R-like structures and
 functions.")
-      ;; Any of these licenses can be picked for the R interface.  The whole
-      ;; project is released under GPLv2+ according to the license declaration
-      ;; in "setup.py".
-      (license (list license:mpl2.0 license:gpl2+ license:lgpl2.1+)))))
+    ;; Any of these licenses can be picked for the R interface.  The whole
+    ;; project is released under GPLv2+ according to the license declaration
+    ;; in "setup.py".
+    (license (list license:mpl2.0 license:gpl2+ license:lgpl2.1+))))
 
 (define-public java-jdistlib
   (package

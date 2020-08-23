@@ -3825,10 +3825,10 @@ blocks with @code{org-babel} in @code{org-mode}.")
       (license license:gpl3+))))
 
 (define-public emacs-ob-restclient
-  (let ((commit "53376667eeddb1388fd6c6976f3222e7c8adcd46"))
+  (let ((commit "f7449b2068498fe9d8ab9589e0a638148861533f"))
     (package
       (name "emacs-ob-restclient")
-      (version (git-version "0.02" "1" commit))
+      (version (git-version "0.02" "2" commit))
       (source
        (origin
          (method git-fetch)
@@ -3837,7 +3837,7 @@ blocks with @code{org-babel} in @code{org-mode}.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "1djg53cp7y83gic2v71y6r5z76kwrbkp0r69hl25rs99dx6p89dy"))))
+          (base32 "0s3931w9ab3yfml2pmq71rw21yf6hpg7m3vihxyy3vs6zli1cvmq"))))
       (propagated-inputs
        `(("emacs-restclient" ,emacs-restclient)))
       (build-system emacs-build-system)
@@ -5756,7 +5756,7 @@ cards created in Org mode.")
 (define-public emacs-org-superstar
   (package
     (name "emacs-org-superstar")
-    (version "1.3.0")
+    (version "1.4.0")
     (source
      (origin
        (method git-fetch)
@@ -5765,7 +5765,7 @@ cards created in Org mode.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "17x32k3f21z9ldakgryd2wczhdj78kb8gsdxplyjqc3knajpnzgp"))))
+        (base32 "1aklp6nk05ghpq7ybsbvn28wrygfwqvq58k1hjll97nbhd7h0gyb"))))
     (build-system emacs-build-system)
     (propagated-inputs
      `(("emacs-org" ,emacs-org)))
@@ -6460,7 +6460,7 @@ regexp that matches all known keywords.")
 (define-public emacs-perspective
   (package
     (name "emacs-perspective")
-    (version "2.9")
+    (version "2.10")
     (source
      (origin
        (method git-fetch)
@@ -6470,8 +6470,13 @@ regexp that matches all known keywords.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "1hmbczw3b7k2xdqcy5p3xnf2781gjw6bqqcwc5r9myg6b8p3pr7m"))))
+         "1xfcm69nd6f9chwlqfz5vd8nnyl5mwharxjrn1m515568dqrk62x"))))
     (build-system emacs-build-system)
+    (arguments
+     `(#:tests? #t
+       #:test-command '("emacs" "-Q" "-batch" "-L" "."
+                        "-l" "test/test-perspective.el"
+                        "-f" "ert-run-tests-batch-and-exit")))
     (home-page "https://github.com/nex3/perspective-el")
     (synopsis "Switch between named \"perspectives\"")
     (description
@@ -10960,23 +10965,24 @@ and cangjie.")
 (define-public emacs-posframe
   (package
     (name "emacs-posframe")
-    (version "0.7.0")
+    (version "0.8.0")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "https://elpa.gnu.org/packages/"
                            "posframe-" version ".el"))
        (sha256
-        (base32 "1kwl83jb5k1hnx0s2qw972v0gjqbbvk4sdcdb1qbdxsyw36sylc9"))))
+        (base32 "1vzaiiw2pxa0zrc2bkaxljpr4035xrh3d8z3l5f0jvp72cnq49kp"))))
     (build-system emacs-build-system)
     ;; emacs-minimal does not include the function font-info.
     (arguments
      `(#:emacs ,emacs))
     (home-page "https://github.com/tumashu/posframe")
     (synopsis "Pop a posframe (a child frame) at point")
-    (description "@code{emacs-posframe} can pop a posframe at point.  A
-posframe is a child frame displayed within its root window's buffer.
-@code{emacs-posframe} is fast and works well with CJK languages.")
+    (description
+     "Posframe can pop a posframe at point.  A posframe is a child frame
+displayed within its root window's buffer.  Posframe is fast and works well
+with CJK languages.")
     (license license:gpl3+)))
 
 (define-public emacs-el2org
@@ -12217,7 +12223,7 @@ the latest versions of Idris 1.")
 (define-public emacs-browse-at-remote
   (package
     (name "emacs-browse-at-remote")
-    (version "0.10.0")
+    (version "0.14.0")
     (source
      (origin
        (method git-fetch)
@@ -12226,7 +12232,7 @@ the latest versions of Idris 1.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0vhia7xmszcb3lxrb8wh93a3knjfzj48h8nhj4fh8zj1pjz6args"))))
+        (base32 "0bx4ns0jb0sqrjk1nsspvl3mhz3n12925azf7brlwb1vcgnji09v"))))
     (build-system emacs-build-system)
     (propagated-inputs
      `(("emacs-f" ,emacs-f)
@@ -13752,28 +13758,26 @@ add any additional instance slots.")
       (license license:gpl3))))
 
 (define-public emacs-epkg
-  ;; The release version is to old for the current database scheme.
-  (let ((commit "432312b9583ed7b88ad9644fd1bf2183765a892e"))
-    (package
-      (name "emacs-epkg")
-      (version (git-version "3.0.0" "1" commit))
-      (source
-       (origin
-         (method git-fetch)
-         (uri (git-reference
-               (url "https://github.com/emacscollective/epkg")
-               (commit commit)))
-         (file-name (git-file-name name version))
-         (sha256
-          (base32
-           "0d882kahn7a0vri7a9r15lvmfx1zn2hsga6jfcc6jv0hqbswlb2k"))))
-      (build-system emacs-build-system)
-      (propagated-inputs
-       `(("emacs-closql" ,emacs-closql)
-         ("emacs-dash" ,emacs-dash)))
-      (home-page "https://emacsmirror.net")
-      (synopsis "Browse the Emacsmirror package database")
-      (description "This package provides access to a local copy of the
+  (package
+    (name "emacs-epkg")
+    (version "3.2.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/emacscollective/epkg")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "1pxz611qb3m33r6343h0xhwqvvhjl131zyc2klplzgb23rkm8lk0"))))
+    (build-system emacs-build-system)
+    (propagated-inputs
+     `(("emacs-closql" ,emacs-closql)
+       ("emacs-dash" ,emacs-dash)))
+    (home-page "https://emacsmirror.net")
+    (synopsis "Browse the Emacsmirror package database")
+    (description "This package provides access to a local copy of the
 Emacsmirror package database.  It provides low-level functions for querying
 the database and a @file{package.el} user interface for browsing the database.
 Epkg itself is not a package manager.
@@ -13793,7 +13797,7 @@ name and password.  To skip it press a @key{Return} key.
 
 You could get a Epkg package list by invoking @code{epkg-list-packages} in
 Emacs.")
-      (license license:gpl3+))))
+    (license license:gpl3+)))
 
 (define-public emacs-elisp-slime-nav
   (package
@@ -15401,7 +15405,7 @@ powerful Org contents.")
 (define-public emacs-org-re-reveal
   (package
     (name "emacs-org-re-reveal")
-    (version "3.0.2")
+    (version "3.1.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -15410,7 +15414,7 @@ powerful Org contents.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1jjawkqrhbm787jkzfnwz1ixjphm5mgrhdi3qhzl0jzbjib5a4bf"))))
+                "1cmvqr97vx22lw510z0k2nsy5xfgnz2lvchmx5sdxrqz54pz1wfq"))))
     (build-system emacs-build-system)
     (propagated-inputs
      `(("emacs-htmlize" ,emacs-htmlize)
@@ -16008,7 +16012,7 @@ fixed-pitch,everything else becomes variable-pitch.")
 (define-public emacs-visual-regexp
   (package
     (name "emacs-visual-regexp")
-    (version "1.1.1")
+    (version "1.1.2")
     (source
      (origin
        (method git-fetch)
@@ -16017,7 +16021,7 @@ fixed-pitch,everything else becomes variable-pitch.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "12zpmzwyp85dzsjpxd3279kpfi9yz3jwc1k9fnb3xv3pjiil5svg"))))
+        (base32 "12p3rlhdphwmx1kxsjzcl2wj3i6qgpvw8iwhg1whs6yqgaxivixd"))))
     (build-system emacs-build-system)
     (home-page "https://github.com/benma/visual-regexp.el/")
     (synopsis "Regexp command with interactive visual feedback")
@@ -16504,27 +16508,35 @@ scroll up to read the function name and then scroll down to original position.")
       (license license:gpl3+))))
 
 (define-public emacs-git-auto-commit-mode
-  (package
-    (name "emacs-git-auto-commit-mode")
-    (version "4.5.0")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/ryuslash/git-auto-commit-mode")
-             (commit version)))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "1w3v9pmlmdxl4pglsb6j0igp13lbzg5bhbr1rv2vll93m6zxmyma"))))
-    (build-system emacs-build-system)
-    (home-page "https://github.com/ryuslash/git-auto-commit-mode")
-    (synopsis "Emacs Minor mode to automatically commit and push")
-    (description "@code{git-auto-commit-mode} is an Emacs minor mode that
+  (let ((commit "23abaff792c0459e51e596d3fecd5513617e8cb1")
+        (revision "1"))
+    (package
+      (name "emacs-git-auto-commit-mode")
+      (version (git-version "4.6.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/ryuslash/git-auto-commit-mode")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "0hqj34q8z4jg86zz2lwfvj6xk07b4g1222h9y1zqs83qgivwpk1l"))))
+      (build-system emacs-build-system)
+      (native-inputs
+       `(("emacs-buttercup" ,emacs-buttercup)
+         ("git" ,git)))
+      (arguments
+       `(#:tests? #t
+         #:test-command '("buttercup" "-L" ".")))
+      (home-page "https://github.com/ryuslash/git-auto-commit-mode")
+      (synopsis "Emacs Minor mode to automatically commit and push")
+      (description "@code{git-auto-commit-mode} is an Emacs minor mode that
 tries to commit changes to a file after every save.
 
 When @code{gac-automatically-push-p} is non-nil, it also tries to push to
 the current upstream.")
-    (license license:gpl3+)))
+      (license license:gpl3+))))
 
 (define-public emacs-scroll-on-drag
   (let ((commit "888abd04c34753b1fc4b2fe541bc004ebec5c996")
@@ -19990,7 +20002,7 @@ files in Elisp.")
 (define-public emacs-lsp-ui
   (package
     (name "emacs-lsp-ui")
-    (version "7.0")
+    (version "7.0.1")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -19999,7 +20011,7 @@ files in Elisp.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1v5xl2sfnpzrfi22bcb7zp25pv8s5kxgiqamxlbkd72pwch0skma"))))
+                "09dmhhxmfjnzdc5kygwsjf8nwqlnq9rbgrca679s2wy93miqj7vc"))))
     (build-system emacs-build-system)
     (propagated-inputs
      `(("emacs-dash" ,emacs-dash)
@@ -22710,7 +22722,7 @@ Telegram messaging platform.")
 (define-public emacs-doom-modeline
   (package
     (name "emacs-doom-modeline")
-    (version "2.8.2")
+    (version "3.0.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -22718,7 +22730,7 @@ Telegram messaging platform.")
                     (commit (string-append "v" version))))
               (sha256
                (base32
-                "11srz1mr821axggs2jcmdhihxx09a2dniqv3n039wbdfaimfaidz"))
+                "08m75rl5i812pa87zcsjvb4mm3jjhpwzgx9mf2m7sxj807airz5d"))
               (file-name (git-file-name name version))))
     (build-system emacs-build-system)
     (arguments
@@ -22726,6 +22738,7 @@ Telegram messaging platform.")
     (native-inputs `(("emacs-ert-runner" ,emacs-ert-runner)))
     (propagated-inputs
      `(("emacs-all-the-icons" ,emacs-all-the-icons)
+       ("emacs-dash" ,emacs-dash)
        ("emacs-shrink-path" ,emacs-shrink-path)))
     (synopsis "Fancy and fast mode-line inspired by minimalism design")
     (description "Doom modeline is a complete modeline for GNU Emacs inspired

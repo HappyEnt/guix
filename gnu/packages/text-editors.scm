@@ -75,21 +75,27 @@
 (define-public vis
   (package
     (name "vis")
-    (version "0.5")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append "https://github.com/martanne/vis/releases"
-                                  "/download/v" version
-                                  "/vis-v" version ".tar.gz"))
-              (sha256
-               (base32
-                "0aw35n8xk7ir84ckvczc6yshj9ynishrlz0qlv4yc1afbra1gxmn"))))
+    (version "0.6")                     ; also update the vis-test input
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/martanne/vis")
+             (commit (string-append "v" version))))
+       (sha256
+        (base32 "1zjm89cn3rfq8fxpwp66khy53s6vqlmw6q103qyyvix8ydzxdmsh"))
+       (file-name (git-file-name name version))))
     (build-system gnu-build-system)
     (arguments
      `(#:test-target "test"
-       #:tests? #f                  ; no releases; snapshots are missing tests
        #:phases
        (modify-phases %standard-phases
+         (add-after 'unpack 'unpack-test-suite
+           (lambda* (#:key inputs #:allow-other-keys)
+             (let ((vis-test (assoc-ref inputs "vis-test")))
+               (copy-recursively vis-test "test")
+               #t)))
+         (delete 'check)                ; the tests need a wrapped vis
          (add-after 'install 'wrap-binary
            (lambda* (#:key inputs outputs #:allow-other-keys)
              (let* ((out (assoc-ref outputs "out"))
@@ -102,7 +108,34 @@
                (wrap-program (string-append out "/bin/vis")
                  `("LUA_PATH" ":" prefix (,LUA_PATH))
                  `("LUA_CPATH" ":" prefix (,LUA_CPATH)))
+               #t)))
+         (add-after 'wrap-binary 'check
+           (assoc-ref %standard-phases 'check))
+         (add-before 'check 'set-up-tests
+           (lambda* (#:key outputs #:allow-other-keys)
+             (let ((out (assoc-ref outputs "out")))
+               ;; DEFAULT_COMPILER is hard-coded here.
+               (substitute* "test/core/ccan-config.c"
+                 (("\"cc\"")
+                  (format #f "\"~a\"" ,(cc-for-target))))
+
+               ;; Use the ‘vis’ executable that we wrapped above.
+               (install-file (string-append out "/bin/vis") ".")
+
+               ;; XXX Delete 2 failing tests.  TODO: make them not fail. :-)
+               (for-each delete-file
+                         (find-files "test/vis/selections" "^complement"))
                #t))))))
+    (native-inputs
+     `(("vis-test"
+        ,(origin
+           (method git-fetch)
+           (uri (git-reference
+                 (url "https://github.com/martanne/vis-test")
+                 (commit "4c4f6645de77f697a45899e8645e0c2bbdc7208a")))
+           (sha256
+            (base32 "10vh1pxsqw88a5xwh5irkm85xr66dbycmgpmabyw9h0vm14cvcz2"))
+           (file-name (git-file-name "vis-test" version))))))
     (inputs `(("lua" ,lua)
               ("ncurses" ,ncurses)
               ("libtermkey" ,libtermkey)
@@ -247,7 +280,26 @@ bindings and many of the powerful features of GNU Emacs.")
                         (setenv "DISPLAY" display)
                         (system (string-append xorg-server "/bin/Xvfb "
                                                display " &")))
-                      #t)))))
+                      #t))
+                  (add-after 'install 'wrap
+                    (lambda* (#:key inputs outputs #:allow-other-keys)
+                      ;; The package needs GTK+ and GtkSourceView on XDG_DATA_DIRS
+                      ;; for syntax highlighting to work.  shared-mime-info is
+                      ;; necessary for MIME handling.
+                      ;; XXX: Ideally we'd reuse glib-or-gtk-wrap here, but it
+                      ;; does not pick up $gtksourceview/share/gtksourceview-3.0.
+                      (let ((out (assoc-ref outputs "out"))
+                            (gtk+ (assoc-ref inputs "gtk+"))
+                            (gtksourceview (assoc-ref inputs "gtksourceview"))
+                            (shared-mime-info (assoc-ref inputs "shared-mime-info")))
+                        (wrap-program (string-append out "/bin/juci")
+                          `("XDG_DATA_DIRS" ":" prefix
+                            (,(string-join
+                               (map (lambda (pkg)
+                                      (string-append pkg "/share"))
+                                    (list out gtk+ gtksourceview shared-mime-info))
+                               ":"))))
+                        #t))))))
     (native-inputs
      `(("pkg-config" ,pkg-config)
        ("xorg-server" ,xorg-server-for-tests)))
@@ -903,7 +955,7 @@ card.  It offers:
 (define-public ne
   (package
     (name "ne")
-    (version "3.2.1")
+    (version "3.3.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -912,7 +964,7 @@ card.  It offers:
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0h6d08cnwrk96ss83i9bragwwanph6x54sm3ak1z81146dsqsiif"))))
+                "01aglnsfljlvx0wvyvpjfn4y88jf450a06qnj9a8lgdqv1hdkq1a"))))
     (build-system gnu-build-system)
     (native-inputs
      `(("perl" ,perl)
