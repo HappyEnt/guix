@@ -2,7 +2,7 @@
 ;;; Copyright © 2015, 2016 Andreas Enge <andreas@enge.fr>
 ;;; Copyright © 2016, 2018 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2016, 2017 Alex Griffin <a@ajgrf.com>
-;;; Copyright © 2017, 2019 Brendan Tildesley <mail@brendan.scot>
+;;; Copyright © 2017, 2019, 2020 Brendan Tildesley <mail@brendan.scot>
 ;;; Copyright © 2017 Roel Janssen <roel@gnu.org>
 ;;; Copyright © 2018, 2019 Tobias Geerinckx-Rice <me@tobias.gr>
 ;;; Copyright © 2020 Marius Bakke <mbakke@fastmail.com>
@@ -28,7 +28,6 @@
   #:use-module (guix download)
   #:use-module (guix git-download)
   #:use-module (guix build-system gnu)
-  #:use-module (gnu packages)
   #:use-module (guix build-system python)
   #:use-module (gnu packages)
   #:use-module (gnu packages compression)
@@ -247,6 +246,29 @@
                                           (assoc-ref inputs "js-mathjax")
                                           "/share/javascript/mathjax"))
              (invoke "python2" "setup.py" "rapydscript")))
+         (replace 'wrap
+           ;; Here we wrap PYTHONPATH exactly as it would be in
+           ;; python-build-system, plus the addition of
+           ;; QTWEBENGINEPROCESS_PATH, fixing a bug where Calibre would not
+           ;; find Qtwebengine.
+           (lambda* (#:key inputs outputs #:allow-other-keys)
+             (let* ((out (assoc-ref outputs "out"))
+                    (bin (string-append out "/bin"))
+                    (python (assoc-ref inputs "python"))
+                    (site-packages
+                     (cons (string-append out "/lib/python"
+                                          (python-version python)
+                                          "/site-packages")
+                           (search-path-as-string->list (getenv "PYTHONPATH"))))
+                    (qtwebengineprocess
+                     (string-append (assoc-ref inputs "qtwebengine")
+                                    "/lib/qt5/libexec/QtWebEngineProcess")))
+               (for-each (lambda (program)
+                           (wrap-program program
+                                 `("QTWEBENGINEPROCESS_PATH" = (,qtwebengineprocess))
+                                 `("PYTHONPATH" prefix ,site-packages)))
+                         (find-files bin ".")))
+             #t))
          (add-after 'install 'install-man-pages
            (lambda* (#:key outputs #:allow-other-keys)
              (copy-recursively

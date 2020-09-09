@@ -7,7 +7,7 @@
 ;;; Copyright © 2015, 2016, 2017 Ben Woodcroft <donttrustben@gmail.com>
 ;;; Copyright © 2017 Nikita <nikita@n0.is>
 ;;; Copyright © 2017, 2019, 2020 Marius Bakke <mbakke@fastmail.com>
-;;; Copyright © 2017, 2018, 2019 Efraim Flashner <efraim@flashner.co.il>
+;;; Copyright © 2017, 2018, 2019, 2020 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2017, 2018, 2020 Tobias Geerinckx-Rice <me@tobias.gr>
 ;;; Copyright © 2017 Clément Lassieur <clement@lassieur.org>
 ;;; Copyright © 2017, 2018, 2019 Christopher Baines <mail@cbaines.net>
@@ -6787,7 +6787,7 @@ inspired by the Sinatra microframework style of specifying actions:
 (define-public ruby-rubocop-ast
   (package
     (name "ruby-rubocop-ast")
-    (version "0.1.0")
+    (version "0.3.0")
     (source
      (origin
        (method git-fetch)               ;no test suite in distributed gem
@@ -6797,7 +6797,7 @@ inspired by the Sinatra microframework style of specifying actions:
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "0nz25z5b76xkgb9sh370hni3l946j07fr05cdwkdj9x7ibgsb6nj"))))
+         "1ycf6qcj8nbzk2js72priim4642lkn56w5kbny1nlryjkckxgm04"))))
     (build-system ruby-build-system)
     (arguments
      `(#:test-target "spec"
@@ -8905,14 +8905,13 @@ extension plugins.")
 (define-public ruby-domain-name
   (package
     (name "ruby-domain-name")
-    (version "0.5.20180417")
+    (version "0.5.20190701")
     (source
      (origin
        (method url-fetch)
        (uri (rubygems-uri "domain_name" version))
        (sha256
-        (base32
-         "0abdlwb64ns7ssmiqhdwgl27ly40x2l27l8hs8hn0z4kb3zd2x3v"))))
+        (base32 "0lcqjsmixjp52bnlgzh4lg9ppsk52x9hpwdjd53k8jnbah2602h0"))))
     (build-system ruby-build-system)
     (arguments
      `(#:phases
@@ -9898,13 +9897,13 @@ programs running in the background, in Ruby.")
 (define-public ruby-public-suffix
   (package
     (name "ruby-public-suffix")
-    (version "4.0.1")
+    (version "4.0.5")
     (source (origin
               (method url-fetch)
               (uri (rubygems-uri "public_suffix" version))
               (sha256
                (base32
-                "0xnfv2j2bqgdpg2yq9i2rxby0w2sc9h5iyjkpaas2xknwrgmhdb0"))))
+                "0vywld400fzi17cszwrchrzcqys4qm6sshbv73wy5mwcixmrgg7g"))))
     (build-system ruby-build-system)
     (arguments
      '(#:phases
@@ -10719,6 +10718,28 @@ of Markdown.  It is completely written in Ruby, supports standard Markdown
 popular by the PHP @code{Markdown Extra} package and @code{Maruku}.")
     (license license:expat)))
 
+(define-public ruby-kramdown-parser-gfm
+  (package
+    (name "ruby-kramdown-parser-gfm")
+    (version "1.1.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (rubygems-uri "kramdown-parser-gfm" version))
+       (sha256
+        (base32 "0a8pb3v951f4x7h968rqfsa19c8arz21zw1vaj42jza22rap8fgv"))))
+    (build-system ruby-build-system)
+    (arguments
+     `(#:tests? #f))                    ;no rakefile
+    (propagated-inputs
+     `(("ruby-kramdown" ,ruby-kramdown)))
+    (synopsis "Kramdown parser for the GFM dialect of Markdown")
+    (description
+     "This is a parser for kramdown that converts Markdown documents in the
+GFM dialect to HTML.")
+    (home-page "https://github.com/kramdown/parser-gfm")
+    (license license:expat)))
+
 (define-public ruby-http-parser.rb
   (package
     (name "ruby-http-parser.rb")
@@ -10997,7 +11018,7 @@ Pathname.")
        ("ruby-i18n" ,ruby-i18n)
        ("ruby-jekyll-sass-converter" ,ruby-jekyll-sass-converter)
        ("ruby-jekyll-watch" ,ruby-jekyll-watch)
-       ("ruby-kramdown" ,ruby-kramdown)
+       ("ruby-kramdown" ,ruby-kramdown-parser-gfm)
        ("ruby-liquid" ,ruby-liquid)
        ("ruby-mercenary" ,ruby-mercenary)
        ("ruby-pathutil" ,ruby-pathutil)
@@ -11011,13 +11032,13 @@ Pathname.")
 (define-public ruby-jekyll-paginate-v2
   (package
     (name "ruby-jekyll-paginate-v2")
-    (version "2.0.0")
+    (version "3.0.0")
     (source (origin
               (method url-fetch)
               (uri (rubygems-uri "jekyll-paginate-v2" version))
               (sha256
                (base32
-                "154bfpyml6abxww9868hhyfvxasl8qhsc5zy2q30c7dxaj0igdib"))))
+                "1qzlqhpiqz28624fp0ak76hfy7908w6kpx62v7z43aiwjv0yc6q0"))))
     (build-system ruby-build-system)
     (propagated-inputs
      `(("jekyll" ,jekyll)))

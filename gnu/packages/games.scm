@@ -1401,7 +1401,7 @@ destroying an ancient book using a special wand.")
 (define-public gnome-chess
   (package
     (name "gnome-chess")
-    (version "3.36.1")
+    (version "3.37.3")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://gnome/sources/gnome-chess/"
@@ -1409,7 +1409,7 @@ destroying an ancient book using a special wand.")
                                   "gnome-chess-" version ".tar.xz"))
               (sha256
                (base32
-                "165bk8s3nngyqbikggspj4rff5nxxfkfcmgzjb4grmsrgbqwk5di"))))
+                "09axf0q1mp13sv8cs0syfg8ahcd9r2qb26278r09j6s4njxmkfv4"))))
     (build-system meson-build-system)
     (arguments
      '(#:glib-or-gtk? #t
@@ -7048,7 +7048,7 @@ Strife, Chex Quest, and fan-created games like Harmony, Hacx and Freedoom.")
 (define-public odamex
   (package
     (name "odamex")
-    (version "0.8.1")
+    (version "0.8.3")
     (source
      (origin
        (method url-fetch)
@@ -7056,7 +7056,7 @@ Strife, Chex Quest, and fan-created games like Harmony, Hacx and Freedoom.")
              "mirror://sourceforge/odamex/Odamex/" version "/"
              "odamex-src-" version ".tar.gz"))
        (sha256
-        (base32 "1ywbqkfacc9fc5di3dn95y5ah2ys9i241j64q3f37a73x92llw1i"))))
+        (base32 "0f887g87bmcq4dpcga7xc2mpxs947dkbc934ir9xs55gz6z13q96"))))
     (build-system cmake-build-system)
     (arguments `(#:tests? #f))          ; no tests
     (inputs
@@ -7799,7 +7799,7 @@ GameController.")
 (define-public quadrapassel
   (package
     (name "quadrapassel")
-    (version "3.36.02")
+    (version "3.36.05")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://gnome/sources/quadrapassel/"
@@ -7807,7 +7807,7 @@ GameController.")
                                   "quadrapassel-" version ".tar.xz"))
               (sha256
                (base32
-                "0c80pzipxricyh4wydffsc94wj6ymnanqr9bg6wdx51hz1mmmilb"))))
+                "04abxmimh5npw8rhz1sfi6wxilgc6i1wka9mlnfwp8v1p1cb00cv"))))
     (build-system meson-build-system)
     (arguments
      '(#:glib-or-gtk? #t
@@ -7942,7 +7942,7 @@ civilized than your own.")
              ;; SSE instructions are available on Intel systems only.
              ,@(if (any (cute string-prefix? <> (or (%current-target-system)
                                                     (%current-system)))
-                        '("x64_64" "i686"))
+                        '("x86_64" "i686"))
                    '()
                    '("-DWITH_SSE2=NO"))
              ;; Configuration cannot find GTK2 without the two following
@@ -8848,7 +8848,8 @@ play with up to four players simultaneously.  It has network support.")
      ;; XXX: Engine is built as Pascal source code, requiring Free Pascal
      ;; Compiler, which we haven't packaged yet.  With the flag below, we use
      ;; a Pascal to C translator and Clang instead.
-     `(#:configure-flags (list "-DBUILD_ENGINE_C=ON")
+     `(#:configure-flags (list "-DBUILD_ENGINE_C=ON"
+                               "-Dhaskell_flags=-dynamic;-fPIC")
        #:phases
        (modify-phases %standard-phases
          (replace 'check

@@ -4654,6 +4654,17 @@ that client code uses to construct the grammar directly in Python code.")
 (define-public python2-pyparsing
   (package-with-python2 python-pyparsing))
 
+(define-public python-pyparsing-2.4.7
+  (package
+    (inherit python-pyparsing)
+    (version "2.4.7")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "pyparsing" version))
+       (sha256
+        (base32 "1hgc8qrbq1ymxbwfbjghv01fm3fbpjwpjwi0bcailxxzhf3yq0y2"))))))
+
 (define-public python-numpydoc
   (package
     (name "python-numpydoc")
@@ -8170,6 +8181,48 @@ expressions after the entire file has been read.  This enables support for
 first-class forward references that stub files use.")
     (license license:expat)))
 
+(define-public python-flake8-pie
+  (package
+    (name "python-flake8-pie")
+    (version "0.5.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "flake8-pie" version))
+       (sha256
+        (base32 "0kgipl5gljlp7aa7ykx15pswpzkd0d0qiznihb2z0d9a73181dyd"))))
+    (build-system python-build-system)
+    (home-page "https://github.com/sbdchd/flake8-pie")
+    (synopsis "Flake8 extension that implements lints")
+    (description
+     "This package provides a flake8 extension that implements miscellaneous
+lints.")
+    (license license:bsd-2)))
+
+(define-public python-autoflake
+  (package
+    (name "python-autoflake")
+    (version "1.3.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "autoflake" version))
+       (sha256
+        (base32 "0nzr057dbmgprp4a52ymafdkdd5zp2wcqf42913xc7hhvvdbj338"))))
+    (build-system python-build-system)
+    (propagated-inputs
+     `(("python-pyflakes" ,python-pyflakes)))
+    (home-page "https://github.com/myint/autoflake")
+    (synopsis "Removes unused imports and unused variables")
+    (description
+     "@code{autoflake} removes unused imports and unused variables from Python
+code as reported by @code{pyflakes}.
+
+By default, it only removes unused imports for modules that are part of the
+standard library.  Removal of unused variables is also disabled by default.
+It also removes useless @code{pass} statements.")
+    (license license:expat)))
+
 (define-public python-mistune
   (package
     (name "python-mistune")
@@ -9326,10 +9379,14 @@ Python's @code{ctypes} foreign function interface (FFI).")
     (native-inputs (if (%current-target-system)
                        `(("self" ,this-package))
                        '()))
-    (synopsis "Python bindings to the libmagic file type guesser.  Note that
-this module and the python-magic module both provide a \"magic.py\" file;
-these two modules, which are different and were developed separately, both
-serve the same purpose: provide Python bindings for libmagic.")))
+    (synopsis "Python bindings to the libmagic file type guesser")
+    (description "This package provides Python bindings to the libmagic file
+type guesser.
+
+Note that this module and the @code{python-magic} module both provide a
+@file{magic.py} file; these two modules, which are different and were
+developed separately, both serve the same purpose: provide Python bindings for
+libmagic.")))
 
 (define-public python2-file
   (package-with-python2 python-file))
@@ -9497,6 +9554,64 @@ functions to find and load entry points.")
      "Python-EPC can call elisp functions from Python and Python functions
 from elisp.")
     (license license:gpl3)))
+
+(define-public python-forex-python
+  (package
+    (name "python-forex-python")
+    (version "1.5")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "forex-python" version))
+       (sha256
+        (base32 "1ma8cl1i2dh8aa99pifnlilyy4d1gd1s07fj0yd17wcbpsh532cj"))))
+    (build-system python-build-system)
+    (arguments
+     ;; Tests are not included in the PyPI tarball.  Also, the tests in the
+     ;; repository require online data.
+     `(#:tests? #f))
+    (propagated-inputs
+     `(("python-requests" ,python-requests)
+       ("python-simplejson" ,python-simplejson)))
+    (home-page "https://github.com/MicroPyramid/forex-python")
+    (synopsis "Foreign exchange rates and currency conversion")
+    (description
+     "@code{python-forex-python} can be used to manipulate foreign
+exchange rates and to operate currency conversions.
+
+Features:
+@itemize
+@item List all currency rates.
+@item BitCoin price for all currencies.
+@item Converting amount to BitCoins.
+@item Get historical rates for any day since 1999.
+@item Conversion rate for one currency(ex; USD to INR).
+@item Convert amount from one currency to other.('USD 10$' to INR).
+@item Currency symbols.
+@item Currency names.
+@end itemize")
+    (license license:expat)))
+
+(define-public python-simpleeval
+  (package
+    (name "python-simpleeval")
+    (version "0.9.10")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "simpleeval" version))
+       (sha256
+        (base32 "1skvl467kj83rzkhk01i0wm8m5vmh6j5znrfdizn6r18ii45a839"))))
+    (build-system python-build-system)
+    (home-page "https://github.com/danthedeckie/simpleeval")
+    (synopsis "Simple, safe single expression evaluator library")
+    (description
+     "This package provides a quick single file library for easily adding
+evaluatable expressions into python projects.  Say you want to allow a user
+to set an alarm volume, which could depend on the time of day, alarm level,
+how many previous alarms had gone off, and if there is music playing at the
+time.")
+    (license license:expat)))
 
 (define-public python-nbconvert
   (package
@@ -12999,14 +13114,13 @@ collections of data.")
 (define-public python-prompt-toolkit
   (package
     (name "python-prompt-toolkit")
-    (version "3.0.5")
+    (version "3.0.7")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "prompt_toolkit" version))
        (sha256
-        (base32
-         "1j3x5s4gp4ih73sbcni0a0vffbzvrxbrbnkvb3fzjgxn810ilgan"))))
+        (base32 "12a4pyrpnm3vcrvx7lb4cglp220lbvi336mhn2k2nzcgy82lcbw2"))))
     (build-system python-build-system)
     (arguments
      `(#:phases
@@ -13032,7 +13146,8 @@ interfaces in Python.  It's like GNU Readline but it also features syntax
 highlighting while typing, out-of-the-box multi-line input editing, advanced
 code completion, incremental search, support for Chinese double-width
 characters, mouse support, and auto suggestions.")
-    (license license:bsd-3)))
+    (license license:bsd-3)
+    (properties `((python2-variant . ,(delay python-prompt-toolkit-2))))))
 
 (define-public python-prompt-toolkit-2
   (package (inherit python-prompt-toolkit)
@@ -13048,7 +13163,8 @@ characters, mouse support, and auto suggestions.")
     (propagated-inputs
      `(("python-wcwidth" ,python-wcwidth)
        ("python-six" ,python-six)
-       ("python-pygments" ,python-pygments)))))
+       ("python-pygments" ,python-pygments)))
+    (properties '())))
 
 (define-public python2-prompt-toolkit
   (package-with-python2 python-prompt-toolkit-2))
@@ -13107,18 +13223,18 @@ well.")
 (define-public ptpython
   (package
     (name "ptpython")
-    (version "0.34")
+    (version "3.0.5")
     (source (origin
               (method url-fetch)
               (uri (pypi-uri "ptpython" version))
               (sha256
                (base32
-                "1mmbiyzf0n8hm7z2a562x7w5cbl6jc0zsk6vp40q1z4cyblv1k13"))))
+                "0c2ry5gwi2v99slna62j8r2bwq0hpzmvgdryqg9m6x57vbjfg52h"))))
     (build-system python-build-system)
     (arguments
      '(#:tests? #f)) ; FIXME: No tests in pypi tarball.
     (propagated-inputs
-     `(("python-docopt" ,python-docopt)
+     `(("python-appdirs" ,python-appdirs)
        ("python-jedi" ,python-jedi)
        ("python-prompt-toolkit" ,python-prompt-toolkit)
        ("python-pygments" ,python-pygments)))
@@ -16002,14 +16118,14 @@ validating Swagger API specifications.")
 (define-public python-apache-libcloud
   (package
     (name "python-apache-libcloud")
-    (version "2.4.0")
+    (version "3.1.0")
     (source
       (origin
         (method url-fetch)
         (uri (pypi-uri "apache-libcloud" version))
         (sha256
          (base32
-          "0daj3mkzw79v5zin2r1s2wkrz1hplfc16bwj4ss68i5qjq4l2p0j"))))
+          "1b28j265kvibgxrgxx0gwfm6cmv252c8ph1j2vb0cpms8ph5if5v"))))
     (build-system python-build-system)
     (arguments
      `(#:phases
@@ -16022,22 +16138,10 @@ validating Swagger API specifications.")
              #t))
          (add-after 'unpack 'patch-tests
            (lambda _
-             (substitute* "./libcloud/test/test_file_fixtures.py"
-               ;; See <https://issues.apache.org/jira/browse/LIBCLOUD-923>.
-               (("def _ascii") "def _raw_data(self, method, url, body, headers):
-        return (httplib.OK,
-                \"1234abcd\",
-                {\"test\": \"value\"},
-                httplib.responses[httplib.OK])
-    def _ascii"))
              (substitute* "libcloud/test/compute/test_ssh_client.py"
                (("class ShellOutSSHClientTests")
                 "@unittest.skip(\"Guix container doesn't have ssh service\")
-class ShellOutSSHClientTests")
-               ;; See <https://issues.apache.org/jira/browse/LIBCLOUD-924>.
-               (("'.xf0.x90.x8d.x88'") "b'\\xF0\\x90\\x8D\\x88'")
-               (("'.xF0', '.x90', '.x8D', '.x88'")
-                "b'\\xF0', b'\\x90', b'\\x8D', b'\\x88'"))
+class ShellOutSSHClientTests"))
              #t))
          (add-before 'check 'copy-secret
            (lambda _
@@ -19159,6 +19263,54 @@ programs that do multiple things at the same time with parallelized I/O.")
     ;; Either license applies.
     (license (list license:expat license:asl2.0))))
 
+(define-public python-trio-typing
+  (package
+    (name "python-trio-typing")
+    (version "0.5.0")
+    (source
+     (origin
+      (method url-fetch)
+      (uri (pypi-uri "trio-typing" version))
+      (sha256
+       (base32 "1yvlj4vf3wyvp16dw6vyfm4i2idm8lvdc3fvjhi6mhm62zv7s07j"))))
+    (build-system python-build-system)
+    (arguments
+     `(#:phases
+       (modify-phases %standard-phases
+         (replace 'check
+           (lambda _
+             (invoke "pytest" "-vv"))))))
+    (native-inputs
+     `(("python-attrs" ,python-attrs)
+       ("python-pytest" ,python-pytest)))
+    (propagated-inputs
+     `(("python-mypy" ,python-mypy)
+       ("python-mypy-extensions"
+        ,python-mypy-extensions)
+       ("python-trio" ,python-trio)
+       ("python-typing-extensions"
+        ,python-typing-extensions)))
+    (home-page "https://github.com/python-trio/trio-typing")
+    (synopsis "Static type checking support for Trio and related projects")
+    (description
+     "This package provides:
+
+@itemize
+@item PEP 561 typing stubs packages for the Trio project packages:
+
+@itemize
+@item trio (@code{trio-stubs})
+@item outcome (@code{outcome-stubs})
+@item async_generator (@code{async_generator-stubs})
+@end itemize
+
+@item A package @code{trio_typing} containing types that Trio programs often
+want to refer to (@code{AsyncGenerator[Y, S]} and @code{TaskStatus[T])} and
+a mypy plugin that smooths over some limitations in the basic type hints.
+@end itemize")
+    ;; Either license applies.
+    (license (list license:expat license:asl2.0))))
+
 (define-public python-humanize
   (package
     (name "python-humanize")
@@ -20284,6 +20436,49 @@ files.  These files are used to translate strings in android apps.")
 such as a file modification and trigger an action.  This is similar to inotify,
 but portable.")
     (license license:asl2.0)))
+
+(define-public python-watchgod
+  (package
+    (name "python-watchgod")
+    (version "0.6")
+    (source
+     (origin
+       ;; There are no tests in the PyPI tarball.
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/samuelcolvin/watchgod")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1lqx44wkryakgpyqj3m0hsz61bqr07vc7smgzh188374hwvscp66"))))
+    (build-system python-build-system)
+    (arguments
+     `(#:phases
+       (modify-phases %standard-phases
+         (replace 'check
+           (lambda _
+             (invoke "pytest" "-vv"))))))
+    (native-inputs
+     `(("python-coverage" ,python-coverage)
+       ("python-docutils" ,python-docutils)
+       ("python-flake8" ,python-flake8)
+       ("python-isort" ,python-isort)
+       ("python-pycodestyle" ,python-pycodestyle)
+       ("python-pyflakes" ,python-pyflakes)
+       ("python-pygments" ,python-pygments)
+       ("python-pytest" ,python-pytest)
+       ("python-pytest-cov" ,python-pytest-cov)
+       ("python-pytest-aiohttp" ,python-pytest-aiohttp)
+       ("python-pytest-mock" ,python-pytest-mock)
+       ("python-pytest-sugar" ,python-pytest-sugar)
+       ("python-pytest-toolbox" ,python-pytest-toolbox)))
+    (home-page "https://github.com/samuelcolvin/watchgod")
+    (synopsis "Simple, modern file watching and code reload in Python")
+    (description
+     "Simple, modern file watching and code reload in Python inspired by
+@code{watchdog}.  Among the differences are a unified approach for each
+operating systems and an elegant approach to concurrency using threading.")
+    (license license:expat)))
 
 (define-public python-wget
   (package
@@ -21638,3 +21833,101 @@ and have a maximum lifetime built-in.")
      "This package provides a debug print command and other development tools.
 It adds a simple and readable way to print stuff during development.")
     (license license:expat)))
+
+(define-public python-dateparser
+  (package
+    (name "python-dateparser")
+    (version "0.7.6")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "dateparser" version))
+       (sha256
+        (base32
+         "1ypbyqxlk7n6zibk90js3ybz37xmin3kk0i35g8c51bwqpcfyxg8"))))
+    (build-system python-build-system)
+    (inputs
+     `(("tzdata" ,tzdata)))
+    (propagated-inputs
+     `(("python-dateutil" ,python-dateutil)
+       ("python-pytz" ,python-pytz)
+       ("python-regex" ,python-regex)
+       ("python-ruamel.yaml" ,python-ruamel.yaml)
+       ("python-tzlocal" ,python-tzlocal)))
+    (native-inputs
+     `(("python-mock" ,python-mock)
+       ("python-parameterized" ,python-parameterized)))
+    (arguments
+     `(;; TODO: Of 23320 tests, 6 fail and 53 error.
+       #:tests? #f
+       #:phases
+       (modify-phases %standard-phases
+         (add-before 'check 'set-check-environment
+           (lambda* (#:key inputs #:allow-other-keys)
+             (setenv "TZ" "UTC")
+             (setenv "TZDIR"
+                     (string-append (assoc-ref inputs "tzdata")
+                                    "/share/zoneinfo"))
+             #t)))))
+    (home-page "https://github.com/scrapinghub/dateparser")
+    (synopsis
+     "Date parsing library designed to parse dates from HTML pages")
+    (description
+     "@code{python-dateparser} provides modules to easily parse localized
+dates in almost any string formats commonly found on web pages.")
+    (license license:bsd-3)))
+
+(define-public python-dparse
+  (package
+    (name "python-dparse")
+    (version "0.5.1")
+    (source
+      (origin
+        (method url-fetch)
+        (uri (pypi-uri "dparse" version))
+        (sha256
+          (base32
+            "0rzkg3nymsbwdjc0ms2bsajkda02jipwyp3xk97qj71f21lz3dd1"))))
+    (build-system python-build-system)
+    (native-inputs
+      `(("python-pytest" ,python-pytest)))
+    (propagated-inputs
+      `(("python-packaging" ,python-packaging)
+        ("python-pyyaml" ,python-pyyaml)
+        ("python-toml" ,python-toml)))
+    (home-page "https://github.com/pyupio/dparse")
+    (synopsis "Parser for Python dependency files")
+    (description "This package provides a parser for Python dependency files.")
+    (license license:expat)))
+
+(define-public python-safety
+  (package
+    (name "python-safety")
+    (version "1.9.0")
+    (source
+      (origin
+        (method url-fetch)
+        (uri (pypi-uri "safety" version))
+        (sha256
+          (base32
+            "1j801xsxfzavjbzhhc934awvnk1b7jc0qsw3jp3ys0241mlj1gr3"))))
+    (build-system python-build-system)
+    (arguments
+     `(#:phases
+       (modify-phases %standard-phases
+         (add-after 'unpack 'disable-tests
+           (lambda _
+             (substitute* "tests/test_safety.py"
+               ;; requires network
+               (("def test_check_live") "def _test_check_live"))
+             #t)))))
+    (propagated-inputs
+      `(("python-click" ,python-click)
+        ("python-dparse" ,python-dparse)
+        ("python-packaging" ,python-packaging)
+        ("python-requests" ,python-requests)))
+    (home-page "https://github.com/pyupio/safety")
+    (synopsis "Check installed dependencies for known vulnerabilities")
+    (description "Safety checks installed dependencies for known vulnerabilities.
+By default it uses the open Python vulnerability database Safety DB.")
+  (license license:expat)))

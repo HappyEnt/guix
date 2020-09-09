@@ -824,7 +824,7 @@ other vector formats such as:
 (define-public ogre
   (package
     (name "ogre")
-    (version "1.12.5")
+    (version "1.12.6")
     (source
      (origin
        (method git-fetch)
@@ -834,7 +834,7 @@ other vector formats such as:
              (recursive? #t)))          ;for Dear ImGui submodule
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1sx0jsw4kmb4ycf62bgx3ygwv8k1cgjx52y47d7dk07z6gk6wpyj"))))
+        (base32 "1ap3krrl55hswv1n2r3ijf3xrb3kf9dnqvwyrc0fgnc7j7vd45sk"))))
     (build-system cmake-build-system)
     (arguments
      '(#:phases
@@ -1654,41 +1654,45 @@ Automated palette selection is supported.")
     (license license:expat)))
 
 (define-public drawpile
-  (package
-    (name "drawpile")
-    (version "2.1.17")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/drawpile/Drawpile")
-                    (commit version)))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "08w8vad8pw4a8kkshys1kd2kjvzpj62klxxxp904rx0qazw5hl80"))))
-    (build-system qt-build-system)
-    (arguments
-     '(#:configure-flags (list "-DTESTS=ON" "-DTOOLS=ON" "-DKIS_TABLET=ON")))
-    (native-inputs
-     `(("extra-cmake-modules" ,extra-cmake-modules)
-       ("pkg-config" ,pkg-config)))
-    (inputs
-     `(("giflib" ,giflib)
-       ("karchive" ,karchive)
-       ("kdnssd" ,kdnssd)
-       ("libmicrohttpd" ,libmicrohttpd)
-       ("libsodium" ,libsodium)
-       ("libvpx" ,libvpx)
-       ("libxi" ,libxi)
-       ;; ("miniupnpc" ,miniupnpc) ;segfaults for some reason
-       ("qtbase" ,qtbase)
-       ("qtkeychain" ,qtkeychain)
-       ("qtmultimedia" ,qtmultimedia)
-       ("qtsvg" ,qtsvg)
-       ("qtx11extras" ,qtx11extras)))
-    (home-page "https://drawpile.net")
-    (synopsis "Collaborative drawing program")
-    (description "Drawpile is a drawing program that allows share the canvas
+  ;; This commit fix building with libmicrohttpd>=0.71.
+  (let ((commit "ed1a75deb113da2d1df91a28f557509c4897130e")
+        (revision "1"))
+    (package
+      (name "drawpile")
+      (version (string-append "2.1.17-" revision "." (string-take commit 9)))
+      (source (origin
+                (method git-fetch)
+                (uri (git-reference
+                      (url "https://github.com/drawpile/Drawpile")
+                      (commit commit)))
+                (file-name (git-file-name name version))
+                (sha256
+                 (base32
+                  "1y21h1hk9ipkjvhjgas0c5hkjyan92vsxbxrn60c906hzqln2fr1"))))
+      (build-system qt-build-system)
+      (arguments
+       '(#:configure-flags
+         (list "-DTESTS=ON" "-DTOOLS=ON" "-DKIS_TABLET=ON")))
+      (native-inputs
+       `(("extra-cmake-modules" ,extra-cmake-modules)
+         ("pkg-config" ,pkg-config)))
+      (inputs
+       `(("giflib" ,giflib)
+         ("karchive" ,karchive)
+         ("kdnssd" ,kdnssd)
+         ("libmicrohttpd" ,libmicrohttpd)
+         ("libsodium" ,libsodium)
+         ("libvpx" ,libvpx)
+         ("libxi" ,libxi)
+         ;; ("miniupnpc" ,miniupnpc) ;segfaults for some reason
+         ("qtbase" ,qtbase)
+         ("qtkeychain" ,qtkeychain)
+         ("qtmultimedia" ,qtmultimedia)
+         ("qtsvg" ,qtsvg)
+         ("qtx11extras" ,qtx11extras)))
+      (home-page "https://drawpile.net")
+      (synopsis "Collaborative drawing program")
+      (description "Drawpile is a drawing program that allows share the canvas
 with other users in real time.
 
 Some feature highlights:
@@ -1704,4 +1708,4 @@ Some feature highlights:
 @item Encrypted connections using SSL
 @item Automatic port forwarding with UPnP
 @end itemize\n")
-    (license license:gpl3+)))
+      (license license:gpl3+))))

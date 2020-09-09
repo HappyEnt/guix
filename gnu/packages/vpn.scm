@@ -39,6 +39,7 @@
   #:use-module (guix build-system gnu)
   #:use-module (guix build-system linux-module)
   #:use-module (guix build-system python)
+  #:use-module (guix utils)
   #:use-module (gnu packages)
   #:use-module (gnu packages admin)
   #:use-module (gnu packages base)
@@ -52,6 +53,7 @@
   #:use-module (gnu packages guile)
   #:use-module (gnu packages libevent)
   #:use-module (gnu packages linux)
+  #:use-module (gnu packages ncurses)
   #:use-module (gnu packages nss)
   #:use-module (gnu packages perl)
   #:use-module (gnu packages pkg-config)
@@ -320,7 +322,7 @@ traversing network address translators (@dfn{NAT}s) and firewalls.")
 (define-public protonvpn-cli
   (package
     (name "protonvpn-cli")
-    (version "2.2.2")
+    (version "2.2.4")
     (source
      (origin
        ;; PyPI has a ".whl" file but not a proper source release.
@@ -332,7 +334,7 @@ traversing network address translators (@dfn{NAT}s) and firewalls.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "0ixjb02kj4z79whm1izd8mrn2h0rp9cmw4im1qvp93rahqxdd4n8"))))
+         "08yca0a0prrnrc7ir7ajd56yxvxpcs4m1k8f5kf273f5whgr7wzw"))))
     (build-system python-build-system)
     (arguments '(#:tests? #f)) ; no tests in repo
     (native-inputs
@@ -341,7 +343,8 @@ traversing network address translators (@dfn{NAT}s) and firewalls.")
      `(("pythondialog" ,python-pythondialog)
        ("requests" ,python-requests)))
     (propagated-inputs
-     `(("openvpn" ,openvpn)))
+     `(("openvpn" ,openvpn)
+       ("dialog" ,dialog)))
     (synopsis "Command-line client for ProtonVPN")
     (description
      "This is the official command-line interface for ProtonVPN, a secure
@@ -555,7 +558,7 @@ WireGuard was added to Linux 5.6.")
 (define-public wireguard-tools
   (package
     (name "wireguard-tools")
-    (version "1.0.20200513")
+    (version "1.0.20200827")
     (source
      (origin
        (method git-fetch)
@@ -564,11 +567,11 @@ WireGuard was added to Linux 5.6.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1yk8hng0qw2rf76hnawjbdpjssmah88bd5fk20h1c0j1yazlx0a9"))))
+        (base32 "1h351hn531z6z85sx9ya27xjz1jszgn1pkwibacjj49mds15f7gn"))))
     (build-system gnu-build-system)
     (arguments
      `(#:make-flags
-       (list "CC=gcc"
+       (list ,(string-append "CC=" (cc-for-target))
              "--directory=src"
              "WITH_BASHCOMPLETION=yes"
              ;; Install the ‘simple and dirty’ helper script wg-quick(8).

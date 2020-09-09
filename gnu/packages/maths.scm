@@ -135,7 +135,8 @@
   #:use-module (gnu packages version-control)
   #:use-module (gnu packages wxwidgets)
   #:use-module (gnu packages xml)
-  #:use-module (srfi srfi-1))
+  #:use-module (srfi srfi-1)
+  #:use-module (srfi srfi-26))
 
 (define-public aris
   (package
@@ -640,7 +641,7 @@ computing convex hulls.")
 (define-public lrslib
   (package
     (name "lrslib")
-    (version "7.0a")
+    (version "7.1")
     (source
      (origin
        (method url-fetch)
@@ -649,7 +650,7 @@ computing convex hulls.")
                            (string-delete #\. version) ".tar.gz"))
        (sha256
         (base32
-         "034fa45r9hwx6ljmgpxk2872q34nklkalpdkc6s9hqw57rivi36k"))))
+         "05kq3hzam31dlmkccv3v358r478kpvx76mw37ka12c6ypwv5dsnk"))))
     (build-system gnu-build-system)
     (inputs
      `(("gmp" ,gmp)))
@@ -1053,7 +1054,7 @@ incompatible with HDF5.")
     (synopsis
      "HDF4 without netCDF API, can be combined with the regular netCDF library")))
 
-(define-public hdf5
+(define-public hdf5-1.8
   (package
     (name "hdf5")
     (version "1.8.21")
@@ -1181,23 +1182,27 @@ extremely large and complex data collections.")
               "https://www.hdfgroup.org/ftp/HDF5/current/src/unpacked/COPYING"))))
 
 (define-public hdf5-1.10
-  (package (inherit hdf5)
+  (package/inherit hdf5-1.8
     (version "1.10.6")
     (source
      (origin
-      (method url-fetch)
-      (uri (list (string-append "https://support.hdfgroup.org/ftp/HDF5/releases/"
-                                "hdf5-" (version-major+minor version)
-                                "/hdf5-" version "/src/hdf5-"
-                                version ".tar.bz2")
-                 (string-append "https://support.hdfgroup.org/ftp/HDF5/"
-                                "current"
-                                (apply string-append
-                                       (take (string-split version #\.) 2))
-                                "/src/hdf5-" version ".tar.bz2")))
-      (sha256
-       (base32 "1gf38x51128hn00744358w27xgzjk0ff4wra4yxh2lk804ck1mh9"))
-      (patches (search-patches "hdf5-config-date.patch"))))))
+       (method url-fetch)
+       (uri (list (string-append "https://support.hdfgroup.org/ftp/HDF5/releases/"
+                                 "hdf5-" (version-major+minor version)
+                                 "/hdf5-" version "/src/hdf5-"
+                                 version ".tar.bz2")
+                  (string-append "https://support.hdfgroup.org/ftp/HDF5/"
+                                 "current"
+                                 (apply string-append
+                                        (take (string-split version #\.) 2))
+                                 "/src/hdf5-" version ".tar.bz2")))
+       (sha256
+        (base32 "1gf38x51128hn00744358w27xgzjk0ff4wra4yxh2lk804ck1mh9"))
+       (patches (search-patches "hdf5-config-date.patch"))))))
+
+(define-public hdf5
+  ;; Default version of HDF5.
+  hdf5-1.8)
 
 (define-public hdf-java
   (package
@@ -1407,7 +1412,7 @@ Swath).")
     (license (license:non-copyleft home-page))))
 
 (define-public hdf5-parallel-openmpi
-  (package (inherit hdf5)
+  (package/inherit hdf5-1.10                      ;use the latest
     (name "hdf5-parallel-openmpi")
     (inputs
      `(("mpi" ,openmpi)
@@ -1433,7 +1438,7 @@ Swath).")
                (substitute* "testpar/Makefile"
                  (("(^TEST_PROG_PARA.*)t_pflush1(.*)" front back)
                   (string-append front back "\n")))
-               (substitute* "tools/h5diff/testph5diff.sh"
+               (substitute* "tools/test/h5diff/testph5diff.sh"
                  (("/bin/sh") (which "sh")))
                #t))))))
     (synopsis "Management suite for data with parallel IO support")))
@@ -1603,7 +1608,11 @@ sharing of scientific data.")
                 "--enable-parallel-tests"
                 ;; Shared libraries not supported with parallel IO.
                 "--disable-shared" "--with-pic"
-                ,flags))))))
+                ,flags))
+       ((#:phases phases '%standard-phases)
+        `(modify-phases ,phases
+           (add-after 'build 'mpi-setup
+             ,%openmpi-setup)))))))
 
 (define-public netcdf-fortran
   (package
@@ -1747,6 +1756,84 @@ its dual and primal Simplex algorithms.  It also has a barrier algorithm for
 linear and quadratic objectives.  There are limited facilities for nonlinear
 and quadratic objectives using the Simplex algorithm.")
     (license license:epl1.0)))
+
+(define-public libflame
+  (package
+    (name "libflame")
+    (version "5.2.0")
+    (outputs '("out" "static"))
+    (source
+      (origin
+        (method git-fetch)
+        (uri (git-reference
+               (url "https://github.com/flame/libflame")
+               (commit version)))
+        (file-name (git-file-name name version))
+        (sha256
+         (base32
+          "1n6lf0wvpp77lxqlr721h2jbfbzigphdp19wq8ajiccilcksh7ay"))))
+    (build-system gnu-build-system)
+    (arguments
+     `(#:configure-flags
+       ;; Sensible defaults: https://github.com/flame/libflame/issues/28
+       (list "--enable-dynamic-build"
+             "--enable-max-arg-list-hack"
+             "--enable-lapack2flame"
+             "--enable-verbose-make-output"
+             "--enable-multithreading=pthreads" ; Openblas isn't built with openmp.
+             ,@(if (any (cute string-prefix? <> (or (%current-target-system)
+                                                    (%current-system)))
+                        '("x86_64" "i686"))
+                 '("--enable-vector-intrinsics=sse")
+                 '())
+             "--enable-supermatrix"
+             "--enable-memory-alignment=16"
+             "--enable-ldim-alignment")
+       #:phases
+       (modify-phases %standard-phases
+         (add-after 'unpack 'patch-/usr/bin/env-bash
+           (lambda _
+             (substitute* "build/config.mk.in"
+               (("/usr/bin/env bash") (which "bash")))
+             #t))
+         (replace 'check
+           (lambda* (#:key tests? #:allow-other-keys)
+             (substitute* "test/Makefile"
+               (("LIBBLAS .*") "LIBBLAS = -lblas\n")
+               (("LIBLAPACK .*") "LIBLAPACK = -llapack\n"))
+             (if tests?
+               (with-directory-excursion "test"
+                 (mkdir "obj")
+                 (invoke "make")
+                 (invoke "./test_libflame.x"))
+               #t)))
+         (add-after 'install 'install-static
+           (lambda* (#:key outputs #:allow-other-keys)
+             (let ((out (assoc-ref outputs "out"))
+                   (static (assoc-ref outputs "static")))
+               (mkdir-p (string-append static "/lib"))
+               (rename-file (string-append out "/lib/libflame.a")
+                            (string-append static "/lib/libflame.a"))
+               (install-file (string-append out "/include/FLAME.h")
+                             (string-append static "/include"))
+               #t))))))
+    (inputs
+     `(("gfortran" ,gfortran)))
+    (native-inputs
+     `(("lapack" ,lapack)
+       ("openblas" ,openblas)
+       ("perl" ,perl)
+       ("python" ,python-wrapper)))
+    (home-page "https://github.com/flame/libflame")
+    (synopsis "High-performance object-based library for DLA computations")
+    (description "@code{libflame} is a portable library for dense matrix
+computations, providing much of the functionality present in LAPACK, developed
+by current and former members of the @acronym{SHPC, Science of High-Performance
+Computing} group in the @url{https://www.ices.utexas.edu/, Institute for
+Computational Engineering and Sciences} at The University of Texas at Austin.
+@code{libflame} includes a compatibility layer, @code{lapack2flame}, which
+includes a complete LAPACK implementation.")
+    (license license:bsd-3)))
 
 (define-public ceres
   (package
@@ -1896,8 +1983,6 @@ script files.")
 (define-public octave
   (package (inherit octave-cli)
     (name "octave")
-    (source (origin
-              (inherit (package-source octave-cli))))
     (inputs
      `(("qscintilla" ,qscintilla)
        ("qt" ,qtbase)
@@ -2583,7 +2668,7 @@ bindings to almost all functions of SLEPc.")
 (define-public metamath
   (package
     (name "metamath")
-    (version "0.183")
+    (version "0.192")
     (source
      (origin
        (method git-fetch)
@@ -2592,7 +2677,7 @@ bindings to almost all functions of SLEPc.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1jjf4fy6j53i40dh0yv0f9sngnw4gs24cig99vsg3q0303pwrhg7"))))
+        (base32 "1k31zw36h2b0w5r6sbn9qc0v4hj42vw53qlhf5l7q2h3p5qlzvic"))))
     (build-system gnu-build-system)
     (native-inputs
      `(("autoconf" ,autoconf)

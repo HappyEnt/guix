@@ -1793,14 +1793,14 @@ determining dependencies between variables, code improvement suggestions.")
 (define-public r-chippeakanno
   (package
     (name "r-chippeakanno")
-    (version "3.22.2")
+    (version "3.22.3")
     (source
      (origin
        (method url-fetch)
        (uri (bioconductor-uri "ChIPpeakAnno" version))
        (sha256
         (base32
-         "199mlg0gwjy39afyk0ah6lzcm759bzxla4hgcajj0ay9jiibjqpa"))))
+         "0q3f55hh0a2hl96272js6gagmgps9cxs8s13pf6fii64rzaz5m7y"))))
     (properties `((upstream-name . "ChIPpeakAnno")))
     (build-system r-build-system)
     (propagated-inputs
@@ -3452,14 +3452,14 @@ surface of a flowcell.")
 (define-public r-gkmsvm
   (package
     (name "r-gkmsvm")
-    (version "0.80.0")
+    (version "0.81.0")
     (source
      (origin
        (method url-fetch)
        (uri (cran-uri "gkmSVM" version))
        (sha256
         (base32
-         "0ljcga246ad0ql8x3drvrdsyp0f20mgp3p6lnl79xb76qgfdnm0p"))))
+         "119g5rhc7ffyviz04r04aj5z1g6abnj3ddd01g7db505sdr6lapj"))))
     (properties `((upstream-name . "gkmSVM")))
     (build-system r-build-system)
     (propagated-inputs
@@ -4360,14 +4360,14 @@ position-specific scores within R and Bioconductor.")
 (define-public r-atacseqqc
   (package
     (name "r-atacseqqc")
-    (version "1.12.3")
+    (version "1.12.4")
     (source
      (origin
        (method url-fetch)
        (uri (bioconductor-uri "ATACseqQC" version))
        (sha256
         (base32
-         "12710c4024pndwwqiiqr6dhrd360z26fc8r3fxhs739gyd0ddk9r"))))
+         "1gs9862hhh4gr1akij6ykhcj29s9dzg1vnj87hqrm19dfgl43qbh"))))
     (properties `((upstream-name . "ATACseqQC")))
     (build-system r-build-system)
     (propagated-inputs
@@ -6334,14 +6334,14 @@ self-organizing map clustering and minimal spanning trees.")
 (define-public r-mixomics
   (package
     (name "r-mixomics")
-    (version "6.12.1")
+    (version "6.12.2")
     (source
      (origin
        (method url-fetch)
        (uri (bioconductor-uri "mixOmics" version))
        (sha256
         (base32
-         "13kq9l5xwhwp30y5gfqfh5f11n63vn8rk195mb2y2mww4cwi6lv4"))))
+         "1nkqlvm9j1f4vfj3f3kyxqgan38rpa9imimvl9pwivvsfl647vvc"))))
     (properties `((upstream-name . "mixOmics")))
     (build-system r-build-system)
     (propagated-inputs
@@ -6460,14 +6460,14 @@ genes in the gene-set that are ranked above the leading edge).")
 (define-public r-cicero
   (package
     (name "r-cicero")
-    (version "1.6.1")
+    (version "1.6.2")
     (source
      (origin
        (method url-fetch)
        (uri (bioconductor-uri "cicero" version))
        (sha256
         (base32
-         "0nf9yqg5krj26n4n82iyx3rsr84d46b17i9zfk35sh12l4xssbii"))))
+         "042ba6yfa7fksij2v7cwnp2sca3vmz7izn6fsxx9xswnncrkgcqh"))))
     (build-system r-build-system)
     (propagated-inputs
      `(("r-assertthat" ,r-assertthat)

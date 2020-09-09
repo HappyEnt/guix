@@ -2620,7 +2620,7 @@ with Python.")
 (define-public delly
   (package
     (name "delly")
-    (version "0.7.9")
+    (version "0.8.3")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -2628,7 +2628,7 @@ with Python.")
                     (commit (string-append "v" version))))
               (file-name (git-file-name name version))
               (sha256
-               (base32 "034jqsxswy9gqdh2zkgc1js99qkv75ks4xvzgmh0284sraagv61z"))
+               (base32 "1ibnplgfzj96w8glkx17v7sld3pm402fr5ybmf3h0rlcryabxrqy"))
               (modules '((guix build utils)))
               (snippet
                '(begin
@@ -2652,9 +2652,9 @@ with Python.")
                #t))))))
     (inputs
      `(("boost" ,boost)
+       ("bzip2" ,bzip2)
        ("htslib" ,htslib)
-       ("zlib" ,zlib)
-       ("bzip2" ,bzip2)))
+       ("zlib" ,zlib)))
     (home-page "https://github.com/dellytools/delly")
     (synopsis "Integrated structural variant prediction method")
     (description "Delly is an integrated structural variant prediction method
@@ -6357,14 +6357,14 @@ bioinformatics file formats, sequence alignment, and more.")
 (define-public seqmagick
   (package
     (name "seqmagick")
-    (version "0.7.0")
+    (version "0.8.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "seqmagick" version))
        (sha256
         (base32
-         "12bfyp8nqi0hd36rmj450aygafp01qy3hkbvlwn3bk39pyjjkgg5"))))
+         "0pf98da7i59q47gwrbx0wjk6xlvbybiwphw80w7h4ydjj0579a2b"))))
     (build-system python-build-system)
     (inputs
      `(("python-biopython" ,python-biopython)))
@@ -7896,6 +7896,31 @@ manipulating genomic intervals and variables defined along a genome.")
      "This package provides functions that are needed by many other packages
 on Bioconductor or which replace R functions.")
     (license license:artistic2.0)))
+
+(define-public r-bisquerna
+  (package
+   (name "r-bisquerna")
+   (version "1.0.4")
+   (source (origin
+            (method url-fetch)
+            (uri (cran-uri "BisqueRNA" version))
+            (sha256
+             (base32
+              "01g34n87ml7n3pck77497ddgbv3rr5p4153ac8ninpgjijlm3jw2"))))
+   (properties `((upstream-name . "BisqueRNA")))
+   (build-system r-build-system)
+   (propagated-inputs
+    `(("r-biobase" ,r-biobase)
+      ("r-limsolve" ,r-limsolve)))
+   (home-page "https://www.biorxiv.org/content/10.1101/669911v1")
+   (synopsis "Decomposition of Bulk Expression with Single-Cell Sequencing")
+   (description "This package provides tools to accurately estimate cell type
+abundances from heterogeneous bulk expression.  A reference-based method
+utilizes single-cell information to generate a signature matrix and
+transformation of bulk expression for accurate regression based estimates.
+A marker-based method utilizes known cell-specific marker genes to measure
+relative abundances across samples.")
+   (license license:gpl3)))
 
 (define-public r-annotationdbi
   (package
@@ -15400,12 +15425,34 @@ mutations from scRNA-Seq data.")
                       (string-append "HTS_LIB=" htslib-ref "/lib/libhts.a")
                       (string-append "INCLUDES= -I" htslib-ref "/include/htslib")
                       "HTS_HEADERS="    ; No need to check for headers here.
-                      (string-append "LIBPATH=-L. -L" htslib-ref "/include")))))
+                      (string-append "LIBPATH=-L. -L" htslib-ref "/include"))
+              (invoke "g++" "-shared" "-o" "libtabixpp.so" "tabix.o" "-lhts")
+              (invoke "ar" "rcs" "libtabixpp.a" "tabix.o"))))
         (replace 'install
           (lambda* (#:key outputs #:allow-other-keys)
-            (let ((bin (string-append (assoc-ref outputs "out") "/bin")))
-              (install-file "tabix++" bin))
-            #t)))))
+            (let* ((out (assoc-ref outputs "out"))
+                   (lib (string-append out "/lib"))
+                   (bin (string-append out "/bin")))
+              (install-file "tabix++" bin)
+              (install-file "libtabixpp.so" lib)
+              (install-file "libtabixpp.a" lib)
+              (install-file "tabix.hpp" (string-append out "/include"))
+              (mkdir-p (string-append lib "/pkgconfig"))
+              (with-output-to-file (string-append lib "/pkgconfig/tabixpp.pc")
+                (lambda _
+                  (format #t "prefix=~a~@
+                          exec_prefix=${prefix}~@
+                          libdir=${exec_prefix}/lib~@
+                          includedir=${prefix}/include~@
+                          ~@
+                          ~@
+                          Name: libtabixpp~@
+                          Version: ~a~@
+                          Description: C++ wrapper around tabix project~@
+                          Libs: -L${libdir} -ltabixpp~@
+                          Cflags: -I${includedir}~%"
+                          out ,version)))
+              #t))))))
    (home-page "https://github.com/ekg/tabixpp")
    (synopsis "C++ wrapper around tabix project")
    (description "This is a C++ wrapper around the Tabix project which abstracts
@@ -15432,13 +15479,45 @@ some of the details of opening and jumping in tabix-indexed files.")
          #:phases
          (modify-phases %standard-phases
            (delete 'configure) ; There is no configure phase.
+           (add-after 'unpack 'patch-source
+             (lambda _
+               (substitute* "Makefile"
+                 (("-c ") "-c -fPIC "))
+               #t))
+           (add-after 'build 'build-dynamic
+             (lambda _
+               (invoke "g++"
+                       "-shared" "-o" "libsmithwaterman.so"
+                       "smithwaterman.o" "SmithWatermanGotoh.o"
+                       "disorder.o" "BandedSmithWaterman.o"
+                       "LeftAlign.o" "Repeats.o" "IndelAllele.o")))
            (replace 'install
              (lambda* (#:key outputs #:allow-other-keys)
                (let* ((out (assoc-ref outputs "out"))
                       (bin (string-append out "/bin"))
                       (lib (string-append out "/lib")))
                  (install-file "smithwaterman" bin)
-                 (install-file "libsw.a" lib))
+                 (for-each
+                   (lambda (file)
+                     (install-file file (string-append out "/include/smithwaterman")))
+                   (find-files "." "\\.h$"))
+                 (install-file "libsmithwaterman.so" lib)
+                 (install-file "libsw.a" lib)
+                 (mkdir-p (string-append lib "/pkgconfig"))
+                 (with-output-to-file (string-append lib "/pkgconfig/smithwaterman.pc")
+                   (lambda _
+                     (format #t "prefix=~a~@
+                             exec_prefix=${prefix}~@
+                             libdir=${exec_prefix}/lib~@
+                             includedir=${prefix}/include/smithwaterman~@
+                             ~@
+                             ~@
+                             Name: smithwaterman~@
+                             Version: ~a~@
+                             Description: smith-waterman-gotoh alignment algorithm~@
+                             Libs: -L${libdir} -lsmithwaterman~@
+                             Cflags: -I${includedir}~%"
+                             out ,version))))
                #t)))))
       (home-page "https://github.com/ekg/smithwaterman")
       (synopsis "Implementation of the Smith-Waterman algorithm")
@@ -15528,10 +15607,43 @@ neural networks.")
        #:phases
        (modify-phases %standard-phases
          (delete 'configure) ; There is no configure phase.
+           (add-after 'unpack 'patch-source
+             (lambda _
+               (substitute* "Makefile"
+                 (("-c ") "-c -fPIC "))
+               #t))
+         (add-after 'build 'build-dynamic
+           (lambda _
+             (invoke "g++"
+                     "-shared" "-o" "libfastahack.so"
+                     "Fasta.o" "FastaHack.o" "split.o" "disorder.o")))
          (replace 'install
            (lambda* (#:key outputs #:allow-other-keys)
-             (let ((bin (string-append (assoc-ref outputs "out") "/bin")))
-               (install-file "fastahack" bin))
+             (let* ((out (assoc-ref outputs "out"))
+                    (lib (string-append out "/lib"))
+                    (bin (string-append out "/bin")))
+               (mkdir-p (string-append out "/include/fastahack"))
+               (for-each
+                 (lambda (file)
+                   (install-file file (string-append out "/include/fastahack")))
+                 (find-files "." "\\.h$"))
+               (install-file "fastahack" bin)
+               (install-file "libfastahack.so" lib)
+               (mkdir-p (string-append lib "/pkgconfig"))
+               (with-output-to-file (string-append lib "/pkgconfig/fastahack.pc")
+                 (lambda _
+                   (format #t "prefix=~a~@
+                           exec_prefix=${prefix}~@
+                           libdir=${exec_prefix}/lib~@
+                           includedir=${prefix}/include/fastahack~@
+                           ~@
+                           ~@
+                           Name: fastahack~@
+                           Version: ~a~@
+                           Description: Indexing and sequence extraction from FASTA files~@
+                           Libs: -L${libdir} -lfastahack~@
+                           Cflags: -I${includedir}~%"
+                           out ,version))))
              #t)))))
     (home-page "https://github.com/ekg/fastahack")
     (synopsis "Indexing and sequence extraction from FASTA files")
@@ -15554,9 +15666,16 @@ library automatically handles index file generation and use.")
                            "/vcflib-" version "-src.tar.gz"))
        (sha256
         (base32 "14zzrg8hg8cq9cvq2wdvp21j7nmxxkjrbagw2apd2yqv2kyx42lm"))
+       (patches (search-patches "vcflib-use-shared-libraries.patch"))
        (modules '((guix build utils)))
        (snippet
         `(begin
+           (substitute* (find-files "." "\\.(h|c)(pp)?$")
+             (("\"SmithWatermanGotoh.h\"") "<smithwaterman/SmithWatermanGotoh.h>")
+             (("\"convert.h\"") "<smithwaterman/convert.h>")
+             (("\"disorder.h\"") "<smithwaterman/disorder.h>")
+             (("\"tabix.hpp\"") "<tabix.hpp>")
+             (("\"Fasta.h\"") "<fastahack/Fasta.h>"))
            (for-each delete-file-recursively
                      '("fastahack" "filevercmp" "fsom" "googletest" "intervaltree"
                        "libVCFH" "multichoose" "smithwaterman" "tabixpp"))
@@ -15564,34 +15683,34 @@ library automatically handles index file generation and use.")
     (build-system gnu-build-system)
     (inputs
      `(("htslib" ,htslib)
+       ("fastahack" ,fastahack)
        ("perl" ,perl)
        ("python" ,python)
+       ("smithwaterman" ,smithwaterman)
+       ("tabixpp" ,tabixpp)
+       ("xz" ,xz)
        ("zlib" ,zlib)))
     (native-inputs
-     `(;; Submodules.
+     `(("pkg-config" ,pkg-config)
+       ;; Submodules.
        ;; This package builds against the .o files so we need to extract the source.
-       ("fastahack-src" ,(package-source fastahack))
        ("filevercmp-src" ,(package-source filevercmp))
-       ("fsom-src" ,(package-source fsom))
        ("intervaltree-src" ,(package-source intervaltree))
-       ("multichoose-src" ,(package-source multichoose))
-       ("smithwaterman-src" ,(package-source smithwaterman))
-       ("tabixpp-src" ,(package-source tabixpp))))
+       ("multichoose-src" ,(package-source multichoose))))
     (arguments
      `(#:tests? #f ; no tests
-       #:make-flags (list (string-append "HTS_LIB="
-                                         (assoc-ref %build-inputs "htslib")
-                                         "/lib/libhts.a")
-                          (string-append "HTS_INCLUDES= -I"
-                                         (assoc-ref %build-inputs "htslib")
-                                         "/include/htslib")
-                          (string-append "HTS_LDFLAGS= -L"
-                                         (assoc-ref %build-inputs "htslib")
-                                         "/include/htslib" " -lhts"))
        #:phases
        (modify-phases %standard-phases
+         (add-after 'unpack 'set-flags
+           (lambda* (#:key outputs #:allow-other-keys)
+             (substitute* "Makefile"
+               (("LDFLAGS =")
+                (string-append "LDFLAGS = -Wl,-rpath="
+                               (assoc-ref outputs "out") "/lib ")))
+             (substitute* "filevercmp/Makefile"
+               (("-c") "-c -fPIC"))
+             #t))
          (delete 'configure)
-         (delete 'check)
          (add-after 'unpack 'unpack-submodule-sources
            (lambda* (#:key inputs #:allow-other-keys)
              (let ((unpack (lambda (source target)
@@ -15603,34 +15722,39 @@ library automatically handles index file generation and use.")
                                            (assoc-ref inputs source)
                                            "--strip-components=1"))))))
                (and
-                (unpack "fastahack-src" "fastahack")
                 (unpack "filevercmp-src" "filevercmp")
-                (unpack "fsom-src" "fsom")
                 (unpack "intervaltree-src" "intervaltree")
-                (unpack "multichoose-src" "multichoose")
-                (unpack "smithwaterman-src" "smithwaterman")
-                (unpack "tabixpp-src" "tabixpp")))))
-         (replace 'build
-           (lambda* (#:key inputs make-flags #:allow-other-keys)
-             (let ((htslib (assoc-ref inputs "htslib")))
-               (with-directory-excursion "tabixpp"
-                 (substitute* "Makefile"
-                   (("-Ihtslib") (string-append "-I" htslib "/include/htslib"))
-                   (("-Lhtslib") (string-append "-L" htslib "/lib/htslib"))
-                   (("htslib/htslib") (string-append htslib "/include/htslib")))
-                 (invoke "make"
-                         (string-append "HTS_LIB=" htslib "/lib/libhts.a")))
-               (apply invoke "make" "CC=gcc" "CFLAGS=-Itabixpp" make-flags))))
+                (unpack "multichoose-src" "multichoose")))))
          (replace 'install
            (lambda* (#:key outputs #:allow-other-keys)
-             (let ((bin (string-append (assoc-ref outputs "out") "/bin"))
-                   (lib (string-append (assoc-ref outputs "out") "/lib")))
+             (let* ((out (assoc-ref outputs "out"))
+                    (bin (string-append out "/bin"))
+                    (lib (string-append out "/lib")))
                (for-each (lambda (file)
                            (install-file file bin))
                          (find-files "bin" ".*"))
-               ;; The header files in src/ do not interface libvcflib,
-               ;; therefore they are left out.
-               (install-file "libvcflib.a" lib))
+               (install-file "libvcflib.so" lib)
+               (install-file "libvcflib.a" lib)
+               (for-each
+                 (lambda (file)
+                   (install-file file (string-append out "/include")))
+                 (find-files "include" "\\.h(pp)?$"))
+               (mkdir-p (string-append lib "/pkgconfig"))
+               (with-output-to-file (string-append lib "/pkgconfig/vcflib.pc")
+                 (lambda _
+                   (format #t "prefix=~a~@
+                           exec_prefix=${prefix}~@
+                           libdir=${exec_prefix}/lib~@
+                           includedir=${prefix}/include~@
+                           ~@
+                           ~@
+                           Name: libvcflib~@
+                           Version: ~a~@
+                           Requires: smithwaterman, fastahack~@
+                           Description: C++ library for parsing and manipulating VCF files~@
+                           Libs: -L${libdir} -lvcflib~@
+                           Cflags: -I${includedir}~%"
+                           out ,version))))
              #t)))))
     (home-page "https://github.com/vcflib/vcflib/")
     (synopsis "Library for parsing and manipulating VCF files")

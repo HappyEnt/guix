@@ -298,7 +298,7 @@ Linux kernel.")
 (define-public libopenmpt
   (package
     (name "libopenmpt")
-    (version "0.5.1")
+    (version "0.5.2")
     (source
      (origin
        (method url-fetch)
@@ -306,8 +306,20 @@ Linux kernel.")
         (string-append "https://download.openmpt.org/archive/libopenmpt/src/"
                        "libopenmpt-" version "+release.autotools.tar.gz"))
        (sha256
-        (base32 "1vpalfsrkbx4vyrh1qy564lr91jwdxlbjivv5gzf8zcywxasf0xa"))))
+        (base32 "1cwpc4j90dpxa2siia68rg9qwwm2xk6bhxnslfjj364507jy6s4l"))))
     (build-system gnu-build-system)
+    (arguments
+     `(#:configure-flags
+       (list (string-append "--docdir=" (assoc-ref %outputs "out")
+                            "/share/doc/" ,name "-" ,version))
+       #:phases
+       (modify-phases %standard-phases
+         (add-after 'install 'delete-static-libraries
+           (lambda* (#:key outputs #:allow-other-keys)
+             (let* ((out (assoc-ref outputs "out"))
+                    (lib (string-append out "/lib")))
+               (for-each delete-file (find-files lib "\\.a$"))
+               #t))))))
     (native-inputs
      `(("doxygen" ,doxygen)
        ("perl" ,perl)
@@ -766,7 +778,7 @@ engineers, musicians, soundtrack editors and composers.")
           ;; SSE instructions are available on Intel systems only.
           ,@(if (any (cute string-prefix? <> (or (%current-target-system)
                                                  (%current-system)))
-                    '("x64_64" "i686"))
+                    '("x86_64" "i686"))
               '()
               '("--enable-sse=no"))
           ;; portmidi, libid3tag and libmad provide no .pc files, so

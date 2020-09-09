@@ -798,6 +798,7 @@ using Guile's foreign function interface.")
     (build-system guile-build-system)
     (arguments
      '(#:source-directory "src"
+       #:compile-flags '("--r6rs" "-Wunbound-variable" "-Warity-mismatch")
        #:phases (modify-phases %standard-phases
                   (add-after 'unpack 'move-files-around
                     (lambda _
@@ -806,8 +807,7 @@ using Guile's foreign function interface.")
                       (mkdir-p "src/pfds")
                       (for-each (lambda (file)
                                   (rename-file file
-                                               (string-append "src/pfds/"
-                                                              file)))
+                                    (string-append "src/pfds/" file)))
                                 '("bbtrees.sls"
                                   "deques"
                                   "deques.sls"
@@ -821,15 +821,6 @@ using Guile's foreign function interface.")
                                   "queues.sls"
                                   "sequences.sls"
                                   "sets.sls"))
-
-                      ;; In Guile <= 2.2.4, there's no way to tell 'guild
-                      ;; compile' to accept the ".sls" extension.  So...
-                      (for-each (lambda (file)
-                                  (rename-file file
-                                               (string-append
-                                                (string-drop-right file 4)
-                                                ".scm")))
-                                (find-files "." "\\.sls$"))
                       #t)))))
     (native-inputs
      `(("guile" ,guile-3.0)))
@@ -853,6 +844,36 @@ Vicare Scheme and IronScheme.  Right now it contains:
 @end itemize\n")
     (license license:bsd-3)))
 
+(define-public guile-prometheus
+  (let ((commit "cbc6e1b03512443a03d66414c426adb8470b5f2b")
+        (revision "0"))
+    (package
+    (name "guile-prometheus")
+    (version (git-version "0" revision commit))
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://git.cbaines.net/git/guile/prometheus")
+                    (commit commit)))
+              (sha256
+               (base32
+                "1k1qg4ia87w2ipnf8cpikdc67lxi5bmahkhgk2x0i9ibdyvqb7np"))
+              (file-name (string-append name "-" version "-checkout"))))
+    (build-system gnu-build-system)
+    (native-inputs
+     `(("pkg-config" ,pkg-config)
+       ("autoconf" ,autoconf)
+       ("automake" ,automake)))
+    (inputs
+     `(("guile" ,guile-3.0)))
+    (home-page "https://git.cbaines.net/guile/prometheus")
+    (synopsis "Prometheus client library for Guile")
+    (description
+     "This Guile library provides instrumentation code intended to be used
+with the Prometheus time series service.  Counter, gauge and histogram metric
+types are supported.")
+    (license license:gpl3+))))
+
 (define-public guile2.2-pfds
   (package
     (inherit guile-pfds)
@@ -862,7 +883,18 @@ Vicare Scheme and IronScheme.  Right now it contains:
      (substitute-keyword-arguments (package-arguments guile-pfds)
        ((#:phases phases)
         `(modify-phases ,phases
-           (delete 'work-around-guile-bug)))))))
+           (delete 'work-around-guile-bug)
+           (add-after 'move-files-around 'sls->scm
+             (lambda _
+               ;; In Guile <= 2.2.4, there's no way to tell 'guild
+               ;; compile' to accept the ".sls" extension.  So...
+               (for-each (lambda (file)
+                           (rename-file file
+                                        (string-append
+                                         (string-drop-right file 4)
+                                         ".scm")))
+                         (find-files "." "\\.sls$"))
+               #t))))))))
 
 (define-public guile3.0-pfds
   (deprecated-package "guile3.0-pfds" guile-pfds))
@@ -1729,19 +1761,20 @@ capabilities.")
     (license license:gpl3+)))
 
 (define-public g-golf
-  (let ((commit "5d2903afb4b6b65c22f587835d8fdff91916e5ee"))
+  (let ((commit   "84e894eb7945c3bcdf7f8d5135c1be3efa524c92")
+        (revision "822"))
     (package
       (name "g-golf")
-      (version (git-version "1" "804" commit))
-      (source (origin
-                (method git-fetch)
-                (uri (git-reference
-                      (url "https://git.savannah.gnu.org/git/g-golf.git")
-                      (commit commit)))
-                (file-name (git-file-name name version))
-                (sha256
-                 (base32
-                  "1xkb6a5d3i9s8lpb5cf06bd64p5srqnnhn5l0b2f5csbvyz8hmmh"))))
+      (version (git-version "0.1.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://git.savannah.gnu.org/git/g-golf.git")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1pkcij65zy2lkip5yrfzj85nq17pp9mrf0d4sk6hpjqr4kd0bxd5"))))
       (build-system gnu-build-system)
       (native-inputs
        `(("autoconf" ,autoconf)
@@ -2437,11 +2470,11 @@ The picture values can directly be displayed in Geiser.")
                       guile-picture-language))
 
 (define-public guile-studio
-  (let ((commit "d24d59a68e3f1fa9477e3430fc48a2efe97b805d")
+  (let ((commit "5c05b03e8a5c450f7358ceec7ea602f29c49d54e")
         (revision "1"))
     (package
       (name "guile-studio")
-      (version (git-version "0.0.2" revision commit))
+      (version (git-version "0.0.3" revision commit))
       (source (origin
                 (method git-fetch)
                 (uri (git-reference
@@ -2450,7 +2483,7 @@ The picture values can directly be displayed in Geiser.")
                 (file-name (git-file-name name version))
                 (sha256
                  (base32
-                  "0kqi0q8a7si65n21b7gn8vbninwcg0fqy5hmvy3l1bi6iync20zr"))))
+                  "11wyf6x7mhyhimv0cd57pl39zgav9hc9ljqi3g2g35b264hylpnx"))))
       (build-system gnu-build-system)
       (arguments
        `(#:modules
@@ -2487,6 +2520,7 @@ The picture values can directly be displayed in Geiser.")
          ("emacs-geiser" ,emacs-geiser)
          ("emacs-company" ,emacs-company)
          ("emacs-flycheck" ,emacs-flycheck)
+         ("emacs-flycheck-guile" ,emacs-flycheck-guile)
          ("emacs-smart-mode-line" ,emacs-smart-mode-line)
          ("emacs-paren-face" ,emacs-paren-face)
          ("adwaita-icon-theme" ,adwaita-icon-theme)))
@@ -2803,6 +2837,60 @@ pre-alpha code.")
 parameters, which  define* and lambda* special forms")
     (license license:gpl3+)))
 
+(define-public guile-srfi-145
+  (package
+    (name "guile-srfi-145")
+    (version "0.0.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://gitlab.com/mjbecze/guile-srfi-145.git")
+             (commit version)))
+       (sha256
+         (base32
+           "1gssa8cmcp8640fil9z8dpil8v5l279wlalqjcx3fls5jwv13q1b"))
+       (file-name (git-file-name name version))))
+    (build-system guile-build-system)
+    (native-inputs
+     `(("guile" ,guile-3.0)))
+    (home-page "https://gitlab.com/mjbecze/guile-srfi-145")
+    (synopsis "SRFI-145 port for Guile")
+    (description
+     "This package provides SRFI-145.  This provides the means to
+denote the invalidity of certain code paths in a Scheme program.")
+    (license license:gpl3+)))
+
+(define-public guile-srfi-158
+  (package
+    (name "guile-srfi-158")
+    (version "0.0.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://gitlab.com/mjbecze/guile-srfi-158.git")
+             (commit version)))
+       (sha256
+        (base32
+         "0b8hlv1bldbcwkcxi9y8mm6xp5gbgpg7b15bwqxv70iynl9d9a7c"))
+       (file-name (git-file-name name version))))
+    (build-system gnu-build-system)
+    (native-inputs
+     `(("autoconf" ,autoconf)
+       ("automake" ,automake)
+       ("pkg-config" ,pkg-config)))
+    (inputs
+     `(("guile" ,guile-3.0)))
+    (home-page "https://gitlab.com/samplet/guile-srfi-158")
+    (synopsis "SRFI 158 (Generators and Accumulators) for Guile")
+    (description "This package provides an implementation of SRFI 158
+for Guile.  SRFI 158 defines utility procedures that create,
+transform, and consume generators.  It also defines procedures that
+return accumulators.  It is implemented by wrapping the sample
+implementation in a thin Guile compatibility layer.")
+    (license license:gpl3+)))
+
 (define-public guile-srfi-159
   (let ((commit "1bd98abda2ae4ef8f36761a167903e55c6bda7bb")
         (revision "0"))
@@ -2832,6 +2920,45 @@ formatting combinators specified by
 @uref{https://srfi.schemers.org/srfi-159/srfi-159.html, SRFI-159}.  These are
 more expressive and flexible than the traditional @code{format} procedure.")
       (license license:bsd-3))))
+
+(define-public guile-srfi-180
+  (let ((commit "9188bf9724c6d320ef804579d222e855b007b193")
+        (revision "0"))
+    (package
+      (name "guile-srfi-180")
+      (version (git-version "0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/scheme-requests-for-implementation/srfi-180.git")
+               (commit commit)))
+         (sha256
+          (base32
+           "08lf70rsak8mwfij55xc37pg9zg7c87fizmhz7ln46skzj68sl3y"))
+         (modules '((guix build utils)))
+         (snippet
+          '(begin
+             (delete-file-recursively "srfi/files")
+             (delete-file "srfi/run-r7rs-checks.guile.scm")
+             (delete-file "srfi/run-r7rs-checks.scm")
+             (delete-file "srfi/check.scm")
+             #t))
+         (file-name (git-file-name name version))))
+      (build-system guile-build-system)
+      (arguments
+       '(#:not-compiled-file-regexp "body\\.scm$"))
+      (native-inputs
+       `(("guile" ,guile-3.0)))
+      (propagated-inputs
+       `(("guile-srfi-145" ,guile-srfi-145)))
+      (home-page "https://srfi.schemers.org/srfi-180/")
+      (synopsis "JSON parser and printer for Guile")
+      (description
+       "This library implements a JavaScript Object Notation (JSON) parser and printer.
+It also supports parsing JSON objects that may be bigger than memory with a streaming
+API.")
+      (license license:expat))))
 
 (define-public emacsy
   (package
@@ -2915,20 +3042,20 @@ in C using Gtk+-3 and WebKitGtk.")
     (license license:gpl3+)))
 
 (define-public emacsy-minimal
-  (let ((commit "v0.4.1-28-gd459ca1"))
+  (let ((commit "v0.4.1-31-g415d96f"))
     (package
       (inherit emacsy)
       (name "emacsy-minimal")
       (version (string-drop commit 1))
-      (source (origin
-                (method git-fetch)
-                (uri (git-reference
-                      (url "https://git.savannah.gnu.org/git/emacsy.git")
-                      (commit commit)))
-                (file-name (git-file-name name version))
-                (sha256
-                 (base32
-                  "1ps15w8cxj9kc18gmvys9jv9xa1qqa7m43ismv34l3cmhddrn0sr"))))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://git.savannah.gnu.org/git/emacsy.git")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1cs1i1hxwrv0a512j54yrvfh743nci1chx6qjgp4jyzq98ncvxgg"))))
       (build-system gnu-build-system)
       (inputs
        `(("guile" ,guile-2.2)
@@ -2939,10 +3066,10 @@ in C using Gtk+-3 and WebKitGtk.")
        `(#:configure-flags '("--without-examples")
          #:phases
          (modify-phases %standard-phases
-         (add-before 'configure 'setenv
-           (lambda _
-             (setenv "GUILE_AUTO_COMPILE" "0")
-             #t))))))))
+           (add-before 'configure 'setenv
+             (lambda _
+               (setenv "GUILE_AUTO_COMPILE" "0")
+               #t))))))))
 
 (define-public guile-jpeg
   (let ((commit "6a1673578b297c2c1b28e44a76bd5c49e76a5046")
@@ -2981,16 +3108,16 @@ perform geometrical transforms on JPEG images.")
 (define-public nomad
   (package
     (name "nomad")
-    (version "0.2.0-alpha")
+    (version "0.2.0-alpha-100-g6a565d3")
     (source (origin
               (method git-fetch)
               (uri (git-reference
-                    (url "https://git.savannah.gnu.org/git/nomad.git")
+                    (url "https://git.savannah.gnu.org/git/nomad.git/")
                     (commit version)))
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1z2z5x37v1qrk2vb8qlz2yj030iirzzd0maa9fjxzlqkrg6krbaj"))))
+                "0anmprm63a88kii251rl296v1g4iq62r6n4nssx5jbc0hzkknanz"))))
     (build-system gnu-build-system)
     (native-inputs
      `(("autoconf" ,autoconf)
@@ -3001,36 +3128,35 @@ perform geometrical transforms on JPEG images.")
        ("guile" ,guile-2.2)
        ("glib:bin" ,glib "bin")
        ("texinfo" ,texinfo)
+       ("gettext" ,gnu-gettext)
        ("perl" ,perl)))
     (inputs
-     `(("guile" ,guile-2.2)
+     `(;; Guile
+       ("guile" ,guile-2.2)
        ("guile-lib" ,guile2.2-lib)
        ("guile-readline" ,guile2.2-readline)
        ("guile-gcrypt" ,guile2.2-gcrypt)
        ("gnutls" ,gnutls)
+       ("g-golf" ,g-golf)
        ("shroud" ,shroud)
        ("emacsy" ,emacsy-minimal)
+       ;; Gtk
        ("glib" ,glib)
        ("dbus-glib" ,dbus-glib)
+       ("glib-networking" ,glib-networking)
        ("gtk+" ,gtk+)
        ("gtk+:bin" ,gtk+ "bin")
-       ("gtksourceview" ,gtksourceview)
        ("webkitgtk" ,webkitgtk)
-       ("g-golf" ,g-golf)
-       ("xorg-server" ,xorg-server)))
-    (propagated-inputs
-     `(("glib" ,glib)
-       ("glib-networking" ,glib-networking)
+       ("gtksourceview" ,gtksourceview)
+       ("vte" ,vte)
+       ;; Gstreamer
        ("gstreamer" ,gstreamer)
        ("gst-plugins-base" ,gst-plugins-base)
        ("gst-plugins-good" ,gst-plugins-good)
        ("gst-plugins-bad" ,gst-plugins-bad)
        ("gst-plugins-ugly" ,gst-plugins-ugly)
-       ("gtk+" ,gtk+)
-       ("gtksourceview" ,gtksourceview)
-       ("vte" ,vte)
-       ("webkitgtk" ,webkitgtk)
-       ("gsettings-desktop-schemas" ,gsettings-desktop-schemas)))
+       ;; Util
+       ("xorg-server" ,xorg-server)))
     (arguments
      `(#:modules ((guix build gnu-build-system)
                   (guix build utils)
@@ -3048,49 +3174,40 @@ perform geometrical transforms on JPEG images.")
              #t))
          (add-after 'install 'wrap-binaries
            (lambda* (#:key inputs outputs #:allow-other-keys)
-             (let* ((out (assoc-ref outputs "out"))
-                    (gio-deps (map (cut assoc-ref inputs <>)
-                                   '("glib-networking"
-                                     "glib"
-                                     "gstreamer"
-                                     "gst-plugins-base"
-                                     "gst-plugins-good"
-                                     "gst-plugins-bad"
-                                     "gst-plugins-ugly")))
-                    (gio-mod-path (map (cut string-append <>
-                                            "/lib/gio/modules")
-                                       gio-deps))
-                    (effective (read-line (open-pipe*
-                                           OPEN_READ
-                                           "guile" "-c"
-                                           "(display (effective-version))")))
-                    (deps (map (cut assoc-ref inputs <>)
-                               '("emacsy" "guile-lib" "guile-readline"
-                                 "g-golf" "shroud")))
-                    (scm-path (map (cut string-append <>
-                                        "/share/guile/site/" effective)
-                                   `(,out ,@deps)))
-                    (go-path (map (cut string-append <>
-                                       "/lib/guile/" effective "/site-ccache")
-                                  `(,out ,@deps)))
-                    (progs (map (cut string-append out "/bin/" <>)
-                                '("nomad"))))
-               (map (cut wrap-program <>
-                         `("GIO_EXTRA_MODULES" ":" prefix ,gio-mod-path)
-                         `("GUILE_LOAD_PATH" ":" prefix ,scm-path)
-                         `("GUILE_LOAD_COMPILED_PATH" ":"
-                           prefix ,go-path))
-                    progs)
+             (let* ((out        (assoc-ref outputs "out"))
+                    (effective  (read-line (open-pipe*
+                                            OPEN_READ
+                                            "guile" "-c"
+                                            "(display (effective-version))")))
+                    (gst-plugins (map (lambda (i)
+                                        (string-append (assoc-ref inputs i)
+                                                       "/lib/gstreamer-1.0"))
+                                      `("gstreamer"
+                                        "gst-plugins-base"
+                                        "gst-plugins-good"
+                                        "gst-plugins-bad"
+                                        "gst-plugins-ugly")))
+                    (out-append (lambda (. args)
+                                  (apply string-append out args)))
+                    (gi-path    (out-append "/lib/girepository-1.0"))
+                    (load-path  (out-append "/share/guile/site/" effective))
+                    (comp-path  (out-append "/lib/guile/"
+                                            effective "/site-ccache"))
+                    (ext-path   (out-append "/libexec/nomad")))
+               (wrap-program (string-append out "/bin/nomad")
+                 `("GUILE_LOAD_PATH" ":" prefix
+                   (,load-path
+                    ,(getenv "GUILE_LOAD_PATH")))
+                 `("GUILE_LOAD_COMPILED_PATH" ":" prefix
+                   (,comp-path
+                    ,(getenv "GUILE_LOAD_COMPILED_PATH")))
+                 `("GI_TYPELIB_PATH" ":" prefix
+                   (,gi-path ,(getenv "GI_TYPELIB_PATH")))
+                 `("GIO_EXTRA_MODULES" ":" prefix
+                   (,(getenv "GIO_EXTRA_MODULES")))
+                 `("GST_PLUGIN_SYSTEM_PATH" ":" prefix ,gst-plugins)
+                 `("NOMAD_WEB_EXTENSION_DIR" ":" prefix (,ext-path)))
                #t))))))
-    (native-search-paths
-     (list (search-path-specification
-            (variable "GI_TYPELIB_PATH")
-            (separator ":")
-            (files '("lib/girepository-1.0")))
-           (search-path-specification
-            (variable "NOMAD_WEB_EXTENSION_DIR")
-            (separator ":")
-            (files '("libexec/nomad")))))
     (home-page "https://savannah.nongnu.org/projects/nomad/")
     (synopsis "Extensible Web Browser in Guile Scheme")
     (description "Nomad is a Emacs-like web browser that consists of a modular

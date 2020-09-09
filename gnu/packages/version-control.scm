@@ -1444,7 +1444,7 @@ control to Git repositories.")
 (define-public pre-commit
   (package
     (name "pre-commit")
-    (version "2.6.0")
+    (version "2.7.1")
     (source
      (origin
        ;; No tests in the PyPI tarball.
@@ -1454,7 +1454,7 @@ control to Git repositories.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "144hcnz8vz07nkx7hk8a3ac822186ardwxa8jnl6s8qvm5ip92f2"))))
+        (base32 "0n7qby5a4yz3s02nqcp5js6jg9wrd0x7msblxwb1883ds4b2b71a"))))
     (build-system python-build-system)
     (arguments
      `(#:phases
@@ -1490,7 +1490,7 @@ control to Git repositories.")
                       " and not test_run_a_ruby_hook"
                       " and not test_run_ruby_hook_with_disable_shared_gems"
                       " and not test_run_versioned_ruby_hook"
-                      ;; Disable Cargo tests
+                      ;; Disable Cargo tests.
                       " and not test_additional_rust_cli_dependencies_installed"
                       " and not test_additional_rust_lib_dependencies_installed"
                       " and not test_local_rust_additional_dependencies"
@@ -1517,14 +1517,14 @@ control to Git repositories.")
                       " and not test_too_new_version"
                       " and not test_try_repo_uncommitted_changes"
                       " and not test_versions_ok"
-                      ;; This test tries to activate a virtualenv
+                      ;; This test tries to activate a virtualenv.
                       " and not test_healthy_venv_creator"
                       ;; Fatal error: Not a Git repository.
                       " and not test_all_cmds"
                       " and not test_try_repo"
-                      ;; No module named 'pip._internal.cli.main'
+                      ;; No module named 'pip._internal.cli.main'.
                       " and not test_additional_dependencies_roll_forward"
-                      ; Assertion errors
+                      ;; Assertion errors.
                       " and not test_install_existing_hooks_no_overwrite"
                       " and not test_uninstall_restores_legacy_hooks"))))
          (add-before 'reset-gzip-timestamps 'make-files-writable
@@ -1536,7 +1536,7 @@ control to Git repositories.")
                          (find-files out "\\.gz$"))
                #t))))))
     (native-inputs
-     `(("git" ,git)
+     `(("git" ,git-minimal)
        ("python-pytest" ,python-pytest)))
     (inputs
      `(("python-cfgv" ,python-cfgv)
@@ -1553,40 +1553,17 @@ specify a list of hooks you want and pre-commit manages the installation and
 execution of any hook written in any language before every commit.")
     (license license:expat)))
 
-(define (mercurial-patch name revision hash)
-  (origin
-    (method url-fetch)
-    (uri (string-append "https://www.mercurial-scm.org/repo/hg/raw-rev/" revision))
-    (file-name (string-append "mercurial-" name ".patch"))
-    (sha256 (base32 hash))))
-
-(define %mercurial-patches
-  (list
-   ;; These three patches fixes compatibility with the updated gzip module
-   ;; in Python 3.8.2: <https://bz.mercurial-scm.org/show_bug.cgi?id=6284>.
-   (mercurial-patch "python-mtime" "6c36a521572edf3a79ee567b118469b3192037cc"
-                    "0bmm7y40r8s081ws2sjvn1v8kvyfan4a97jl0fhdh7yc2pzxlzqq")
-   (mercurial-patch "indent-gzip" "a23b859ad17dd0a5b9bb37846b69b5e30f99c44c"
-                    "1spscv9dgqv38m7h1liki93ax6w97gxayg17fr7wr6acjdfccpr9")
-   (mercurial-patch "python-gzip" "b7ca03dff14c63d64ad7bfa36a2d0a36a6b62253"
-                    "0p88ffhx0kk21ssrsb156ffhpcb7g8mkwwkmq49qpmbm5ag2paf0")
-   ;; This fixes an incompatibility with os.isfile in Python 3.8:
-   ;; <https://bz.mercurial-scm.org/show_bug.cgi?id=6287>.
-   (mercurial-patch "os-isfile" "6a8738dc4a019da4c9df5c26961aa09d45ce1c68"
-                    "0lr069m12kzrkmr1pmhaxg5lxmdwxabsza61qp1i1q70g7sy8lvy")))
-
 (define-public mercurial
   (package
     (name "mercurial")
-    (version "5.3.1")
+    (version "5.5.1")
     (source (origin
              (method url-fetch)
              (uri (string-append "https://www.mercurial-scm.org/"
                                  "release/mercurial-" version ".tar.gz"))
-             (patches %mercurial-patches)
              (sha256
               (base32
-               "1nbjpzjrzgql4hrvslpxwbcgn885ikq6ba1yb4w6p78rw9nzkhgp"))))
+               "0x08yjs26j88kh1bvl2g3r24lnfc023ry3i1cxfq6haray6sv5ag"))))
     (build-system python-build-system)
     (arguments
      `(#:phases
@@ -1614,6 +1591,13 @@ execution of any hook written in any language before every commit.")
                            ;; FIXME: Why does this fail in the build container, but
                            ;; not in 'guix environment -C' (even without /bin/sh)?
                            "test-nointerrupt.t"
+
+                           ;; FIXME: This gets killed but does not receive an interrupt.
+                           "test-commandserver.t"
+
+                           ;; Only works when run in a hg-repo, not in an
+                           ;; extracted tarball
+                           "test-doctest.py"
 
                            ;; TODO: the fqaddr() call fails in the build
                            ;; container, causing these server tests to fail.
@@ -2575,7 +2559,7 @@ interrupted, published, and collaborated on while in progress.")
 (define-public git-lfs
   (package
     (name "git-lfs")
-    (version "2.7.2")
+    (version "2.11.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -2584,10 +2568,35 @@ interrupted, published, and collaborated on while in progress.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1nf40rbdz901vsahg5cm09pznpina6wimmxl0lmh8pn0mi51yzvc"))))
+                "05qd96bn2cl7gn5qarbcv6scdpj28qiwdfzalamqk5jjiidpmng5"))))
     (build-system go-build-system)
     (arguments
-     '(#:import-path "github.com/git-lfs/git-lfs"))
+     `(#:import-path "github.com/git-lfs/git-lfs"
+       #:install-source? #f
+       #:phases
+       (modify-phases %standard-phases
+         (add-before 'build 'man-gen
+           ;; Without this, the binary generated in 'build
+           ;; phase won't have any embedded usage-text.
+           (lambda _
+             (with-directory-excursion "src/github.com/git-lfs/git-lfs"
+               (invoke "make" "mangen"))))
+         (add-after 'build 'build-man-pages
+           (lambda _
+             (with-directory-excursion "src/github.com/git-lfs/git-lfs"
+               (invoke "make" "man"))
+             #t))
+         (add-after 'install 'install-man-pages
+           (lambda _
+             (with-directory-excursion "src/github.com/git-lfs/git-lfs/man"
+               (let ((out (assoc-ref %outputs "out")))
+                 (for-each
+                   (lambda (manpage)
+                     (install-file manpage (string-append out "/share/man/man1")))
+                   (find-files "." "^git-lfs.*\\.1$"))))
+             #t)))))
+    ;; make `ronn` available during build for man page generation
+    (native-inputs `(("ronn-ng" ,ronn-ng)))
     (home-page "https://git-lfs.github.com/")
     (synopsis "Git extension for versioning large files")
     (description

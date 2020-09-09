@@ -23,6 +23,7 @@
 ;;; Copyright © 2020 Marius Bakke <mbakke@fastmail.com>
 ;;; Copyright © 2020 Reza Alizadeh Majd <r.majd@pantherx.org>
 ;;; Copyright © 2020 Jonathan Brielmaier <jonathan.brielmaier@web.de>
+;;; Copyright © 2020 Mason Hock <chaosmonk@riseup.net>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -226,6 +227,29 @@ microblogging network (plus all other Twitter API compatible services like
 identi.ca and status.net).")
     (home-page "https://www.bitlbee.org/")
     (license (list license:gpl2+ license:bsd-2))))
+
+(define-public bitlbee-purple
+  ;; This variant uses libpurple, which provides support for more protocols at
+  ;; the expense of a much bigger closure.
+  (package/inherit bitlbee
+    (name "bitlbee-purple")
+    (synopsis "IRC to instant messaging gateway (using Pidgin's libpurple)")
+    (inputs `(("purple" ,pidgin)
+              ,@(package-inputs bitlbee)))
+    (arguments
+     (substitute-keyword-arguments (package-arguments bitlbee)
+       ((#:phases phases '%standard-phases)
+        `(modify-phases ,phases
+           (replace 'configure                    ;add "--purple=1"
+             (lambda* (#:key outputs #:allow-other-keys)
+               (invoke "./configure"
+                       (string-append "--prefix="
+                                      (assoc-ref outputs "out"))
+                       "--otr=1" "--purple=1")))))
+       ((#:tests? _ #t)
+        ;; XXX: Tests fail to link, and ./configure says that it's "supported
+        ;; on a best-effort basis" anyway.
+        #f)))))
 
 (define-public bitlbee-discord
   (package
@@ -569,14 +593,14 @@ compromised.")
 (define-public znc
   (package
     (name "znc")
-    (version "1.8.1")
+    (version "1.8.2")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://znc.in/releases/archive/znc-"
                                   version ".tar.gz"))
               (sha256
                (base32
-                "0hb1v167aa6gv5bcwz352l6b8gnd74ymjw92y4x882l099hzg59i"))))
+                "03fyi0j44zcanj1rsdx93hkdskwfvhbywjiwd17f9q1a7yp8l8zz"))))
     (build-system cmake-build-system)
     (arguments
      `(#:configure-flags
@@ -759,7 +783,7 @@ end-to-end encryption support; XML console.")
 (define-public gajim-omemo
   (package
     (name "gajim-omemo")
-    (version "2.7.4")
+    (version "2.7.7")
     (source (origin
               (method url-fetch/zipbomb)
               (uri (string-append
@@ -767,7 +791,7 @@ end-to-end encryption support; XML console.")
                     version ".zip"))
               (sha256
                (base32
-                "00zrj57n86c2m99n0swmmaws4f8zccbgbi8fknv6f9b1vif9jc8p"))))
+                "17jl4blkq04ag3g0har6z1bmk36523d29s51g260wb1pywfb536h"))))
     (build-system trivial-build-system)
     (arguments
      `(#:modules ((guix build utils))
@@ -2257,7 +2281,7 @@ support for high performance Telegram Bot creation.")
       ("folks" ,folks)
       ("libgcrypt" ,libgcrypt)
       ("libgee" ,libgee)
-      ("libhandy" ,libhandy)
+      ("libhandy" ,libhandy-0.0)
       ("pidgin" ,pidgin)
       ("purple-mm-sms" ,purple-mm-sms)
       ("sqlite" ,sqlite)))

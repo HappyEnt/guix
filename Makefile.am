@@ -68,7 +68,6 @@ MODULES =					\
   guix/cpio.scm					\
   guix/deprecation.scm				\
   guix/docker.scm	   			\
-  guix/json.scm					\
   guix/records.scm				\
   guix/openpgp.scm				\
   guix/pki.scm					\
@@ -80,6 +79,7 @@ MODULES =					\
   guix/modules.scm				\
   guix/download.scm				\
   guix/discovery.scm				\
+  guix/android-repo-download.scm		\
   guix/bzr-download.scm            		\
   guix/git-download.scm				\
   guix/hg-download.scm				\
@@ -109,8 +109,6 @@ MODULES =					\
   guix/cache.scm				\
   guix/cve.scm					\
   guix/workers.scm				\
-  guix/zlib.scm					\
-  guix/lzlib.scm				\
   guix/build-system.scm				\
   guix/build-system/android-ndk.scm		\
   guix/build-system/ant.scm			\
@@ -172,6 +170,7 @@ MODULES =					\
   guix/build/minify-build-system.scm		\
   guix/build/font-build-system.scm		\
   guix/build/go-build-system.scm		\
+  guix/build/android-repo.scm			\
   guix/build/asdf-build-system.scm		\
   guix/build/bzr.scm				\
   guix/build/copy-build-system.scm		\
@@ -337,10 +336,6 @@ AUX_FILES =						\
   gnu/packages/aux-files/linux-libre/5.8-arm64.conf     \
   gnu/packages/aux-files/linux-libre/5.8-i686.conf      \
   gnu/packages/aux-files/linux-libre/5.8-x86_64.conf    \
-  gnu/packages/aux-files/linux-libre/5.7-arm.conf	\
-  gnu/packages/aux-files/linux-libre/5.7-arm64.conf	\
-  gnu/packages/aux-files/linux-libre/5.7-i686.conf	\
-  gnu/packages/aux-files/linux-libre/5.7-x86_64.conf	\
   gnu/packages/aux-files/linux-libre/5.4-arm.conf	\
   gnu/packages/aux-files/linux-libre/5.4-arm64.conf	\
   gnu/packages/aux-files/linux-libre/5.4-i686.conf	\
@@ -431,11 +426,11 @@ SCM_TESTS =					\
   tests/import-utils.scm			\
   tests/inferior.scm				\
   tests/lint.scm				\
-  tests/lzlib.scm				\
   tests/modules.scm				\
   tests/monads.scm				\
   tests/nar.scm				\
   tests/networking.scm				\
+  tests/offload.scm				\
   tests/opam.scm				\
   tests/openpgp.scm				\
   tests/packages.scm				\
@@ -470,8 +465,7 @@ SCM_TESTS =					\
   tests/upstream.scm				\
   tests/utils.scm				\
   tests/uuid.scm				\
-  tests/workers.scm				\
-  tests/zlib.scm
+  tests/workers.scm
 
 SH_TESTS =					\
   tests/guix-build.sh				\
@@ -841,6 +835,7 @@ release: dist-with-updated-version
 	  image=`$(top_builddir)/pre-inst-env						\
 	    guix system disk-image							\
 	    --file-system-type=iso9660							\
+	    --label="GUIX_$${system}_$(VERSION)"						\
             --system=$$system --fallback						\
 	    gnu/system/install.scm` ;							\
 	  if [ ! -f "$$image" ] ; then							\

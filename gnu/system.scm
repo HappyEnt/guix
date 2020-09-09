@@ -316,11 +316,13 @@ file system labels."
       ((? bytevector? bv)                         ;old format
        (bytevector->uuid bv 'dce))
       ((? string? device)
-       ;; It used to be that we would not distinguish between labels and
-       ;; device names.  Try to infer the right thing here.
-       (if (string-prefix? "/dev/" device)
-           device
-           (file-system-label device)))))
+       (if (string-contains device ":/")
+           device ; nfs-root
+           ;; It used to be that we would not distinguish between labels and
+           ;; device names.  Try to infer the right thing here.
+           (if (string-prefix? "/" device)
+               device
+               (file-system-label device))))))
 
   (match (read port)
     (('boot-parameters ('version 0)
@@ -747,6 +749,18 @@ This is the GNU system.  Welcome.\n")
   "Return the default /etc/hosts file."
   (plain-file "hosts" (local-host-aliases host-name)))
 
+(define (validated-sudoers-file file)
+  "Return a copy of FILE, a sudoers file, after checking that it is
+syntactically correct."
+  (computed-file "sudoers"
+                 (with-imported-modules '((guix build utils))
+                   #~(begin
+                       (use-modules (guix build utils))
+
+                       (invoke #+(file-append sudo "/sbin/visudo")
+                               "--check" "--file" #$file)
+                       (copy-file #$file #$output)))))
+
 (define* (operating-system-etc-service os)
   "Return a <service> that builds containing the static part of the /etc
 directory."
@@ -873,7 +887,9 @@ fi\n")))
        ("timezone" ,(plain-file "timezone" (operating-system-timezone os)))
        ("localtime" ,(file-append tzdata "/share/zoneinfo/"
                                   (operating-system-timezone os)))
-       ,@(if sudoers `(("sudoers" ,sudoers)) '())
+       ,@(if sudoers
+             `(("sudoers" ,(validated-sudoers-file sudoers)))
+             '())
        ,@(if hurd
              `(("login" ,(file-append hurd "/etc/login"))
                ("motd"  ,(file-append hurd "/etc/motd"))

@@ -520,7 +520,7 @@ a card with a smaller capacity than stated.")
 (define-public python-parted
   (package
     (name "python-parted")
-    (version "3.11.2")
+    (version "3.11.6")
     (source
      (origin
        (method git-fetch)
@@ -529,7 +529,7 @@ a card with a smaller capacity than stated.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0r6916n3w4vldxrq30a3z2iagvxgly4vfmlidjm65vwqnyv17bvn"))))
+        (base32 "1xgrqhvn44vr3676j5sy2x3xfv2dzf7vncg25cmrsmkbd49x3z5j"))))
     (build-system python-build-system)
     (arguments
      `(#:phases
@@ -554,9 +554,6 @@ a card with a smaller capacity than stated.")
     (synopsis "Parted bindings for Python")
     (description "This package provides @code{parted} bindings for Python.")
     (license license:gpl2+)))
-
-(define-public python2-parted
-  (package-with-python2 python-parted))
 
 (define-public duperemove
   (package
@@ -692,7 +689,7 @@ passphrases.")
 (define-public ndctl
   (package
     (name "ndctl")
-    (version "68")
+    (version "69")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -701,7 +698,7 @@ passphrases.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0xmim7z4qp6x2ggndnbwd940c73pa1qlf3hxyn3qh5pyr69nh9y8"))))
+                "1l7p0ycj27d4z07gf9qp796xpg16kfsg3rwx6plhilbhip1as4w7"))))
     (build-system gnu-build-system)
     (native-inputs
      `(("asciidoc" ,asciidoc)

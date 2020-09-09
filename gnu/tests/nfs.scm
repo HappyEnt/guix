@@ -39,7 +39,8 @@
   #:use-module (guix store)
   #:use-module (guix monads)
   #:export (%test-nfs
-            %test-nfs-server))
+            %test-nfs-server
+            %test-nfs-root-fs))
 
 (define %base-os
   (operating-system
@@ -262,3 +263,112 @@
    (description "Test that an NFS server can be started and exported
 directories can be mounted.")
    (value (run-nfs-server-test))))
+
+
+(define (run-nfs-root-fs-test)
+  "Run a test of an OS mounting its root file system via NFS."
+  (define nfs-root-server-os
+    (marionette-operating-system
+     (operating-system
+       (inherit %nfs-os)
+       (services
+         (modify-services (operating-system-user-services %nfs-os)
+           (nfs-service-type
+            config
+            =>
+            (nfs-configuration
+             (debug '(nfs nfsd mountd))
+             (exports '(("/export"
+                         "*(rw,insecure,no_subtree_check,crossmnt,fsid=root,no_root_squash,insecure,async)"))))))))
+     #:requirements '(nscd)
+     #:imported-modules '((gnu services herd)
+                          (guix combinators))))
+
+  (define nfs-root-client-os
+    (marionette-operating-system
+     (operating-system
+       (inherit %nfs-os)
+       (kernel-arguments '("ip=dhcp"))
+       (file-systems (cons
+                      (file-system
+                        (type "nfs")
+                        (mount-point "/")
+                        (device ":/export")
+                        (options "addr=0.0.0.0,vers=4.2"))
+                     %base-file-systems)))
+     #:requirements '(nscd)
+     #:imported-modules '((gnu services herd)
+                          (guix combinators))))
+
+  (define test
+    (with-imported-modules '((gnu build marionette))
+      #~(begin
+          (use-modules (gnu build marionette)
+                       (srfi srfi-64))
+
+          (mkdir "/tmp/server")
+          (define server-marionette
+            (make-marionette (list #$(virtual-machine nfs-root-server-os)) #:socket-directory "/tmp/server"))
+          (define client-marionette
+            (make-marionette (list #$(virtual-machine nfs-root-client-os))))
+
+          (mkdir #$output)
+          (chdir #$output)
+
+          (test-begin "start-nfs-boot-test")
+          (marionette-eval
+           '(begin
+              (use-modules (gnu services herd))
+              (current-output-port
+               (open-file "/dev/console" "w0"))
+              ;; FIXME: Instead statfs "/" and "/export" and wait until they
+              ;; are different file systems.
+              (sleep 10)
+              (chmod "/export" #o777)
+              (symlink "/gnu" "/export/gnu")
+              (start-service 'nscd)
+              (start-service 'networking)
+              (start-service 'nfs))
+           server-marionette)
+
+          ;; Wait for the NFS services to be up and running.
+          (test-assert "nfs services are running"
+           (wait-for-file "/var/run/rpc.statd.pid" server-marionette))
+
+          (marionette-eval
+           '(begin
+              (use-modules (gnu services herd))
+              (use-modules (rnrs io ports))
+
+              (current-output-port
+               (open-file "/dev/console" "w0"))
+              (let ((content (call-with-input-file "/proc/mounts" get-string-all)))
+                (call-with-output-file "/mounts.new"
+                  (lambda (port)
+                    (display content port))))
+              (chmod "/mounts.new" #o777)
+              (rename-file "/mounts.new" "/mounts"))
+           client-marionette)
+
+          (test-assert "nfs-root-client booted")
+
+          (test-assert "nfs client deposited file"
+           (wait-for-file "/export/mounts" server-marionette))
+          (marionette-eval
+           '(begin
+              (current-output-port
+               (open-file "/dev/console" "w0"))
+              (call-with-input-file "/export/mounts" display))
+           server-marionette)
+
+          (test-end)
+          (exit (= (test-runner-fail-count (test-runner-current)) 0)))))
+
+  (gexp->derivation "nfs-server-test" test))
+
+(define %test-nfs-root-fs
+  (system-test
+   (name "nfs-root-fs")
+   (description "Test that an NFS server can be started and exported
+directories can be mounted.")
+   (value (run-nfs-root-fs-test))))

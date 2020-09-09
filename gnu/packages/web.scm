@@ -196,7 +196,7 @@ and its related documentation.")
 (define-public mod-wsgi
   (package
     (name "mod-wsgi")
-    (version "4.5.22")
+    (version "4.7.1")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -205,7 +205,7 @@ and its related documentation.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1q90xw2cbhka5gcd6yc69iir73x4gm7fm75qpkins2ryfl6w1q3f"))))
+                "1savh6h3qds20mwn1nqasmqzcp57pdhfc9v4b4k78d6q28y0r17s"))))
     (build-system gnu-build-system)
     (arguments
      '(#:tests? #f                 ; TODO: can't figure out if there are tests
@@ -1675,7 +1675,7 @@ minimum to provide high performance operation.")
   (package
     (name "libsass")
     ;; When updating, check whether sassc/libsass-3.5 is still needed.
-    (version "3.6.3")
+    (version "3.6.4")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -1684,7 +1684,7 @@ minimum to provide high performance operation.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1vn0q343d1vxz5q0xb6f9dzjah8z6j0s6x0lwvwdd55xa8z7rsnh"))))
+                "0r8lfqvr3rjhjd8r036zd1wc9q17gyiskppcw9m13jks9an7xp4j"))))
     (build-system gnu-build-system)
     (arguments
      `(#:phases
@@ -4455,8 +4455,8 @@ CDF, Atom 0.3, and Atom 1.0 feeds.")
   (package-with-python2 python-feedparser))
 
 (define-public guix-data-service
-  (let ((commit "d1c243f7fd8902f359ff06fb78dce663cf4297ce")
-        (revision "19"))
+  (let ((commit "c596a1c6a90bb2fe07da5339b8dc832b81d94194")
+        (revision "21"))
     (package
       (name "guix-data-service")
       (version (string-append "0.0.1-" revision "." (string-take commit 7)))
@@ -4468,7 +4468,7 @@ CDF, Atom 0.3, and Atom 1.0 feeds.")
                 (file-name (git-file-name name version))
                 (sha256
                  (base32
-                  "1ji8d4vwmv7j9h7z96hvzi3zvik594yngjrdal37w13fbxy2v6sw"))))
+                  "09gn2imhh3aqkzray0xgkz7slriy567inh5lpkxm74bgmx862g3g"))))
       (build-system gnu-build-system)
       (arguments
        '(#:modules ((guix build utils)
@@ -4482,7 +4482,7 @@ CDF, Atom 0.3, and Atom 1.0 feeds.")
          (modify-phases %standard-phases
            (add-before 'build 'set-GUILE_AUTO_COMPILE
              (lambda _
-               ;; To avoid errors relating to guild
+               ;; To avoid warnings relating to 'guild'.
                (setenv "GUILE_AUTO_COMPILE" "0")
                #t))
            (add-after 'install 'wrap-executable
@@ -4531,13 +4531,14 @@ CDF, Atom 0.3, and Atom 1.0 feeds.")
          ("guile-fibers" ,guile3.0-fibers)
          ("guile-json" ,guile3.0-json)
          ("guile-email" ,guile3.0-email)
+         ("guile-prometheus" ,guile-prometheus)
          ("guile-squee" ,guile3.0-squee)
          ("ephemeralpg" ,ephemeralpg)
          ("util-linux" ,util-linux)
          ("postgresql" ,postgresql-11)
          ("sqitch" ,sqitch)))
       (native-inputs
-       `(("guile" ,guile-3.0)
+       `(("guile" ,@(assoc-ref (package-native-inputs guix) "guile"))
          ("autoconf" ,autoconf)
          ("automake" ,automake)
          ("emacs-minimal" ,emacs-minimal)

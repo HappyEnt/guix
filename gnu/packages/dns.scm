@@ -312,6 +312,7 @@ and BOOTP/TFTP for network booting of diskless machines.")
 (define-public isc-bind
   (package
     (name "bind")
+    ;; When updating, check whether isc-dhcp's bundled copy should be as well.
     (version "9.16.6")
     (source (origin
               (method url-fetch)
@@ -802,14 +803,14 @@ Extensions} (DNSSEC).")
 (define-public knot
   (package
     (name "knot")
-    (version "2.9.5")
+    (version "2.9.6")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "https://secure.nic.cz/files/knot-dns/"
                            "knot-" version ".tar.xz"))
        (sha256
-        (base32 "0xmzmhd2m9rb24clrrd9k058harsq67nyjplpbyxvy1g46xah28i"))
+        (base32 "1rxjjisr6rz1wa4279ghvj5zzhgyjhncmb9dkzqm8nw2qs1jhx5z"))
        (modules '((guix build utils)))
        (snippet
         '(begin

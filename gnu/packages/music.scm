@@ -504,7 +504,7 @@ settings (aliasing, linear interpolation and cubic interpolation).")
 (define-public hydrogen
   (package
     (name "hydrogen")
-    (version "1.0.0")
+    (version "1.0.1")
     (source
      (origin
        (method git-fetch)
@@ -513,7 +513,7 @@ settings (aliasing, linear interpolation and cubic interpolation).")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1kwlqfah0yk135i0rzmbbgnqdzxrzg9yslii5asl4ip9x4dc1w3r"))))
+        (base32 "0snljpvbcgikhz610c325dgvayi0k512p3bglck9vvi90wsqx7l1"))))
     (build-system cmake-build-system)
     (arguments
      `(#:test-target "tests"
@@ -1945,7 +1945,7 @@ export.")
 (define-public pd
   (package
     (name "pd")
-    (version "0.51-0")
+    (version "0.51-1")
     (source (origin
               (method url-fetch)
               (uri
@@ -1953,7 +1953,7 @@ export.")
                               version ".src.tar.gz"))
               (sha256
                (base32
-                "0qzv4hjf4h7xx00ihnbl43pxa0fia9qkc8nwgzhqrs12jiljz6ps"))))
+                "0imbha9h96vqa967cbmdj7kkx7zrs054n5w2bjnifxdzws3qbxf6"))))
     (build-system gnu-build-system)
     (arguments
      (let ((wish (string-append "wish" (version-major+minor
@@ -2304,66 +2304,61 @@ capabilities, custom envelopes, effects, etc.")
     (license license:gpl2)))
 
 (define-public yoshimi
-  ;; Release 1.7.1 doesn't build with our version of LV2.  Applying only
-  ;; 86996cbb235f0fe138ae814a6758c2c8ba1c2a38 is not enough.
-  (let ((commit "bfcadc6537dbcb301cd93346f21d36bcbffa36c7")
-        (revision "0"))
-    (package
-      (name "yoshimi")
-      (version (git-version "1.7.1" revision commit))
-      (source
-       (origin
-         (method git-fetch)
-         (uri (git-reference
-               (url "https://git.code.sf.net/p/yoshimi/code")
-               (commit commit)))
-         (sha256
-          (base32 "0vhdxj7ky4iyq11r5wj9jwavjih4xvcn2djbrlmwpkdhrzpy6myl"))
-         (file-name (git-file-name name version))))
-      (build-system cmake-build-system)
-      (arguments
-       `(#:tests? #f                    ; there are no tests
-         #:configure-flags
-         (list (string-append "-DCMAKE_INSTALL_DATAROOTDIR="
-                              (assoc-ref %outputs "out") "/share"))
-         #:phases
-         (modify-phases %standard-phases
-           (add-before 'configure 'enter-dir
-             (lambda _ (chdir "src") #t))
-           ;; Move SSE compiler optimization flags from generic target to
-           ;; athlon64 and core2 targets, because otherwise the build would fail
-           ;; on non-Intel machines.
-           (add-after 'unpack 'remove-sse-flags-from-generic-target
-             (lambda _
-               (substitute* "src/CMakeLists.txt"
-                 (("-msse -msse2 -mfpmath=sse") "")
-                 (("-march=(athlon64|core2)" flag)
-                  (string-append flag " -msse -msse2 -mfpmath=sse")))
-               #t)))))
-      (inputs
-       `(("boost" ,boost)
-         ("fftwf" ,fftwf)
-         ("alsa-lib" ,alsa-lib)
-         ("jack" ,jack-1)
-         ("fontconfig" ,fontconfig)
-         ("minixml" ,minixml)
-         ("mesa" ,mesa)
-         ("fltk" ,fltk)
-         ("lv2" ,lv2)
-         ("readline" ,readline)
-         ("ncurses" ,ncurses)
-         ("cairo" ,cairo)
-         ("zlib" ,zlib)))
-      (native-inputs
-       `(("pkg-config" ,pkg-config)))
-      (home-page "http://yoshimi.sourceforge.net/")
-      (synopsis "Multi-paradigm software synthesizer")
-      (description
-       "Yoshimi is a fork of ZynAddSubFX, a feature-heavy real-time software
+  (package
+    (name "yoshimi")
+    (version "1.7.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "mirror://sourceforge/yoshimi/"
+                           (version-major+minor version)
+                           "/yoshimi-" version ".tar.bz2"))
+       (sha256
+        (base32 "1vxrksg199pcgiykq0nsf67ihfk2ny2jmpf6gzdb3nk9iphm7di3"))))
+    (build-system cmake-build-system)
+    (arguments
+     `(#:tests? #f                      ; there are no tests
+       #:configure-flags
+       (list (string-append "-DCMAKE_INSTALL_DATAROOTDIR="
+                            (assoc-ref %outputs "out") "/share"))
+       #:phases
+       (modify-phases %standard-phases
+         (add-before 'configure 'enter-dir
+           (lambda _ (chdir "src") #t))
+         ;; Move SSE compiler optimization flags from generic target to
+         ;; athlon64 and core2 targets, because otherwise the build would fail
+         ;; on non-Intel machines.
+         (add-after 'unpack 'remove-sse-flags-from-generic-target
+           (lambda _
+             (substitute* "src/CMakeLists.txt"
+               (("-msse -msse2 -mfpmath=sse") "")
+               (("-march=(athlon64|core2)" flag)
+                (string-append flag " -msse -msse2 -mfpmath=sse")))
+             #t)))))
+    (inputs
+     `(("boost" ,boost)
+       ("fftwf" ,fftwf)
+       ("alsa-lib" ,alsa-lib)
+       ("jack" ,jack-1)
+       ("fontconfig" ,fontconfig)
+       ("minixml" ,minixml)
+       ("mesa" ,mesa)
+       ("fltk" ,fltk)
+       ("lv2" ,lv2)
+       ("readline" ,readline)
+       ("ncurses" ,ncurses)
+       ("cairo" ,cairo)
+       ("zlib" ,zlib)))
+    (native-inputs
+     `(("pkg-config" ,pkg-config)))
+    (home-page "http://yoshimi.sourceforge.net/")
+    (synopsis "Multi-paradigm software synthesizer")
+    (description
+     "Yoshimi is a fork of ZynAddSubFX, a feature-heavy real-time software
 synthesizer.  It offers three synthesizer engines, multitimbral and polyphonic
 synths, microtonal capabilities, custom envelopes, effects, etc.  Yoshimi
 improves on support for JACK features, such as JACK MIDI.")
-      (license license:gpl2))))
+    (license license:gpl2)))
 
 (define-public libgig
   (package
@@ -3226,15 +3221,14 @@ with a number of bugfixes and changes to improve IT playback.")
 (define-public sooperlooper
   (package
     (name "sooperlooper")
-    (version "1.7.3")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append "http://essej.net/sooperlooper/sooperlooper-"
-                                  version ".tar.gz"))
-              (sha256
-               (base32
-                "0n2gdxw1fx8nxxnpzf4sj0kp6k6zi1yq59cbz6qqzcnsnpnvszbs"))
-              (patches (search-patches "sooperlooper-build-with-wx-30.patch"))))
+    (version "1.7.4")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "http://essej.net/sooperlooper/sooperlooper-"
+                           version ".tar.gz"))
+       (sha256
+        (base32 "1jjvq4aflbyr3nr8b318k1vkad16xfa1jkqn9ckzw4419qc6c1k5"))))
     (build-system gnu-build-system)
     (arguments
      `(#:phases
@@ -5071,15 +5065,15 @@ short-time Fourier transform, available as LV2 audio plugin and JACK client.")
 (define-public x42-plugins
   (package
     (name "x42-plugins")
-    (version "20191215")
+    (version "20200714")
     (source
      (origin
        (method url-fetch)
        (uri
-        (string-append "http://gareus.org/misc/x42-plugins/x42-plugins-"
+        (string-append "https://gareus.org/misc/x42-plugins/x42-plugins-"
                        version ".tar.xz"))
        (sha256
-        (base32 "1mwfvhsvc0qgjyiwd8pmmam1mav43lmv39fljhmj9yri558v5g1c"))))
+        (base32 "1av05ykph8x67018hm9zfgh1vk0zi39mvrsxkj6bm4hkarxf0vvl"))))
     (build-system gnu-build-system)
     (arguments
      `(#:tests? #f                      ; no "check" target

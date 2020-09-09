@@ -15,6 +15,7 @@
 ;;; Copyright © 2020 Jan (janneke) Nieuwenhuizen <janneke@gnu.org>
 ;;; Copyright © 2020 Giacomo Leidi <goodoldpaul@autistici.org>
 ;;; Copyright © 2020 Jesse Gibbons <jgibbons2357+guix@gmail.com>
+;;; Copyright © 2020 Martin Becze <mjbecze@riseup.net>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -114,13 +115,23 @@
                         arch "-linux"
                         "/20131110/guile-2.0.9.tar.xz"))))
 
+;; NOTE: The commit IDs used here form a linked list threaded through the git
+;; history. In a phenomenon known as boot-stripping, not only the head of this
+;; list is used, but also a few older versions, when a guix from this package is
+;; used to build something also depending on guix.
+;;
+;; Therefore, if, by accident, you set this package to a non-existent commit ID,
+;; it is insufficient to simply correct it with the latest commit.
+;; Instead, please push one commit that rolls back Guix to before the mistake,
+;; and then another that points to the first one. That way, the faulty commit
+;; won't appear on the linked list.
 (define-public guix
   ;; Latest version of Guix, which may or may not correspond to a release.
   ;; Note: the 'update-guix-package.scm' script expects this definition to
   ;; start precisely like this.
   (let ((version "1.1.0")
-        (commit "218a67dfabcdf592325a8f8c49b86478f69ff589")
-        (revision 18))
+        (commit "44c6e6f590b706f1ecfea6a7e7406bbd7cb70736")
+        (revision 25))
     (package
       (name "guix")
 
@@ -136,7 +147,7 @@
                       (commit commit)))
                 (sha256
                  (base32
-                  "0zjpfagd377i977xv1ljzl0cj4vlrk4qpyqmlhclcdkjfbbachaq"))
+                  "17kmn9yrk9pxi88v4d48h9q3m5dpd2j0pf15fhxzh4k915jv8n6k"))
                 (file-name (string-append "guix-" version "-checkout"))))
       (build-system gnu-build-system)
       (arguments
@@ -278,6 +289,8 @@ $(prefix)/etc/init.d\n")))
                                (gcrypt (assoc-ref inputs "guile-gcrypt"))
                                (json   (assoc-ref inputs "guile-json"))
                                (sqlite (assoc-ref inputs "guile-sqlite3"))
+                               (zlib   (assoc-ref inputs "guile-zlib"))
+                               (lzlib  (assoc-ref inputs "guile-lzlib"))
                                (git    (assoc-ref inputs "guile-git"))
                                (bs     (assoc-ref inputs
                                                   "guile-bytestructures"))
@@ -285,7 +298,7 @@ $(prefix)/etc/init.d\n")))
                                (gnutls (assoc-ref inputs "gnutls"))
                                (locales (assoc-ref inputs "glibc-utf8-locales"))
                                (deps   (list gcrypt json sqlite gnutls
-                                             git bs ssh))
+                                             git bs ssh zlib lzlib))
                                (effective
                                 (read-line
                                  (open-pipe* OPEN_READ
@@ -325,6 +338,8 @@ $(prefix)/etc/init.d\n")))
                        ("guile-gcrypt" ,guile-gcrypt)
                        ("guile-json" ,guile-json-4)
                        ("guile-sqlite3" ,guile-sqlite3)
+                       ("guile-zlib" ,guile-zlib)
+                       ("guile-lzlib" ,guile-lzlib)
                        ("guile-ssh" ,guile-ssh)
                        ("guile-git" ,guile-git)
 
@@ -341,9 +356,6 @@ $(prefix)/etc/init.d\n")))
       (inputs
        `(("bzip2" ,bzip2)
          ("gzip" ,gzip)
-         ("zlib" ,zlib)              ;for 'guix publish'
-         ("lzlib" ,lzlib)            ;for 'guix publish' and 'guix substitute'
-
          ("sqlite" ,sqlite)
          ("libgcrypt" ,libgcrypt)
 
@@ -377,7 +389,9 @@ $(prefix)/etc/init.d\n")))
          ("guile-json" ,guile-json-4)
          ("guile-sqlite3" ,guile-sqlite3)
          ("guile-ssh" ,guile-ssh)
-         ("guile-git" ,guile-git)))
+         ("guile-git" ,guile-git)
+         ("guile-zlib" ,guile-zlib)
+         ("guile-lzlib" ,guile-lzlib)))
 
       (home-page "https://www.gnu.org/software/guix/")
       (synopsis "Functional package manager for installed software packages and versions")
@@ -544,18 +558,17 @@ out) and returning a package that uses that as its 'source'."
 (define-public nix
   (package
     (name "nix")
-    (version "2.3.6")
+    (version "2.3.7")
     (source (origin
              (method url-fetch)
              (uri (string-append "http://nixos.org/releases/nix/nix-"
                                  version "/nix-" version ".tar.xz"))
              (sha256
               (base32
-               "128xf2as0y7hr28x575pbf9lkjpxr9hsxknbavv4p7ywr4lhbs85"))))
+               "15p50jkss6szinisb7axhxybgfi29sm9grz7mxwair8ljj2553yx"))))
     (build-system gnu-build-system)
     (arguments
-     `(#:configure-flags
-       (list "--sysconfdir=/etc")
+     `(#:configure-flags '("--sysconfdir=/etc" "--enable-gc")
        #:phases
        (modify-phases %standard-phases
          (replace 'install
@@ -987,6 +1000,15 @@ environments.")
                   (substitute* "configure.ac"
                     (("^GUILE_PKG.*")
                      "GUILE_PKG([3.0 2.2])\n"))
+
+                  ;; Avoid name clash and build failure now that
+                  ;; 'define-json-mapping' is also provided by Guile-JSON, as
+                  ;; of version 4.3.
+                  (substitute* (find-files "." "\\.scm$")
+                    (("define-json-mapping")
+                     "define-json-mapping*")
+                    (("<=>")
+                     "<->"))
                   #t))
               (file-name (string-append "guix-jupyter-" version "-checkout"))))
     (build-system gnu-build-system)
@@ -1063,14 +1085,14 @@ in an isolated environment, in separate namespaces.")
 (define-public gcab
   (package
     (name "gcab")
-    (version "1.2")
+    (version "1.4")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://gnome/sources/gcab/"
                                   version "/gcab-" version ".tar.xz"))
               (sha256
                (base32
-                "038h5kk41si2hc9d9169rrlvp8xgsxq27kri7hv2vr39gvz9cbas"))))
+                "13q43iqld4l50yra45lhvkd376pn6qpk7rkx374zn8y9wsdzm9b7"))))
     (build-system meson-build-system)
     (native-inputs
      `(("glib:bin" ,glib "bin")         ; for glib-mkenums
@@ -1180,14 +1202,14 @@ the boot loader configuration.")
 (define-public flatpak
   (package
    (name "flatpak")
-   (version "1.8.1")
+   (version "1.8.2")
    (source
     (origin
      (method url-fetch)
      (uri (string-append "https://github.com/flatpak/flatpak/releases/download/"
                          version "/flatpak-" version ".tar.xz"))
      (sha256
-      (base32 "1bcymiv0yzs05rplbyzpimb1k17s345a95y0dhw7jh56z5k4p4b6"))))
+      (base32 "1c45a0k7wx685n5b3ihv7dk0mm2kmwbw7cx8w5g2la62yxfn49kr"))))
 
    ;; Wrap 'flatpak' so that GIO_EXTRA_MODULES is set, thereby allowing GIO to
    ;; find the TLS backend in glib-networking.
@@ -1223,7 +1245,7 @@ cp -r /tmp/locale/*/en_US.*")))
               (("/usr/bin/python3") (which "python3")))
             #t))
         ;; Many tests fail for unknown reasons, so we just run a few basic
-        ;; tests
+        ;; tests.
         (replace 'check
           (lambda _
             (setenv "HOME" "/tmp")
@@ -1268,3 +1290,53 @@ applications")
    (description "Flatpak is a system for building, distributing, and running
 sandboxed desktop applications on GNU/Linux.")
    (license license:lgpl2.1+)))
+
+(define-public akku
+  (package
+    (name "akku")
+    (version "1.0.1")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://gitlab.com/akkuscm/akku.git")
+                    (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (sha256 (base32 "1dm32ws3nshnnscd7k75zswxxs1pp25y2q4k8j5ms241hz47by3c"))))
+    (build-system gnu-build-system)
+    (arguments
+     '(#:phases (modify-phases %standard-phases
+                  (replace 'bootstrap
+                    (lambda* (#:key outputs #:allow-other-keys)
+                      (for-each patch-shebang
+                                '("bootstrap"
+                                  ".akku/env"))
+                      (let* ((home "/tmp")
+                             (datadir (string-append home "/.local/share/akku/")))
+                        (mkdir-p datadir)
+                        (invoke "touch" (string-append datadir "index.db"))
+                        (setenv "HOME" home))
+                      (invoke "./bootstrap")
+                      #t))
+                  (add-after 'install 'wrap-executables
+                    (lambda* (#:key outputs inputs #:allow-other-keys)
+                      (let ((out (assoc-ref outputs "out"))
+                            (curl (assoc-ref inputs "curl")))
+                        (wrap-program (string-append out "/bin/akku")
+                          `("LD_LIBRARY_PATH" ":" prefix (,(string-append curl "/lib"))))
+                        #t))))))
+    (native-inputs
+     `(("which" ,which)
+       ("autoconf" ,autoconf)
+       ("automake" ,automake)
+       ("pkg-config" ,pkg-config)))
+    (inputs
+     `(("guile" ,guile-3.0)
+       ("curl" ,curl)))
+    (home-page "https://akkuscm.org/")
+    (synopsis "Language package manager for Scheme")
+    (description
+     "Akku.scm is a project-based language package manager for R6RS and R7RS Scheme.
+It is mainly meant for programmers who develop portable programs or libraries in Scheme,
+but could potentially work for end-users of those programs.  It also has a translator
+from R7RS, which allows most R7RS code to run on R6RS implementations.")
+    (license license:gpl3+)))
