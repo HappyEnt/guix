@@ -3867,3 +3867,141 @@ between data, in a way that is very similar to WikiData or RDF for instance.
 An object can have relations (in the form of an IRI) that relates it to one or
 more objects or strings, represented by a Json object or an IRI.")
     (license license:gpl3+)))
+
+(define-public guile-struct-pack
+  (package
+    (name "guile-struct-pack")
+    (version "1.1.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/weinholt/struct-pack")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0hd72m821pahjphzyjn26i55542v8makr55xzjll2cycja4wsbc1"))))
+    (build-system guile-build-system)
+    (arguments
+     `(#:compile-flags '("--r6rs" "-Wunbound-variable" "-Warity-mismatch")
+       #:modules ((guix build guile-build-system)
+                  (guix build utils)
+                  (srfi srfi-26)
+                  (ice-9 ftw))
+       #:phases (modify-phases %standard-phases
+                  (add-before 'build 'move-sls-files
+                    (lambda _
+                      ;; Move files under a struct/ directory to reflect the
+                      ;; module hierarchy.
+                      (define dst-folder "struct")
+                      (define (target file)
+                        (string-append dst-folder "/" file))
+                      (define files
+                        (scandir "." (negate (cut member <> '("." "..")))))
+                      (mkdir dst-folder)
+                      (for-each (lambda (file)
+                                  (rename-file file (target file)))
+                                files)
+                      #t)))))
+    (native-inputs
+     `(("guile" ,guile-3.0)))
+    (home-page "https://github.com/weinholt/struct-pack")
+    (synopsis "R6RS library for working with packed byte structures")
+    (description
+     "This is an R6RS library for working with packed byte structures.  It is
+similar to struct in Python or pack and unpack in Perl.")
+    (license license:expat)))
+
+(define-public guile-machine-code
+  (package
+    (name "guile-machine-code")
+    (version "2.1.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/weinholt/machine-code")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0wzj3caj2jypzyjqfkfqkvr3kkbjabsnhldv9kvnx9w9qnria5yd"))))
+    (build-system guile-build-system)
+    (arguments
+     `(#:compile-flags '("--r6rs" "-Wunbound-variable" "-Warity-mismatch")
+       #:modules ((guix build guile-build-system)
+                  (guix build utils)
+                  (srfi srfi-26)
+                  (ice-9 ftw))
+       #:phases (modify-phases %standard-phases
+                  (add-before 'build 'move-sls-files
+                    (lambda _
+                      ;; Move files under a struct/ directory to reflect the
+                      ;; module hierarchy.
+                      (define dst-folder "machine-code")
+                      (define (target file)
+                        (string-append dst-folder "/" file))
+                      (define files
+                        (scandir "." (negate (cut member <> '("." "..")))))
+                      (mkdir dst-folder)
+                      (for-each (lambda (file)
+                                  (rename-file file (target file)))
+                                files)
+                      #t)))))
+    (native-inputs
+     `(("guile" ,guile-3.0)))
+    (propagated-inputs
+     `(("guile-struct-pack" ,guile-struct-pack)))
+    (home-page "https://github.com/weinholt/machine-code")
+    (synopsis "Tools that relate to machine code and object formats")
+    (description
+     "This project is about the development of tools that relate to machine
+code and object formats; for all architectures.  Here you'll find libraries
+for working with binary code: assembly, disassembly, instruction tables,
+object formats and related areas.")
+    (license license:expat)))
+
+(define-public guile-laesare
+  (package
+    (name "guile-laesare")
+    (version "1.0.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/weinholt/laesare")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "15q619gzw717r8r1ql23zfdaibpnp9qqs96032vdc3rj74msxc92"))))
+    (build-system guile-build-system)
+    (arguments
+     `(#:compile-flags '("--r6rs" "-Wunbound-variable" "-Warity-mismatch")
+       #:modules ((guix build guile-build-system)
+                  (guix build utils)
+                  (srfi srfi-26)
+                  (ice-9 ftw))
+       #:phases (modify-phases %standard-phases
+                  (add-before 'build 'move-sls-files
+                    (lambda _
+                      ;; Move files under a laesare directory to reflect
+                      ;; the module hierarchy.
+                      (define dst-folder "laesare")
+                      (define (target file)
+                        (string-append dst-folder "/" file))
+                      (define files
+                        (scandir "." (negate (cut member <> '("." "..")))))
+                      (mkdir dst-folder)
+                      (for-each (lambda (file)
+                                  (rename-file file (target file)))
+                                files)
+                      #t)))))
+    (native-inputs
+     `(("guile" ,guile-3.0)))
+    (home-page "https://github.com/weinholt/laesare")
+    (synopsis "R6RS Scheme library that provides a reader")
+    (description
+     "This is an R6RS Scheme library that provides a reader with some extra
+features not found in the standard read procedure such as a compatible mode
+with support for other RnRS standards and a tolerant mode that continues on
+errors.")
+    (license license:expat)))

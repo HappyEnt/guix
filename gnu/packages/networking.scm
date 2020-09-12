@@ -2107,14 +2107,14 @@ HTTP proxies.")
 (define-public enet
   (package
     (name "enet")
-    (version "1.3.15")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append "http://enet.bespin.org/download/"
-                                  "enet-" version ".tar.gz"))
-              (sha256
-               (base32
-                "1yxxf9bkx6dx3j8j70fj17c05likyfibb1419ls74hp58qrzdgas"))))
+    (version "1.3.16")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "http://enet.bespin.org/download/"
+                           "enet-" version ".tar.gz"))
+       (sha256
+        (base32 "1lggc82rbzscci057dqqyhkbq4j6mr5k01hbrvn06jkzc2xpxdxv"))))
     (build-system gnu-build-system)
     (native-inputs
      `(("pkg-config" ,pkg-config)))
@@ -3428,14 +3428,14 @@ maximum extent possible.")
 (define-public batctl
   (package
    (name "batctl")
-   (version "2020.1")
+   (version "2020.3")
    (source
     (origin
      (method url-fetch)
      (uri (string-append "https://downloads.open-mesh.org/batman/releases/batman-adv-"
                          version "/batctl-" version ".tar.gz"))
      (sha256
-      (base32 "0fy252q1my3a57v6pfz8i97h6zv7v03di01dhwjkj47pqnx1rqm3"))))
+      (base32 "0r2w2v4sy6wgr7mp9lc7yj9k4ldsbsm3425rjil7p0b17zmzf4rm"))))
    (inputs
     `(("libnl" ,libnl)))
    (native-inputs
@@ -3673,15 +3673,14 @@ thousands of connections is clearly realistic with today's hardware.")
 (define-public lldpd
   (package
     (name "lldpd")
-    (version "1.0.5")
+    (version "1.0.6")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "https://media.luffy.cx/files/lldpd/lldpd-"
                            version ".tar.gz"))
        (sha256
-        (base32
-         "16fbqrs3l976gdslx647nds8x7sz4h5h3h4l4yxzrayvyh9b5lrd"))
+        (base32 "1v5fd8vwxracvzvgrsswvhppwyx5c4srj89g1cnvy73w831mpq95"))
        (modules '((guix build utils)))
        (snippet
         '(begin
