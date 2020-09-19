@@ -38,6 +38,7 @@
 ;;; Copyright © 2020 Noisytoot <noisytoot@gmail.com>
 ;;; Copyright © 2020 Edouard Klein <edk@beaver-labs.com>
 ;;; Copyright © 2020 Vinicius Monego <monego@posteo.net>
+;;; Copyright © 2020 Konrad Hinsen <konrad.hinsen@fastmail.net>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -1879,6 +1880,61 @@ WebSocket usage in Python programs.")
       "Purl is a Python package for handling URLs.")
     (license license:expat)))
 
+(define-public python-apiron
+  (package
+    (name "python-apiron")
+    (version "5.1.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "apiron" version))
+       (sha256
+        (base32 "1qwbqn47sf0aqznj1snbv37v8ijx476qqkjf5l9pac7xjkxsr8qk"))))
+    (build-system python-build-system)
+    (arguments
+     `(#:phases
+       (modify-phases %standard-phases
+         (replace 'check
+           (lambda* (#:key inputs outputs #:allow-other-keys)
+             (add-installed-pythonpath inputs outputs)
+             (invoke "pytest" "-vv" "--cov" "-k"
+                     ;; This test tries to connect to the internet.
+                     "not test_call"))))))
+    (propagated-inputs
+     `(("python-requests" ,python-requests)))
+    (native-inputs
+     `(("python-pytest" ,python-pytest)
+       ("python-pytest-cov" ,python-pytest-cov)))
+    (home-page "https://github.com/ithaka/apiron")
+    (synopsis "Python wrapper for interacting with RESTful APIs")
+    (description
+     "@code{apiron} provides a declarative, structured configuration of
+services and endpoints with a unified interface for interacting with RESTful
+APIs.")
+    (license license:expat)))
+
+(define-public python-beren
+  (package
+    (name "python-beren")
+    (version "0.7.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "beren" version))
+       (sha256
+        (base32 "1v3mdwfqsyza892zvs124ym9w1bkng1j56b7l4dwfjir3723xcgf"))))
+    (build-system python-build-system)
+    (arguments
+     ;; The test tries to open a connection to a remote server.
+     `(#:tests? #f))
+    (propagated-inputs
+     `(("python-apiron" ,python-apiron)))
+    (home-page "https://github.com/teffalump/beren")
+    (synopsis "REST client for Orthanc DICOM servers")
+    (description
+     "@code{beren} provides a REST client for Orthanc, a DICOM server.")
+    (license license:gpl3+)))
+
 (define-public python-requests
   (package
     (name "python-requests")
@@ -2028,6 +2084,28 @@ with python-requests.")
     (arguments
      `(;; FIXME: Some tests require network access.
        #:tests? #f))))
+
+(define-public python-requests-ftp
+  (package
+    (name "python-requests-ftp")
+    (version "0.3.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "requests-ftp" version))
+       (sha256
+        (base32
+         "0yh5v21v36dsjsgv4y9dx4mmz35741l5jf6pbq9w19d8rfsww13m"))))
+    (build-system python-build-system)
+    (propagated-inputs
+     `(("python-requests" ,python-requests)))
+    (home-page
+     "https://github.com/Lukasa/requests-ftp")
+    (synopsis "FTP Transport Adapter for Requests")
+    (description
+     "Requests-FTP is an implementation of a simple FTP transport
+adapter for use with the Requests library.")
+    (license license:asl2.0)))
 
 (define-public python-oauthlib
   (package

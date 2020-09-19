@@ -129,6 +129,7 @@
   #:use-module (gnu packages gsasl)
   #:use-module (gnu packages gstreamer)
   #:use-module (gnu packages gtk)
+  #:use-module (gnu packages haskell-xyz)
   #:use-module (gnu packages icu4c)
   #:use-module (gnu packages image)
   #:use-module (gnu packages imagemagick)
@@ -7328,13 +7329,13 @@ interfaces in an easy and portable manner.")
 (define-public python-networkx
   (package
     (name "python-networkx")
-    (version "2.4")
+    (version "2.5")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "networkx" version))
        (sha256
-        (base32 "0r2wr7aqay9fwjrgk35fkjzk8lvvb4i4df7ndaqzkr4ndw5zzx7q"))))
+        (base32 "00hnii2lplig2s324k1hvi29pyfab6z7i22922f67jgv4da9ay3r"))))
     (build-system python-build-system)
     (arguments
      '(#:phases (modify-phases %standard-phases
@@ -9164,7 +9165,7 @@ specification.")
 (define-public python-libsass
   (package
     (name "python-libsass")
-    (version "0.20.0")
+    (version "0.20.1")
     (source
      (origin
        ;; PyPI tarball is missing some test files.
@@ -9174,7 +9175,7 @@ specification.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0h9rj4k9izkfdvli8ip72bbvh6a7bvrv5pxz6zay2bq235gpfgfc"))))
+        (base32 "1r0kgl7i6nnhgjl44sjw57k08gh2qr7l8slqih550dyxbf1akbxh"))))
     (build-system python-build-system)
     (arguments
      `(#:phases
@@ -9187,10 +9188,7 @@ specification.")
          (replace 'check
            (lambda* (#:key inputs outputs #:allow-other-keys)
              (add-installed-pythonpath inputs outputs)
-             (invoke "pytest" "sasstests.py" "-k"
-                     ;; See https://github.com/sass/libsass/issues/3092.
-                     ;; This test may work in a future release of libsass.
-                     "not test_stack_trace_formatting"))))))
+             (invoke "pytest" "sasstests.py"))))))
     (native-inputs
      `(("python-pytest" ,python-pytest)
        ("python-werkzeug" ,python-werkzeug)))
@@ -14443,7 +14441,7 @@ PKCS#5 v2.0 Password-Based Key Derivation is a key derivation function which
 is part of the RSA Public Key Cryptography Standards series.  The provided
 implementation takes a password or a passphrase and a salt value (and
 optionally a iteration count, a digest module, and a MAC module) and provides
-a file-like object from which an arbitrarly-sized key can be read.")
+a file-like object from which an arbitrarily-sized key can be read.")
     (license license:expat)))
 
 (define-public python2-pbkdf2
@@ -14523,7 +14521,7 @@ to ansi-escaped strings suitable for display in a terminal.")
     (synopsis "Convert ANSI-decorated console output to HTML")
     (description
      "@command{ansi2html} is a Python library and command line utility for
-convering text with ANSI color codes to HTML or LaTeX.")
+converting text with ANSI color codes to HTML or LaTeX.")
     (license license:gpl3+)))
 
 (define-public python2-ansi2html
@@ -21979,3 +21977,45 @@ dates in almost any string formats commonly found on web pages.")
     (description "Safety checks installed dependencies for known vulnerabilities.
 By default it uses the open Python vulnerability database Safety DB.")
   (license license:expat)))
+
+(define-public python-pypandoc
+  (package
+    (name "python-pypandoc")
+    (version "1.5")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "pypandoc" version))
+       (sha256
+        (base32
+         "1zvn9764cf7kkjkmr9gw6wc8adpk06qxr1rhxwa9pg0zmdvrk90l"))))
+    (build-system python-build-system)
+    (inputs
+     `(("pandoc" ,pandoc)
+       ("pandoc-citeproc" ,pandoc-citeproc)))
+    (propagated-inputs
+     `(("wheel" ,python-wheel)))
+    (native-inputs
+     `(("texlive" ,(texlive-union (list texlive-amsfonts
+                                        texlive-fonts-ec
+                                        texlive-latex-hyperref
+                                        texlive-latex-oberdiek
+                                        texlive-lm
+                                        texlive-xcolor)))))
+    (arguments
+     `(#:phases
+       (modify-phases %standard-phases
+         (add-before 'check 'disable-tests
+           (lambda _
+             ;; Disable test requiring network access
+             (substitute* "tests.py"
+               (("test_basic_conversion_from_http_url")
+                "skip_test_basic_conversion_from_http_url"))
+             ;; Needed by texlive-union to generate fonts
+             (setenv "HOME" "/tmp")
+             #t)))))
+    (home-page "https://github.com/bebraw/pypandoc")
+    (synopsis "Python wrapper for pandoc")
+    (description "pypandoc is a thin Python wrapper around pandoc
+and pandoc-citeproc.")
+    (license license:expat)))

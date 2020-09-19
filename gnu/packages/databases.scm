@@ -1343,7 +1343,7 @@ for example from a shell script.")
 (define-public sqitch
   (package
     (name "sqitch")
-    (version "1.0.0")
+    (version "1.1.0")
     (source
      (origin
        (method url-fetch)
@@ -1351,7 +1351,7 @@ for example from a shell script.")
              "mirror://cpan/authors/id/D/DW/DWHEELER/App-Sqitch-v"
              version ".tar.gz"))
        (sha256
-        (base32 "0p4wraqiscvwmmsvfqfy65blgsilwpvd9zj4d2zvm2xdx70ncr7l"))))
+        (base32 "1ayiwg9kh3w0nbacbcln7h944z94vq5vnnd5diz86033bpbnq57f"))))
     (build-system perl-build-system)
     (arguments
      '(#:phases
@@ -1383,6 +1383,7 @@ for example from a shell script.")
        ("perl-test-file" ,perl-test-file)
        ("perl-test-file-contents" ,perl-test-file-contents)
        ("perl-test-mockmodule" ,perl-test-mockmodule)
+       ("perl-test-mockobject" ,perl-test-mockobject)
        ("perl-test-nowarnings" ,perl-test-nowarnings)
        ("perl-test-warn" ,perl-test-warn)))
     (inputs
@@ -1391,7 +1392,9 @@ for example from a shell script.")
        ("perl-config-gitlike" ,perl-config-gitlike)
        ("perl-datetime" ,perl-datetime)
        ("perl-datetime-timezone" ,perl-datetime-timezone)
+       ("perl-dbd-mysql" ,perl-dbd-mysql)
        ("perl-dbd-pg" ,perl-dbd-pg)
+       ("perl-dbd-sqlite" ,perl-dbd-sqlite)
        ("perl-dbi" ,perl-dbi)
        ("perl-devel-stacktrace" ,perl-devel-stacktrace)
        ("perl-encode-locale" ,perl-encode-locale)
@@ -2897,13 +2900,13 @@ designed to be easy and intuitive to use.")
 (define-public python-psycopg2
   (package
     (name "python-psycopg2")
-    (version "2.8.5")
+    (version "2.8.6")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "psycopg2" version))
        (sha256
-        (base32 "06081jk9srkd4ra9j8b93x9ld3a2yxsbsf5bbbcivbm1yx065m7p"))))
+        (base32 "0hzmk6b1hb5riqkljr5xics6p4zbvmis6knbczb7zhq7273zc8zv"))))
     (build-system python-build-system)
     (arguments
      ;; Tests would require a postgresql database "psycopg2_test"

@@ -118,6 +118,7 @@
   #:use-module (gnu packages curl)
   #:use-module (gnu packages databases)
   #:use-module (gnu packages dictionaries)
+  #:use-module (gnu packages djvu)
   #:use-module (gnu packages emacs)
   #:use-module (gnu packages guile)
   #:use-module (gnu packages gtk)
@@ -2479,13 +2480,30 @@ filters, new key bindings and faces.  It can be enabled by
        (sha256
         (base32 "0njgyx09q225hliacsnjk8wallg5i6xkz6bj501pb05nwqfbvfk7"))))
     (build-system emacs-build-system)
+    (inputs `(("djview" ,djview)
+              ("djvulibre" ,djvulibre)))
+    (arguments
+     `(#:phases
+       (modify-phases %standard-phases
+         (add-after 'unpack 'configure
+           (lambda* (#:key inputs outputs #:allow-other-keys)
+             (let ((file "djvu.el")
+                   (djview (assoc-ref inputs "djview"))
+                   (djvulibre (assoc-ref inputs "djvulibre")))
+               ;; Specify the absolute executable locations.
+               (chmod file #o644)
+               (substitute* file
+                 (("\"djvused\"") (string-append "\"" djvulibre "/bin/djvused\""))
+                 (("\"djvm\"") (string-append "\"" djvulibre "/bin/djvm\""))
+                 (("\"ddjvu\"") (string-append "\"" djvulibre "/bin/ddjvu\"")))
+               (emacs-substitute-variables file
+                 ("djvu-djview-command" (string-append djview "/bin/djview"))))
+             #t)))))
     (home-page "http://elpa.gnu.org/packages/djvu.html")
     (synopsis "Edit and view Djvu files via djvused")
     (description
      "This package is a front end for the command-line program djvused from
-DjVuLibre, see @url{http://djvu.sourceforge.net/}.  It assumes you have the
-programs @command{djvused}, @command{djview}, @command{ddjvu}, and
-@command{djvm} installed.")
+DjVuLibre, see @url{http://djvu.sourceforge.net/}.")
     (license license:gpl3+)))
 
 (define-public emacs-pabbrev
@@ -3041,7 +3059,7 @@ files and directories.")
 (define-public emacs-fountain-mode
   (package
     (name "emacs-fountain-mode")
-    (version "3.2.2")
+    (version "3.3.0")
     (source
      (origin
        (method git-fetch)
@@ -3050,7 +3068,7 @@ files and directories.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0rwdwbw9cq8ljvbmgmz9izank8dqjki79l1bw127lli69fs72gyi"))))
+        (base32 "04jrv6i4ah3i8c9hcd9wyaw2vrxr46f50qb9qwna2v7qa5vaway3"))))
     (build-system emacs-build-system)
     (home-page "https://github.com/rnkn/fountain-mode")
     (synopsis "Major mode for screenwriting in Fountain markup")
@@ -5257,6 +5275,29 @@ commands and highlighting.")
     ;; indicates GPL3.
     (license license:gpl3)))
 
+(define-public emacs-sbt-mode
+  (package
+    (name "emacs-sbt-mode")
+    (version "2.0.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/hvesalai/emacs-sbt-mode")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0lv9ridzk9x6rkf7lj21srnszypyq04vqg05vl10zhpz1yqlnbjd"))))
+    (build-system emacs-build-system)
+    (home-page "https://github.com/hvesalai/emacs-sbt-mode")
+    (synopsis "Basic functionality for interacting with sbt inside Emacs")
+    (description
+     "This mode provides basic functionality required for successfully
+interacting with sbt inside Emacs.  The core functionality includes
+interacting with the sbt shell and Scala console, compiling code and
+navigation to errors.")
+    (license license:gpl3+)))
+
 (define-public emacs-scheme-complete
   (let ((commit "9b5cf224bf2a5994bc6d5b152ff487517f1a9bb5"))
     (package
@@ -7343,7 +7384,7 @@ asynchronously, with Counsel and Ivy.  Simply call
 (define-public emacs-counsel-projectile
   (package
     (name "emacs-counsel-projectile")
-    (version "0.3.0")
+    (version "0.3.1")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -7352,7 +7393,7 @@ asynchronously, with Counsel and Ivy.  Simply call
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1inc4ndl0ysfwvxk4avbgpj4qi9rc93da6476a5c81xmwpsv8wmq"))))
+                "1k4n5lw6wwbgpwv0dg9dw0bjzi0hvbgkzrs1zmq36yhfz6y8gwnh"))))
     (build-system emacs-build-system)
     (propagated-inputs
      `(("emacs-counsel" ,emacs-counsel)
@@ -9659,13 +9700,13 @@ passive voice.")
     (name "emacs-org")
     ;; emacs-org-contrib inherits from this package.  Please update it as
     ;; well.
-    (version "9.3.8")
+    (version "9.4")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "https://elpa.gnu.org/packages/org-" version ".tar"))
        (sha256
-        (base32 "1az00pi9rw3ibx4061jyqr6ll27kvs99yvd7nk5dckjh0ajd0gni"))))
+        (base32 "1awkrh3y90q7c0as3327rqj0zylf5cpjzr1pyvbzymli16irhwb6"))))
     (build-system emacs-build-system)
     (arguments
      `(#:phases
@@ -9690,14 +9731,14 @@ programming and reproducible research.")
   (package
     (inherit emacs-org)
     (name "emacs-org-contrib")
-    (version "20200907")
+    (version "20200914")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "https://orgmode.org/elpa/"
                            "org-plus-contrib-" version ".tar"))
        (sha256
-        (base32 "1rgk3pwhsmbmwlncg60ahwrrkm1ks4xpwy2wzv9q7myl1aihjj54"))))
+        (base32 "1naq25g4d95cx29axx428rnpc4m9hd0j7w1l0vqwkdjyr5qfj0ab"))))
     (arguments
      `(#:modules ((guix build emacs-build-system)
                   (guix build utils)
@@ -15017,36 +15058,36 @@ macro takes a first argument (whose value must be an alist) and a body.")
     (license license:gpl3+)))
 
 (define-public emacs-esup
-  (package
-    (name "emacs-esup")
-    (version "0.7")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/jschaf/esup")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32
-         "100w28n3qb3s5b18vvqpwmijdjnjazawn38i0pjbpxz5llhqgl1g"))))
-    (build-system emacs-build-system)
-    (native-inputs
-     `(("emacs-noflet" ,emacs-noflet)
-       ("emacs-el-mock" ,emacs-el-mock)))
-    (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (add-before 'install 'check
-           (lambda* (#:key inputs #:allow-other-keys)
-             (invoke "emacs" "--batch" "-L" "."
-                     "-l" "test/esup-test.el"
-                     "-f" "ert-run-tests-batch-and-exit"))))))
-    (home-page "https://github.com/jschaf/esup")
-    (synopsis "Emacs start up profiler")
-    (description "Benchmark Emacs Startup time without ever leaving
+  (let ((commit "0de8af8233d9ce1b67f05a50f25c481c4f1118d8")
+        (revision "1"))
+    (package
+      (name "emacs-esup")
+      (version (git-version "0.7.1" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/jschaf/esup")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32
+           "01khb3xyj0ylwib6ryzzvqmkh5wvzxiq2n3l0s3h9zv7wx849bzv"))))
+      (build-system emacs-build-system)
+      (native-inputs
+       `(("emacs-noflet" ,emacs-noflet)
+         ("emacs-undercover" ,emacs-undercover)
+         ("emacs-buttercup" ,emacs-buttercup)))
+      (propagated-inputs
+       `(("emacs-dash" ,emacs-dash)))
+      (arguments
+     `(#:tests? #t
+       #:test-command '("buttercup" "-L" ".")))
+      (home-page "https://github.com/jschaf/esup")
+      (synopsis "Emacs start up profiler")
+      (description "Benchmark Emacs Startup time without ever leaving
 your Emacs.")
-    (license license:gpl2+)))
+      (license license:gpl2+))))
 
 (define-public emacs-restart-emacs
   (let ((commit "9aa90d3df9e08bc420e1c9845ee3ff568e911bd9")
@@ -15722,34 +15763,37 @@ downloading manager for Emacs.")
       (license license:gpl3+))))
 
 (define-public emacs-helpful
-  (package
-    (name "emacs-helpful")
-    (version "0.17")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/Wilfred/helpful")
-             (commit version)))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "0v2y0x9pwi08y2mgjjiw5brfb5haa7pbmy4540glw904ffxxcblj"))))
-    (build-system emacs-build-system)
-    (propagated-inputs
-     `(("emacs-elisp-refs" ,emacs-elisp-refs)
-       ("emacs-dash" ,emacs-dash)
-       ("emacs-s" ,emacs-s)
-       ("emacs-f" ,emacs-f)
-       ("emacs-shut-up" ,emacs-shut-up)))
-    (native-inputs
-     `(("emacs-ert-runner" ,emacs-ert-runner)
-       ("emacs-undercover" ,emacs-undercover)))
-    (arguments
-     `(#:tests? #t
-       #:test-command '("ert-runner")))
-    (home-page "https://github.com/Wilfred/helpful")
-    (synopsis "More contextual information in Emacs help")
-    (description "@code{helpful} is an alternative to the built-in Emacs help
+  (let ((version "0.17")
+        (commit "b0e937fff71dc0a5d34066bfd25310e76f284621")
+        (revision "1"))
+    (package
+      (name "emacs-helpful")
+      (version (git-version version revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/Wilfred/helpful")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "048qvlyj2vkgi872z8l07diwqnq21ziycv8slxzzy7rflw3wx0b2"))))
+      (build-system emacs-build-system)
+      (propagated-inputs
+       `(("emacs-elisp-refs" ,emacs-elisp-refs)
+         ("emacs-dash" ,emacs-dash)
+         ("emacs-s" ,emacs-s)
+         ("emacs-f" ,emacs-f)
+         ("emacs-shut-up" ,emacs-shut-up)))
+      (native-inputs
+       `(("emacs-ert-runner" ,emacs-ert-runner)
+         ("emacs-undercover" ,emacs-undercover)))
+      (arguments
+       `(#:tests? #t
+         #:test-command '("ert-runner")))
+      (home-page "https://github.com/Wilfred/helpful")
+      (synopsis "More contextual information in Emacs help")
+      (description "@code{helpful} is an alternative to the built-in Emacs help
 that provides much more contextual information.
 
 @itemize
@@ -15768,7 +15812,7 @@ functions.
 @item Trace, disassemble functions from inside Helpful.  This is discoverable
 and doesn't require memorisation of commands.
 @end itemize\n")
-    (license license:gpl3+)))
+      (license license:gpl3+))))
 
 (define-public emacs-logview
   (package
@@ -16904,6 +16948,27 @@ filters, highlighting of regexp group levels, and more.")
      "This package allows for bookmarking @code{eshell} buffers.  Upon
 visiting the bookmark, a new @code{eshell} session will be opened in the
 appropriate directory if no @code{eshell} session is active.")
+    (license license:gpl3+)))
+
+(define-public emacs-eshell-syntax-highlighting
+  (package
+    (name "emacs-eshell-syntax-highlighting")
+    (version "0.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/akreisher/eshell-syntax-highlighting")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0id27874wsb5y169030x8g1ldpa1mnskv1s2j3ygqiyh5fvpfash"))))
+    (build-system emacs-build-system)
+    (home-page "https://github.com/akreisher/eshell-syntax-highlighting")
+    (synopsis "Add syntax highlighting to Eshell")
+    (description
+     "This package highlights user commands at the Eshell interactive prompt
+to provide feedback on the validity of commands and syntax.")
     (license license:gpl3+)))
 
 (define-public emacs-eshell-z
@@ -18444,7 +18509,7 @@ can be queued at any time.")
        ("emacs-esxml" ,emacs-esxml)
        ("emacs-s" ,emacs-s)))
     (inputs
-     `(("pandoc" ,ghc-pandoc)))
+     `(("pandoc" ,pandoc)))
     (arguments
      `(#:phases
        (modify-phases %standard-phases
@@ -19460,8 +19525,8 @@ stored playlists.")
 
 (define-public emacs-vterm
   (let ((version "0")
-        (revision "2")
-        (commit "f41849c2c9c1899f22d1c3d4f871ec47c82627ce"))
+        (revision "3")
+        (commit "14e4afdfc160b2e625c3e483d169786ac00cb4fe"))
     (package
       (name "emacs-vterm")
       (version (git-version version revision commit))
@@ -19473,7 +19538,7 @@ stored playlists.")
                 (file-name (git-file-name name version))
                 (sha256
                  (base32
-                  "1b5s1101n7a2lnpkbadm1h4k6z295fpijx0rdpmd05dkhyarax6n"))))
+                  "0wl613rxw493i3397n34qwqnd5fkyqrnn1fx3y2040xhvjl9rx70"))))
       (build-system emacs-build-system)
       (arguments
        `(#:modules ((guix build emacs-build-system)
@@ -21991,7 +22056,7 @@ format.")
                 "0iibxplgdp34bpq1yll2gmqjd8d8lnqn4mqjvx6cdf0y438yr4jz"))))
     (build-system emacs-build-system)
     (inputs
-     `(("pandoc" ,ghc-pandoc)))
+     `(("pandoc" ,pandoc)))
     (propagated-inputs
      `(("emacs-dash" ,emacs-dash)
        ("emacs-ht" ,emacs-ht)))

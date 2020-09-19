@@ -2030,7 +2030,7 @@ synchronous execution of all clients, and low latency operation.")
 (define-public jack-2
   (package (inherit jack-1)
     (name "jack2")
-    (version "1.9.13")
+    (version "1.9.14")
     (source (origin
              (method url-fetch)
              (uri (string-append "https://github.com/jackaudio/jack2/releases/"
@@ -2039,7 +2039,7 @@ synchronous execution of all clients, and low latency operation.")
              (file-name (string-append name "-" version ".tar.gz"))
              (sha256
               (base32
-               "1d1d403jn4366mqig6g8ghr8057b3rn7gs26b5p3rkal34j20qw2"))))
+               "0z11hf55a6mi8h50hfz5wry9pshlwl4mzfwgslghdh40cwv342m2"))))
     (build-system waf-build-system)
     (arguments
      `(#:tests? #f  ; no check target
@@ -2049,6 +2049,10 @@ synchronous execution of all clients, and low latency operation.")
        (modify-phases %standard-phases
          (add-before 'configure 'set-linkflags
            (lambda _
+             ;; Ensure -lstdc++ is the tail of LDFLAGS or the simdtests.cpp
+             ;; will not link with undefined reference to symbol
+             ;; '__gxx_personality_v0@@CXXABI_1.3'
+             (setenv "LDFLAGS" "-lstdc++")
              ;; Add $libdir to the RUNPATH of all the binaries.
              (substitute* "wscript"
                ((".*CFLAGS.*-Wall.*" m)
@@ -4464,6 +4468,36 @@ supports both of ID3v1/v2 and APEv2 tags.")
     (home-page "http://tausoft.org/")
     (license license:gpl2+)))
 
+(define-public libsoundio
+  (package
+    (name "libsoundio")
+    (version "2.0.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/andrewrk/libsoundio")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "12l4rvaypv87vigdrmjz48d4d6sq4gfxf5asvnc4adyabxb73i4x"))))
+    (build-system cmake-build-system)
+    (arguments
+     `(#:tests? #f)) ;no tests included
+    (inputs
+     `(("alsa-lib" ,alsa-lib)
+       ("jack" ,jack-1)
+       ("pulseaudio" ,pulseaudio)))
+    (native-inputs
+     `(("pkg-config" ,pkg-config)))
+    (home-page "http://libsound.io")
+    (synopsis "C library for real-time audio input and output")
+    (description "@code{libsoundio} is a C library providing audio input and
+output.  The API is suitable for real-time software such as digital audio
+workstations as well as consumer software such as music players.")
+    (license license:expat)))
+
 (define-public redkite
   (package
     (name "redkite")
@@ -4610,7 +4644,7 @@ in the package.")
 (define-public libaudec
   (package
     (name "libaudec")
-    (version "0.2.2")
+    (version "0.2.3")
     (source
       (origin
         (method git-fetch)
@@ -4620,14 +4654,14 @@ in the package.")
         (file-name (git-file-name name version))
         (sha256
           (base32
-            "04mpmfmqc43asw0m3zxhb6jj4qms7x4jw7mx4xb1d3lh16xllniz"))))
+            "04hw61db8wscj28qjyiaiafx8xl87njgmvqszxyhs4gmg8xgjip7"))))
    (build-system meson-build-system)
    (arguments
-    `(#:configure-flags `("-Denable_tests=true -Denable_ffmpeg=true")))
+     ;; Compile tests.
+    `(#:configure-flags `("-Dtests=true")))
    (inputs
     `(("libsamplerate" ,libsamplerate)
-      ("libsndfile" ,libsndfile)
-      ("ffmpeg" ,ffmpeg)))
+      ("libsndfile" ,libsndfile)))
    (native-inputs
      `(("pkg-config", pkg-config)))
    (synopsis "Library for reading and resampling audio files")
@@ -4777,6 +4811,37 @@ edited, converted, compressed and saved.")
      `(("librsvg" ,librsvg)
        ,@(package-inputs ztoolkit)))
     (synopsis "ZToolkit with SVG support")))
+
+(define-public lsp-dsp-lib
+  (package
+    (name "lsp-dsp-lib")
+    (version "0.5.8")
+    (source
+      (origin
+        (method url-fetch)
+        (uri (string-append "https://github.com/sadko4u/lsp-dsp-lib/"
+                            "releases/download/lsp-dsp-lib-" version
+                            "/lsp-dsp-lib-" version "-src.tar.gz"))
+        (sha256
+         (base32
+          "07w3d2i0z0xmvi1ngcgs7lc5a0da8jvf7rv4dnjk01md43b7fkh1"))))
+    (build-system gnu-build-system)
+    (arguments
+     `(#:tests? #f ; no tests
+       #:make-flags
+       (list (string-append "CC=" ,(cc-for-target)))
+       #:phases
+       (modify-phases %standard-phases
+         (replace 'configure
+           (lambda* (#:key outputs #:allow-other-keys)
+             (invoke "make" "config"
+                     (string-append "PREFIX=" (assoc-ref outputs "out"))))))))
+    (home-page "https://github.com/sadko4u/lsp-dsp-lib")
+    (synopsis "Digital signal processing library")
+    (description "The LSP DSP library provides a set of functions that perform
+SIMD-optimized computing on several hardware architectures.  All functions
+currently operate on IEEE-754 single-precision floating-point numbers.")
+    (license license:lgpl3+)))
 
 (define-public codec2
   (package

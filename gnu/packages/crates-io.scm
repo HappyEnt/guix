@@ -8,6 +8,7 @@
 ;;; Copyright © 2019, 2020 Hartmut Goebel <h.goebel@crazy-compilers.com>
 ;;; Copyright © 2020 Jakub Kądziołka <kuba@kadziolka.net>
 ;;; Copyright © 2020 Leo Famulari <leo@famulari.name>
+;;; Copyright © 2020 Gabriel Arazas <foo.dogsquared@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -441,6 +442,37 @@ shapes, lines and text to buffers.")
     (synopsis "Glue for the Android JNI")
     (description "This package provides the glue for the Android JNI.")
     (license license:expat)))
+
+(define-public rust-ansi-colours-1
+  (package
+    (name "rust-ansi-colours")
+    (version "1.0.1")
+    (source
+      (origin
+        (method url-fetch)
+        (uri (crate-uri "ansi_colours" version))
+        (file-name
+         (string-append name "-" version ".tar.gz"))
+        (sha256
+         (base32
+          "1dnqmpk68mzvncj37jlv0362kdgsgjxg010c6psagimgh4m303qx"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:cargo-inputs
+       (("rust-cc" ,rust-cc-1))
+       #:cargo-development-inputs
+       (("rust-delta-e" ,rust-delta-e-0.2)
+        ("rust-lab" ,rust-lab-0.4))))
+    (home-page "https://github.com/mina86/ansi_colours")
+    (synopsis "Palette converter between true-colour and ANSI terminal")
+    (description
+     "@code{ansi_colours} is a library which converts between 24-bit sRGB
+colours and 8-bit colour palette used by ANSI terminals such as @code{xterm} on
+@code{rxvt-unicode} in 256-colour mode.
+The most common use case is when using 24-bit colours in a terminal emulator
+which only support 8-bit colour palette.  This package allows true-colours to be
+approximated by values supported by the terminal.")
+    (license license:lgpl3+)))
 
 (define-public rust-ansi-term-0.12
   (package
@@ -5443,6 +5475,29 @@ and arithmetic.")
         (sha256
          (base32
           "17giv0n0n1r64z0dahfvkjy3ys517jxyhs8sd9lmgvcljpjyryxa"))))))
+
+(define-public rust-delta-e-0.2
+  (package
+    (name "rust-delta-e")
+    (version "0.2.1")
+    (source
+      (origin
+        (method url-fetch)
+        (uri (crate-uri "delta_e" version))
+        (file-name
+         (string-append name "-" version ".tar.gz"))
+        (sha256
+         (base32
+          "18rxibmi27ark8vj367qm2iqmv5x293l8fm9ang4y2sv3l251sf5"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:cargo-inputs (("rust-lab" ,rust-lab-0.7))))
+    (home-page "https://github.com/elliotekj/DeltaE")
+    (synopsis "Pure Rust implementation of the CIEDE2000 algorithm")
+    (description "DeltaE is a pure-Rust implementation of the
+@url{http://en.wikipedia.org/wiki/Color_difference#CIEDE2000, CIEDE2000}
+algorithm which serves to quantify the difference between two colors.")
+    (license license:expat)))
 
 (define-public rust-demo-hack-0.0
   (package
@@ -12219,6 +12274,74 @@ script, countries and other regions.  They are commonly used in HTML and HTTP
 currently supports parsing (fully conformant parser), formatting and comparing
 language tags.")
     (license license:expat)))
+
+(define-public rust-lab-0.8
+  (package
+    (name "rust-lab")
+    (version "0.8.1")
+    (source
+      (origin
+        (method url-fetch)
+        (uri (crate-uri "lab" version))
+        (file-name
+         (string-append name "-" version ".tar.gz"))
+        (sha256
+         (base32
+          "1ysnbviwi35mq6xyz9c59mpgigyfp4s4y2mispxzrms4vk83bx15"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:cargo-development-inputs
+       (("rust-approx" ,rust-approx-0.3)
+        ("rust-criterion" ,rust-criterion-0.3)
+        ("rust-lazy-static" ,rust-lazy-static-1)
+        ("rust-pretty-assertions" ,rust-pretty-assertions-0.6)
+        ("rust-rand" ,rust-rand-0.5))))
+    (home-page "https://github.com/TooManyBees/lab")
+    (synopsis "Convert RGB to CIE-LAB for Rust")
+    (description
+     "This package contains tools for converting RGB colors to the CIE-LAB color
+space, and comparing differences in color.")
+    (license license:expat)))
+
+(define-public rust-lab-0.7
+  (package
+    (inherit rust-lab-0.8)
+    (name "rust-lab")
+    (version "0.7.2")
+    (source
+      (origin
+        (method url-fetch)
+        (uri (crate-uri "lab" version))
+        (file-name
+         (string-append name "-" version ".tar.gz"))
+        (sha256
+         (base32
+          "0g692d489lq01pv3mzfhxd98j0r22lw28l6bk112m74djlfzxdmw"))))
+    (arguments
+     `(#:tests? #f  ; test suite assumes avx2 support
+       #:cargo-development-inputs
+       (("rust-criterion" ,rust-criterion-0.3)
+        ("rust-lazy-static" ,rust-lazy-static-1)
+        ("rust-pretty-assertions" ,rust-pretty-assertions-0.6)
+        ("rust-rand" ,rust-rand-0.5))))))
+
+(define-public rust-lab-0.4
+  (package
+    (inherit rust-lab-0.8)
+    (name "rust-lab")
+    (version "0.4.4")
+    (source
+      (origin
+        (method url-fetch)
+        (uri (crate-uri "lab" version))
+        (file-name
+         (string-append name "-" version ".tar.gz"))
+        (sha256
+         (base32
+          "0h4ig5bvzmwlzd74zj7b4sh7kzi3c6mjjnw7yjz8ijxvr4mrcr1s"))))
+    (arguments
+     `(#:cargo-development-inputs
+       (("rust-rand" ,rust-rand-0.3))))))
 
 (define-public rust-lalrpop-0.17
   (package
@@ -30418,6 +30541,36 @@ to XDG Base Directory specification.")
     (description "An XML library in pure Rust.")
     (license license:expat)))
 
+(define-public rust-xml-rs-0.7
+  (package
+    (name "rust-xml-rs")
+    (version "0.7.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "xml-rs" version))
+       (file-name
+        (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32
+         "1wv7izl41jf3ylhqhw23y1h0m729v2g5k4mgfw72v4kmgvvawiin"))
+       (modules '((guix build utils)))
+       (snippet
+        '(begin
+           ;; 'doctest' isn't stable until rust-1.40
+           (substitute* "src/lib.rs"
+             (("\\(doctest") "(test"))
+           #t))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:cargo-development-inputs
+       (("rust-doc-comment" ,rust-doc-comment-0.3)
+        ("rust-lazy-static" ,rust-lazy-static-1))))
+    (home-page "https://github.com/netvl/xml-rs")
+    (synopsis "XML library in pure Rust")
+    (description "An XML library in pure Rust.")
+    (license license:expat)))
+
 (define-public rust-xml5ever-0.16
   (package
     (name "rust-xml5ever")
@@ -30639,3 +30792,152 @@ implementation that works everywhere, even WASM!")
     (description
      "This package provides a library for parsing compiled zoneinfo files.")
     (license license:expat)))
+
+(define-public rust-packed-struct
+  (package
+    (name "rust-packed-struct")
+    (version "0.3.0")
+    (source
+      (origin
+        (method url-fetch)
+        (uri (crate-uri "packed_struct" version))
+        (file-name
+	  (string-append name "-" version ".tar.gz"))
+        (sha256
+	  (base32
+	    "10b2fmxchmcigwagnhi42frj74dl02wyv0xwmbr9839qfh7gijlh"))))
+    (build-system cargo-build-system)
+    (arguments
+      `(#:cargo-inputs
+        (("rust-serde" ,rust-serde-1)
+         ("rust-serde-derive" ,rust-serde-derive-1))))
+    (home-page "http://www.hashmismatch.net/libraries/packed-struct/")
+    (synopsis "Binary-level structure packing and unpacking generator")
+    (description "This package provides bit-level packing an unpacking
+of structs.  The library provides a meta-programming approach, using
+attributes to define fields and how they should be packed.  The resulting
+trait implementations provide safe packing, unpacking and runtime debugging
+formatters with per-field documentation generated for each structure.
+
+@itemize
+@item Plain Rust structures, decorated with attributes
+@item MSB or LSB integers of user-defined bit widths
+@item Primitive enum code generation helper
+@item MSB0 or LSB0 bit positioning
+@item Documents the field's packing table
+@item Runtime packing visualization
+@item Nested packed types
+@item Arrays of packed structures as fields
+@item Reserved fields, their bits are always 0 or 1
+@end itemize")
+    ;; User can choose either license.
+    (license (list license:expat license:asl2.0))))
+
+(define-public rust-xmltree-0.8
+  (package
+    (name "rust-xmltree")
+    (version "0.8.0")
+    (source
+      (origin
+        (method url-fetch)
+        (uri (crate-uri "xmltree" version))
+        (file-name
+          (string-append name "-" version ".tar.gz"))
+        (sha256
+          (base32
+            "0w0y0jz7lhxg05ca6ngfj0lj8sbrjh4vaqv13q7qaqkhs7lsx3pz"))))
+    (build-system cargo-build-system)
+    (arguments
+      `(#:cargo-inputs
+        (("rust-indexmap" ,rust-indexmap-1)
+         ("rust-xml-rs" ,rust-xml-rs-0.7))))
+    (home-page #f)
+    (synopsis
+      "Parse an XML file into a simple tree-like structure")
+    (description
+      "Parse an XML file into a simple tree-like structure")
+    (license license:expat)))
+
+(define-public rust-svd-parser-0.9
+  (package
+    (name "rust-svd-parser")
+    (version "0.9.0")
+    (source
+      (origin
+        (method url-fetch)
+        (uri (crate-uri "svd-parser" version))
+        (file-name
+          (string-append name "-" version ".tar.gz"))
+        (sha256
+          (base32
+            "1qhvdz3k76i3sfypcy8c84hhb8sqixrckba21kalzcpgy6an45ml"))))
+    (build-system cargo-build-system)
+    (arguments
+      `(#:cargo-inputs
+        (("rust-anyhow" ,rust-anyhow-1.0)
+         ("rust-either" ,rust-either-1.5)
+         ("rust-serde" ,rust-serde-1)
+         ("rust-thiserror" ,rust-thiserror-1.0)
+         ("rust-xmltree" ,rust-xmltree-0.8))
+        #:cargo-development-inputs
+        (("rust-serde-json" ,rust-serde-json-1))))
+    (home-page #f)
+    (synopsis "A CMSIS-SVD file parser")
+    (description
+      "This package provides a CMSIS-SVD file parser")
+    (license (list license:expat license:asl2.0))))
+
+(define-public rust-inflections-1.1
+  (package
+    (name "rust-inflections")
+    (version "1.1.1")
+    (source
+      (origin
+        (method url-fetch)
+        (uri (crate-uri "inflections" version))
+        (file-name
+          (string-append name "-" version ".tar.gz"))
+        (sha256
+          (base32
+            "0yl3gas612q25c72lwf04405i87yxr02vgv3ckcnz2fyvhpmhmx2"))))
+    (build-system cargo-build-system)
+    (home-page #f)
+    (synopsis
+      "High performance inflection transformation library for changing properties of words like the case.")
+    (description
+      "High performance inflection transformation library for changing properties of words like the case.")
+    (license license:expat)))
+
+(define-public svd2rust
+  (package
+    (name "svd2rust")
+    (version "0.17.0")
+    (source
+      (origin
+        (method url-fetch)
+        (uri (crate-uri "svd2rust" version))
+        (file-name
+          (string-append name "-" version ".tar.gz"))
+        (sha256
+          (base32
+            "0850pn92a5pmrlavdsm4s9wgrgx9gz0vylf9i594nj8sixmddjd9"))))
+    (build-system cargo-build-system)
+    (arguments
+      `(#:cargo-inputs
+        (("rust-cast" ,rust-cast-0.2)
+         ("rust-clap" ,rust-clap-2)
+         ("rust-env-logger" ,rust-env-logger-0.7)
+         ("rust-error-chain" ,rust-error-chain-0.12)
+         ("rust-inflections" ,rust-inflections-1.1)
+         ("rust-log" ,rust-log-0.4)
+         ("rust-proc-macro2" ,rust-proc-macro2-0.4)
+         ("rust-quote" ,rust-quote-1)
+         ("rust-svd-parser" ,rust-svd-parser-0.9)
+         ("rust-syn" ,rust-syn-1))))
+    (home-page #f)
+    (synopsis
+      "Generate Rust register maps (`struct`s) from SVD files")
+    (description
+      "Generate Rust register maps (`struct`s) from SVD files")
+    (license (list license:expat license:asl2.0))))
+

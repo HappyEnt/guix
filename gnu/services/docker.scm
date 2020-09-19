@@ -2,6 +2,7 @@
 ;;; Copyright © 2018 Danny Milosavljevic <dannym@scratchpost.org>
 ;;; Copyright © 2020 Jakub Kądziołka <kuba@kadziolka.net>
 ;;; Copyright © 2020 Maxim Cournoyer <maxim.cournoyer@gmail.com>
+;;; Copyright © 2020 Efraim Flashner <efraim@flashner.co.il>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -44,6 +45,9 @@
   (docker
    (package docker)
    "Docker daemon package.")
+  (docker-cli
+   (package docker-cli)
+   "Docker client package.")
   (containerd
    (package containerd)
    "containerd package.")
@@ -133,6 +137,9 @@ loop-back communications.")
 bundles in Docker containers.")
                 (extensions
                  (list
+                  ;; Make sure the 'docker' command is available.
+                  (service-extension profile-service-type
+                                     (compose list docker-configuration-docker-cli))
                   (service-extension activation-service-type
                                      %docker-activation)
                   (service-extension shepherd-root-service-type

@@ -173,14 +173,14 @@ line client and a client based on Qt.")
 (define-public homebank
   (package
     (name "homebank")
-    (version "5.4.2")
+    (version "5.4.3")
     (source (origin
               (method url-fetch)
               (uri (string-append "http://homebank.free.fr/public/homebank-"
                                   version ".tar.gz"))
               (sha256
                (base32
-                "0bkjvd819kw9cwmr3macggbg8yil3yc8v2za8pjrl6g746s89kn6"))))
+                "02wd569viwy6ncy0144z9nxr3zmpl4shkqhz7zzwyky4gknxf8lj"))))
     (build-system glib-or-gtk-build-system)
     (native-inputs
      `(("pkg-config" ,pkg-config)
@@ -480,7 +480,7 @@ other machines/servers.  Electrum does not download the Bitcoin blockchain.")
 (define-public electron-cash
   (package
     (name "electron-cash")
-    (version "4.1.0")
+    (version "4.1.1")
     (source
      (origin
        (method git-fetch)
@@ -489,7 +489,7 @@ other machines/servers.  Electrum does not download the Bitcoin blockchain.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1ccfm6kkmbkvykfdzrisxvr0lx9kgq4l43ixk6v3xnvhnbfwz4s2"))))
+        (base32 "1fllz2s20lg4hrppzmnlgjy9mrq7gaq66l2apb3vz1avzvsjw3gm"))))
     (build-system python-build-system)
     (inputs
      `(("libevent" ,libevent)
