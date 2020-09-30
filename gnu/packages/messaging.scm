@@ -878,6 +878,7 @@ on Axolotl and PEP.")
   (package
     (name "dino")
     (version "0.1.0")
+    (outputs '("out" "debug"))
     (source
      (origin
        (method url-fetch)
@@ -2074,6 +2075,7 @@ There is support for:
   (package
     (name "quaternion")
     (version "0.0.9.4e")
+    (outputs '("out" "debug"))
     (source
      (origin
        (method git-fetch)

@@ -520,6 +520,22 @@ text or blue underlined text, on ANSI terminals.")
        #:cargo-inputs
        (("rust-winapi" ,rust-winapi-0.3))))))
 
+(define-public rust-ansi-term-0.9
+  (package
+    (inherit rust-ansi-term-0.11)
+    (name "rust-ansi-term")
+    (version "0.9.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "ansi_term" version))
+       (file-name
+        (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32
+         "1xif1bh938qpfc3d0f9xgidibpm65xix11w9gszwqnia00q7rb13"))))
+    (arguments `())))
+
 (define-public rust-antidote-1.0
   (package
     (name "rust-antidote")
@@ -984,9 +1000,9 @@ Mac, and Unix.")
        #:cargo-development-inputs
        (("rust-docmatic" ,rust-docmatic-0.1))))
     (home-page "https://github.com/assert-rs/assert_fs")
-    (synopsis "Filesystem fixtures and assertions for testing")
+    (synopsis "File system fixtures and assertions for testing")
     (description
-     "Filesystem fixtures and assertions for testing.")
+     "File system fixtures and assertions for testing.")
     (license (list license:expat license:asl2.0))))
 
 (define-public rust-assert-matches-1.3
@@ -1761,6 +1777,27 @@ that uses Serde for transforming structs into bytes and vice versa!")
      "This package provides a set of bits.")
     (license (list license:asl2.0 license:expat))))
 
+(define-public rust-bit-set-0.4
+  (package
+    (inherit rust-bit-set-0.5)
+    (name "rust-bit-set")
+    (version "0.4.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "bit-set" version))
+       (file-name
+        (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32
+         "0320hhcbr73yzjpj2237vw2zq728yg7vmzb8dardg04ff4263gyr"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:cargo-inputs
+       (("rust-bit-vec" ,rust-bit-vec-0.4))
+       #:cargo-development-inputs
+       (("rust-rand" ,rust-rand-0.3))))))
+
 (define-public rust-bit-vec-0.5
   (package
     (name "rust-bit-vec")
@@ -1786,6 +1823,24 @@ that uses Serde for transforming structs into bytes and vice versa!")
     (description
      "This package provides a vector of bits.")
     (license (list license:expat license:asl2.0))))
+
+(define-public rust-bit-vec-0.4
+  (package
+    (inherit rust-bit-vec-0.5)
+    (name "rust-bit-vec")
+    (version "0.4.4")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "bit-vec" version))
+       (file-name
+        (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32
+         "0pw902a8ail0k64a7092a8vngfzsq7xkj2r22hz6q1z62s5zzd02"))))
+    (arguments
+     `(#:cargo-development-inputs
+       (("rust-rand" ,rust-rand-0.3))))))
 
 (define-public rust-bitflags-1
   (package
@@ -1977,7 +2032,7 @@ BLAKE2bp hash functions.")
     (home-page "https://github.com/blas-lapack-rs/blas-sys")
     (synopsis "Bindings to BLAS (Fortran)")
     (description
-     "Ths package provides bindings to BLAS (Fortran).")
+     "This package provides bindings to BLAS (Fortran).")
     (license (list license:asl2.0
                    license:expat))))
 
@@ -3552,10 +3607,10 @@ colorization.")
 pitfalls in Rust.")
     (license (list license:expat license:asl2.0))))
 
-(define-public rust-cloudabi-0.0
+(define-public rust-cloudabi-0.1
   (package
     (name "rust-cloudabi")
-    (version "0.0.3")
+    (version "0.1.0")
     (source
       (origin
         (method url-fetch)
@@ -3563,7 +3618,7 @@ pitfalls in Rust.")
         (file-name (string-append name "-" version ".crate"))
         (sha256
          (base32
-          "0kxcg83jlihy0phnd2g8c2c303px3l2p3pkjz357ll6llnd5pz6x"))))
+          "0rv4yf5jlldfkynzrw687s00f4x12ypw7axv71vawhy6h4i52i23"))))
     (build-system cargo-build-system)
     (arguments
      `(#:skip-build? #t
@@ -3574,6 +3629,24 @@ pitfalls in Rust.")
     (description
      "Low level interface to CloudABI.  Contains all syscalls and related types.")
     (license license:bsd-2)))
+
+(define-public rust-cloudabi-0.0
+  (package
+    (inherit rust-cloudabi-0.1)
+    (name "rust-cloudabi")
+    (version "0.0.3")
+    (source
+      (origin
+        (method url-fetch)
+        (uri (crate-uri "cloudabi" version))
+        (file-name (string-append name "-" version ".crate"))
+        (sha256
+         (base32
+          "0kxcg83jlihy0phnd2g8c2c303px3l2p3pkjz357ll6llnd5pz6x"))))
+    (arguments
+     `(#:skip-build? #t
+       #:cargo-inputs
+       (("rust-bitflags" ,rust-bitflags-1))))))
 
 (define-public rust-cloudflare-zlib-sys-0.2
   (package
@@ -7927,7 +8000,7 @@ duplication.")
     (build-system cargo-build-system)
     (arguments '(#:skip-build? #t))
     (home-page "https://github.com/webdesus/fs_extra")
-    (synopsis "Extra filesystem methods")
+    (synopsis "Extra file system methods")
     (description "Expanding opportunities standard library @code{std::fs} and
 @code{std::io}.  Recursively copy folders with recept information about
 process and much more.")
@@ -8986,10 +9059,10 @@ API library @code{gdi32}.")
 retrieving random data from system source.")
     (license (list license:expat license:asl2.0))))
 
-(define-public rust-gettext-rs-0.4
+(define-public rust-gettext-rs-0.5
   (package
     (name "rust-gettext-rs")
-    (version "0.4.4")
+    (version "0.5.0")
     (source
       (origin
         (method url-fetch)
@@ -8998,12 +9071,12 @@ retrieving random data from system source.")
          (string-append name "-" version ".tar.gz"))
         (sha256
          (base32
-          "0z6fcsn1g3w9mlgfj6ln6qvqf8610w3zwvk6g062h657v114lifz"))))
+          "1qc9a63i54b9ad3jx951hn7xb6xf76c9f3hmi2cdy2m7rhczm58v"))))
     (build-system cargo-build-system)
     (arguments
      `(#:cargo-inputs
        (("rust-gettext-sys" ,rust-gettext-sys-0.19)
-        ("rust-locale-config" ,rust-locale-config-0.2))
+        ("rust-locale-config" ,rust-locale-config-0.3))
        #:phases
        (modify-phases %standard-phases
          (add-after 'configure 'use-system-gettext
@@ -9017,6 +9090,32 @@ retrieving random data from system source.")
     (synopsis "GNU Gettext FFI binding for Rust")
     (description "This package provides GNU Gettext FFI bindings for Rust.")
     (license license:expat)))
+
+(define-public rust-gettext-rs-0.4
+  (package
+    (inherit rust-gettext-rs-0.5)
+    (name "rust-gettext-rs")
+    (version "0.4.4")
+    (source
+      (origin
+        (method url-fetch)
+        (uri (crate-uri "gettext-rs" version))
+        (file-name
+         (string-append name "-" version ".tar.gz"))
+        (sha256
+         (base32
+          "0z6fcsn1g3w9mlgfj6ln6qvqf8610w3zwvk6g062h657v114lifz"))))
+    (arguments
+     `(#:cargo-inputs
+       (("rust-gettext-sys" ,rust-gettext-sys-0.19)
+        ("rust-locale-config" ,rust-locale-config-0.2))
+       #:phases
+       (modify-phases %standard-phases
+         (add-after 'configure 'use-system-gettext
+           (lambda* (#:key inputs #:allow-other-keys)
+             (let ((gettext (assoc-ref inputs "gettext")))
+               (setenv "GETTEXT_SYSTEM" gettext)
+               #t))))))))
 
 (define-public rust-gettext-sys-0.19
   (package
@@ -15201,9 +15300,9 @@ with all line endings.")
        #:cargo-development-inputs
        (("rust-tempfile" ,rust-tempfile-3))))
     (home-page "https://github.com/passcod/notify")
-    (synopsis "Cross-platform filesystem notification library")
+    (synopsis "Cross-platform file system notification library")
     (description
-     "Cross-platform filesystem notification library.")
+     "Cross-platform file system notification library.")
     (license license:cc0)))
 
 (define-public rust-num-0.2
@@ -16470,7 +16569,7 @@ under its new name.")
 (define-public rust-owning-ref-0.4
   (package
     (name "rust-owning-ref")
-    (version "0.4.0")
+    (version "0.4.1")
     (source
       (origin
         (method url-fetch)
@@ -16478,7 +16577,7 @@ under its new name.")
         (file-name (string-append name "-" version ".crate"))
         (sha256
          (base32
-          "04zgwy77lin8qz398s6g44467pd6kjhbrlqifkia5rkr47mbi929"))))
+          "1kjj9m28wjv452jw49p1mp3d8ql058x78v4bz00avr7rvsnmpxbg"))))
     (build-system cargo-build-system)
     (arguments
      `(#:cargo-inputs
@@ -18804,6 +18903,27 @@ dependency to expose a precomputed hash.")
 replacements, adding colorful diffs.")
     (license (list license:expat license:asl2.0))))
 
+(define-public rust-pretty-assertions-0.4
+  (package
+    (inherit rust-pretty-assertions-0.6)
+    (name "rust-pretty-assertions")
+    (version "0.4.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "pretty_assertions" version))
+       (file-name
+        (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32
+         "1llxlnhh4qz9kda27v6nllgzvgi1fv08i3djfk4zn6zlw8c53si8"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:tests? #f
+       #:cargo-inputs
+       (("rust-ansi-term" ,rust-ansi-term-0.9)
+        ("rust-difference" ,rust-difference-1))))))
+
 (define-public rust-pretty-assertions-0.2
   (package
     (name "rust-pretty-assertions")
@@ -19230,6 +19350,30 @@ macro use case.")
         ("rust-regex-syntax" ,rust-regex-syntax-0.4)
         ("rust-rusty-fork" ,rust-rusty-fork-0.2)
         ("rust-tempfile" ,rust-tempfile-3))
+       #:cargo-development-inputs
+       (("rust-regex" ,rust-regex-0.2))))))
+
+(define-public rust-proptest-0.3
+  (package
+    (inherit rust-proptest-0.7)
+    (name "rust-proptest")
+    (version "0.3.4")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "proptest" version))
+       (file-name
+        (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32
+         "15633iq8x3x0im5vyij2gr8ncpflv4fa9w63rh94k20xhzv4m308"))))
+    (arguments
+     `(#:cargo-inputs
+       (("rust-bit-set" ,rust-bit-set-0.4)
+        ("rust-lazy-static" ,rust-lazy-static-0.2)
+        ("rust-quick-error" ,rust-quick-error-1.2)
+        ("rust-rand" ,rust-rand-0.3)
+        ("rust-regex-syntax" ,rust-regex-syntax-0.4))
        #:cargo-development-inputs
        (("rust-regex" ,rust-regex-0.2))))))
 
@@ -22583,8 +22727,32 @@ library's old @code{scoped_thread_local!} macro for providing scoped access to
          (base32
           "0a2bn9d2mb07c6l16sadijy4p540g498zddfxyiq4rsqpwrglbrk"))))))
 
+(define-public rust-scopeguard-1
+  (package
+    (name "rust-scopeguard")
+    (version "1.1.0")
+    (source
+      (origin
+        (method url-fetch)
+        (uri (crate-uri "scopeguard" version))
+        (file-name (string-append name "-" version ".crate"))
+        (sha256
+         (base32
+          "1kbqm85v43rq92vx7hfiay6pmcga03vrjbbfwqpyj3pwsg3b16nj"))))
+    (build-system cargo-build-system)
+    (home-page "https://github.com/bluss/scopeguard")
+    (synopsis "Scope guard which will run a closure even out of scope")
+    (description "This package provides a RAII scope guard that will run a
+given closure when it goes out of scope, even if the code between panics
+(assuming unwinding panic).  Defines the macros @code{defer!},
+@code{defer_on_unwind!}, @code{defer_on_success!} as shorthands for guards
+with one of the implemented strategies.")
+    (license (list license:asl2.0
+                   license:expat))))
+
 (define-public rust-scopeguard-1.0
   (package
+    (inherit rust-scopeguard-1)
     (name "rust-scopeguard")
     (version "1.0.0")
     (source
@@ -22595,17 +22763,7 @@ library's old @code{scoped_thread_local!} macro for providing scoped access to
         (sha256
          (base32
           "03aay84r1f6w87ckbpj6cc4rnsxkxcfs13n5ynxjia0qkgjiabml"))))
-    (build-system cargo-build-system)
-    (arguments '(#:skip-build? #t))
-    (home-page "https://github.com/bluss/scopeguard")
-    (synopsis "Scope guard which will run a closure even out of scope")
-    (description "This package provides a RAII scope guard that will run a
-given closure when it goes out of scope, even if the code between panics
-(assuming unwinding panic).  Defines the macros @code{defer!},
-@code{defer_on_unwind!}, @code{defer_on_success!} as shorthands for guards
-with one of the implemented strategies.")
-    (license (list license:asl2.0
-                   license:expat))))
+    (arguments '(#:skip-build? #t))))
 
 (define-public rust-scopeguard-0.3
   (package
@@ -24883,6 +25041,28 @@ are met.")
 in @code{stb_truetype.h} from C to Rust.")
     (license (list license:expat license:asl2.0))))
 
+(define-public rust-std-prelude-0.2
+  (package
+    (name "rust-std-prelude")
+    (version "0.2.12")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "std_prelude" version))
+       (file-name
+        (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32
+         "1ghcwnhnqn3rphyhlknmxpj5clzqva46z1vh25k5bpzzan2ff1w2"))))
+    (build-system cargo-build-system)
+    (home-page "https://github.com/vitiral/std_prelude")
+    (synopsis
+     "Prelude that the rust stdlib should have always had")
+    (description
+     "A package that simply uses all of the items often included in a Rust
+codebase.")
+    (license license:expat)))
+
 (define-public rust-stdweb-0.4
   (package
     (name "rust-stdweb")
@@ -25026,6 +25206,37 @@ crate.")
      "Internal crate of the @code{stdweb} crate.")
     (license (list license:asl2.0
                    license:expat))))
+
+(define-public rust-stfu8-0.2
+  (package
+    (name "rust-stfu8")
+    (version "0.2.4")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "stfu8" version))
+       (file-name
+        (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32
+         "0xyv4axwc9rihg3f5fjdy7s0ahnz1iq6lq06blwkq2ihwcrh9xsb"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:cargo-inputs
+       (("rust-lazy-static" ,rust-lazy-static-1)
+        ("rust-regex" ,rust-regex-0.2))
+       #:cargo-development-inputs
+       (("rust-pretty-assertions" ,rust-pretty-assertions-0.4)
+        ("rust-proptest" ,rust-proptest-0.3))))
+    (home-page "https://github.com/vitiral/stfu8")
+    (synopsis "Sorta Text Format in UTF-8")
+    (description
+     "STFU-8 is a hacky text encoding/decoding protocol for files that
+partially uses UTF-8.  Its primary purpose is to allow a human to visualize and
+edit data that is mostly UTF-8.  It will encode all non-UTF8-compliant bytes as
+longform text (e.g., ESC becomes @code{r\x1B}) and tries to encode ill-formed
+UTF-8.")
+    (license (list license:expat license:asl2.0))))
 
 (define-public rust-stream-cipher-0.3
   (package
@@ -27120,8 +27331,8 @@ the current thread.")
         ("rust-tokio-codec" ,rust-tokio-codec-0.1)
         ("rust-tokio-io" ,rust-tokio-io-0.1))))
     (home-page "https://tokio.rs")
-    (synopsis "Filesystem API for Tokio")
-    (description "Filesystem API for Tokio.")
+    (synopsis "File system API for Tokio")
+    (description "File system API for Tokio.")
     (license license:expat)))
 
 ;; Cyclic dependencies with tokio and tokio-current-thread
@@ -30450,7 +30661,7 @@ color in a Windows console.")
        #:cargo-development-inputs
        (("rust-tempfile" ,rust-tempfile-3))))
     (home-page "https://github.com/Stebalien/xattr")
-    (synopsis "Unix extended filesystem attributes")
+    (synopsis "Unix extended file system attributes")
     (description
      "This package provide a small library for setting, getting, and listing
 extended attributes.")

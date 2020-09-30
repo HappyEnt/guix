@@ -349,7 +349,7 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
 
 ;; The current "stable" kernel. That is, the most recently released major
 ;; version.
-(define-public linux-libre-5.8-version "5.8.10")
+(define-public linux-libre-5.8-version "5.8.11")
 (define deblob-scripts-5.8
   (linux-libre-deblob-scripts
    linux-libre-5.8-version
@@ -357,7 +357,7 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "0j6jba5fcddqlb42f95gjl78jisfla4nswqila074gglcrbnl9q7")))
 (define-public linux-libre-5.8-pristine-source
   (let ((version linux-libre-5.8-version)
-        (hash (base32 "1wjsdc93xilag0pk205m2q0ixmpp93ql5qj0fm3qlqddgxm14vlx")))
+        (hash (base32 "0jy0yrrixzql9dlk9305w98pja2pm6ijrdbai326595pnk740n9y")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-5.8)))
@@ -365,7 +365,7 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
 ;; The "longterm" kernels — the older releases with long-term upstream support.
 ;; Here are the support timelines:
 ;; <https://www.kernel.org/category/releases.html>
-(define-public linux-libre-5.4-version "5.4.66")
+(define-public linux-libre-5.4-version "5.4.67")
 (define deblob-scripts-5.4
   (linux-libre-deblob-scripts
    linux-libre-5.4-version
@@ -373,12 +373,12 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "1b3q88i2qfdxyvpi9f7jds0qlb8hfpw87mgia096ax6822c2cmyb")))
 (define-public linux-libre-5.4-pristine-source
   (let ((version linux-libre-5.4-version)
-        (hash (base32 "1cnsrz21kcf0h7krpv9p1a7n59mybr5ii0jdi3yc3x3lcwvk06gz")))
+        (hash (base32 "196avi0950qrd0lxdpdsl6lxa51f20sz476mcl1i5islbnfbsxf1")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-5.4)))
 
-(define-public linux-libre-4.19-version "4.19.146")
+(define-public linux-libre-4.19-version "4.19.147")
 (define deblob-scripts-4.19
   (linux-libre-deblob-scripts
    linux-libre-4.19-version
@@ -386,12 +386,12 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "1jiaw0as1ippkrjdpd52657w5mz9qczg3y2hlra7m9k0xawwiqlf")))
 (define-public linux-libre-4.19-pristine-source
   (let ((version linux-libre-4.19-version)
-        (hash (base32 "0jl17yk3fpz0sx203l9l1fj5bly3jgsyr8hy5qa6py99fbk0qnim")))
+        (hash (base32 "19nnx61v7c0102ik1rjan0kdsj8av8v7iqz5vm3v3kjllmjmvr2x")))
     (make-linux-libre-source version
                              (%upstream-linux-source version hash)
                              deblob-scripts-4.19)))
 
-(define-public linux-libre-4.14-version "4.14.198")
+(define-public linux-libre-4.14-version "4.14.199")
 (define deblob-scripts-4.14
   (linux-libre-deblob-scripts
    linux-libre-4.14-version
@@ -399,12 +399,12 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "1qij18inijj6c3ma8hv98yjagnzxdxyn134da9fd23ky8q6hbvky")))
 (define-public linux-libre-4.14-pristine-source
   (let ((version linux-libre-4.14-version)
-        (hash (base32 "00xmij2l4qmx1s07hplxkn9ddlwiyalh2l5fqdk6d8v031cbmyhy")))
+        (hash (base32 "1yflafb0n783igghk6d392pk6lbk3p2w7y01ams08f1b4qm47wq2")))
     (make-linux-libre-source version
                              (%upstream-linux-source version hash)
                              deblob-scripts-4.14)))
 
-(define-public linux-libre-4.9-version "4.9.236")
+(define-public linux-libre-4.9-version "4.9.237")
 (define deblob-scripts-4.9
   (linux-libre-deblob-scripts
    linux-libre-4.9-version
@@ -412,12 +412,12 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "0fxajshb75siq39lj5h8xvhdj8lcmddkslwlyj65rhlwk6g2r4b2")))
 (define-public linux-libre-4.9-pristine-source
   (let ((version linux-libre-4.9-version)
-        (hash (base32 "1ma2z0nvby4qyxzi3vxa28f0wvlnl74njk6cryjrqaksq6161qp7")))
+        (hash (base32 "07w6mwgh7i3bvg1w3w5i9kgxjmvqr7cv7nzrmx7j9p6cq295gv41")))
     (make-linux-libre-source version
                              (%upstream-linux-source version hash)
                              deblob-scripts-4.9)))
 
-(define-public linux-libre-4.4-version "4.4.236")
+(define-public linux-libre-4.4-version "4.4.237")
 (define deblob-scripts-4.4
   (linux-libre-deblob-scripts
    linux-libre-4.4-version
@@ -425,7 +425,7 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "0hhin1jpfkd6nwrb6xqxjzl3hdxy4pn8a15hy2d3d83yw6pflbsf")))
 (define-public linux-libre-4.4-pristine-source
   (let ((version linux-libre-4.4-version)
-        (hash (base32 "1v1mx16x1crnxf4pix0bhw40lq89n7wpd66gjc2mhxi75h6x6i80")))
+        (hash (base32 "1q6hwjwvlsikgr8b04l7v2jia2wyqxgbli6i7y20aq49h13ap2qk")))
     (make-linux-libre-source version
                              (%upstream-linux-source version hash)
                              deblob-scripts-4.4)))
@@ -1166,27 +1166,30 @@ between the CDemu userspace daemon and linux kernel.")
     (license license:gpl2+)))
 
 (define-public bbswitch-module
-  (package
-    (name "bbswitch-module")
-    (version "0.8")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/Bumblebee-Project/bbswitch")
-                    (commit (string-append "v" version))))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "1glch4j0x1dzlp2yrb67v2r5jg9609jb6p8m251y78m74advqw0l"))))
-    (build-system linux-module-build-system)
-    (arguments
-     ;; No tests.
-     `(#:tests? #f))
-    (home-page "https://github.com/Bumblebee-Project/bbswitch")
-    (synopsis "Kernel module that disables discrete Nvidia graphics cards")
-    (description "The bbswitch module provides a way to toggle the Nvidia
+  ;; Use "develop" branch since stable release does not build on Linux >= 5.6.
+  ;; See https://github.com/Bumblebee-Project/bbswitch/issues/205.
+  (let ((commit "ddbd243638c7bc2baecf43a78aff46cdc12e9b2e"))
+    (package
+      (name "bbswitch-module")
+      (version (git-version "0.8" "1" commit))
+      (source (origin
+                (method git-fetch)
+                (uri (git-reference
+                      (url "https://github.com/Bumblebee-Project/bbswitch")
+                      (commit commit)))
+                (file-name (git-file-name name version))
+                (sha256
+                 (base32
+                  "1pgldnza7mzd0flrxg4q69dwbq1fhl58m5c62ary5drb0xyf3lqb"))))
+      (build-system linux-module-build-system)
+      (arguments
+       ;; No tests.
+       `(#:tests? #f))
+      (home-page "https://github.com/Bumblebee-Project/bbswitch")
+      (synopsis "Kernel module that disables discrete Nvidia graphics cards")
+      (description "The bbswitch module provides a way to toggle the Nvidia
 graphics card on Optimus laptops.")
-    (license license:gpl2)))
+      (license license:gpl2))))
 
 (define-public ddcci-driver-linux
   (package
@@ -2456,14 +2459,14 @@ Linux-based operating systems.")
 (define-public bridge-utils
   (package
     (name "bridge-utils")
-    (version "1.6")
+    (version "1.7")
     (source
      (origin
        (method url-fetch)
-       (uri (string-append "mirror://kernel.org/linux/utils/net/bridge-utils/"
-                           "bridge-utils-" version ".tar.xz"))
+       (uri (string-append "mirror://kernel.org/linux/kernel/people/shemminger/"
+                           "bridge-utils/bridge-utils-" version ".tar.xz"))
        (sha256
-        (base32 "1j16kr44csyr4yqxly26l1yw2bh4nkiasgwvask2i2gvsnsyyryc"))))
+        (base32 "0zlrigizac2nfwgvksm92v4wafrpgxlbci3gwimc795ib7k8g6ck"))))
     (build-system gnu-build-system)
 
     ;; The tarball lacks all the generated files.
@@ -2929,7 +2932,7 @@ compressed, transparent to other programs, without decompressing them.")
 (define-public numactl
   (package
     (name "numactl")
-    (version "2.0.13")
+    (version "2.0.14")
     (source (origin
               (method url-fetch)
               (uri (string-append
@@ -2937,7 +2940,7 @@ compressed, transparent to other programs, without decompressing them.")
                     version "/numactl-" version ".tar.gz"))
               (sha256
                (base32
-                "16lcypvcmx1ydkpi2s82kqhg13kak7qhpbnj8hd9bdbyhr5ja7lr"))))
+                "1xngddsph43bxljywahi9d44fxr022slsap4hh91w8xnq54d2sw2"))))
     (build-system gnu-build-system)
     (arguments
      '(;; There's a 'test' target, but it requires NUMA support in the kernel
@@ -5268,7 +5271,8 @@ supported.")
               ("fuse" ,fuse)))                    ;libuuid
     (native-inputs `(("pkg-config" ,pkg-config)))
     (arguments
-     '(#:configure-flags (list "--exec-prefix=${prefix}"
+     '(#:configure-flags (list "--disable-static"
+                               "--exec-prefix=${prefix}"
                                "--with-fuse=external" ;use our own FUSE
                                "--enable-mount-helper"
                                "--enable-posix-acls"
@@ -5703,14 +5707,14 @@ the default @code{nsswitch} and the experimental @code{umich_ldap}.")
 (define-public mcelog
   (package
     (name "mcelog")
-    (version "170")
+    (version "172")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://git.kernel.org/cgit/utils/cpu/mce/"
                                   "mcelog.git/snapshot/v" version ".tar.gz"))
               (sha256
                (base32
-                "1m11v1y7cvpm7hwsghj23z77ps1w5jzn8000iwiyxpb939h2km5l"))
+                "17666056masfly83791q831yzw6sy1m6rwkxw7sqgjrhchn9sc4w"))
               (file-name (string-append name "-" version ".tar.gz"))
               (modules '((guix build utils)))
               (snippet
@@ -6008,10 +6012,8 @@ under GNU/Linux.  Features include:
 @item Light can automatically figure out the best controller to use, making
 full use of underlying hardware.
 @item It is possible to set a minimum brightness value, as some controllers
-set the screen to be pitch black at a vaĺue of 0 (or higher).
-@end itemize
-
-Light is the successor of lightscript.")
+set the screen to be pitch black at a value of 0 (or higher).
+@end itemize\n")
     (license license:gpl3+)))
 
 (define-public brightnessctl
@@ -7363,11 +7365,12 @@ persistent over reboots.")
     (build-system gnu-build-system)
     (native-inputs
      `(("pkg-config" ,pkg-config)))
-    (inputs
+    (propagated-inputs
+     ;; In Requires.private of libbpf.pc.
      `(("libelf" ,libelf)
        ("zlib" ,zlib)))
     (arguments
-     `(#:tests? #f ; No tests
+     `(#:tests? #f                      ; no tests
        #:make-flags
        (list
         (string-append "PREFIX=''")
@@ -7546,3 +7549,40 @@ created by Alastair Robertson.")
 provide a serial device @code{/dev/ttyebus} with almost no latency upon
 receiving.  It is dedicated to the PL011 UART of the Raspberry Pi.")
       (license license:gpl3+))))
+
+(define-public ipset
+  (package
+    (name "ipset")
+    (version "7.6")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append "http://ipset.netfilter.org/ipset-" version ".tar.bz2"))
+              (sha256
+               (base32
+                "1ny2spcm6bmpj8vnazssg99k59impr7n84jzkdmdjly1m7548z8f"))))
+    (build-system gnu-build-system)
+    (inputs
+     `(("libmnl" ,libmnl)))
+    (native-inputs
+     `(("pkg-config" ,pkg-config)))
+    (arguments
+     `(#:configure-flags '("--with-kmod=no")))
+    (home-page "http://ipset.netfilter.org/")
+    (synopsis "Administration tool for IP sets")
+    (description "IP sets are a framework inside the Linux 2.4.x and 2.6.x kernel which
+can be administered by the ipset utility.  Depending on the type,
+currently an IP set may store IP addresses, (TCP/UDP) port numbers or
+IP addresses with MAC addresses in a way which ensures lightning speed
+when matching an entry against a set.
+
+If you want to
+@itemize @bullet
+@item store multiple IP addresses or port numbers and match against the entire
+collection using a single iptables rule.
+@item dynamically update iptables rules against IP addresses or ports without
+performance penalty.
+@item express complex IP address and ports based rulesets with a single
+iptables rule and benefit from the speed of IP sets.
+@end itemize\n
+then IP sets may be the proper tool for you.")
+    (license license:gpl2+)))

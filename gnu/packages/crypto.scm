@@ -359,10 +359,10 @@ secure operations. ")
           (base32
            "0lj38ldh8vzi11wp4ghw4k0fkwp0s04zv8k8d473p1snmbh7mx98"))))
       (inputs
-       `(("openssl" ,openssl))) ; It needs: openssl/{bn,pem,rsa,sha}.h
+       `(("openssl" ,openssl-1.0)))     ; for openssl/{bn,pem,rsa,sha}.h
       (build-system gnu-build-system)
       (arguments
-       `(#:make-flags (list "CC=gcc"
+       `(#:make-flags (list (string-append "CC=" ,(cc-for-target))
                             (string-append "PREFIX=" (assoc-ref %outputs "out"))
                             (string-append "INSTALL=" "install"))
          ;; XXX: make test would run a !VERY! long hashing of names with the use

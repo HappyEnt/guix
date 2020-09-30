@@ -9,7 +9,7 @@
 ;;; Copyright © 2016, 2017 Leo Famulari <leo@famulari.name>
 ;;; Copyright © 2016 Pjotr Prins <pjotr.guix@thebird.nl>
 ;;; Copyright © 2016, 2017 Ricardo Wurmus <rekado@elephly.net>
-;;; Copyright © 2016, 2017, 2018, 2019 Efraim Flashner <efraim@flashner.co.il>
+;;; Copyright © 2016, 2017, 2018, 2019, 2020 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2016 Peter Feigl <peter.feigl@nexoid.at>
 ;;; Copyright © 2016 John J. Foerch <jjfoerch@earthlink.net>
 ;;; Copyright © 2016, 2017 Nikita <nikita@n0.is>
@@ -443,7 +443,7 @@ graphs and can export its output to different formats.")
 (define-public facter
   (package
     (name "facter")
-    (version "4.0.35")
+    (version "4.0.38")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -452,7 +452,7 @@ graphs and can export its output to different formats.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1f203g2hp96cp8w4x1myhqdj5j09z9s23kylwkrxr69fjhn0vhnb"))))
+                "0jrpzkhnz5lv129rkfy68bdsq53n4wsk1vpmhsvykqi5mrkdffck"))))
     (build-system ruby-build-system)
     (arguments
      `(#:phases
@@ -841,7 +841,7 @@ would need and has several interesting built-in capabilities.")
     (arguments
      `(#:tests? #f                      ; no test suite
        #:make-flags
-       (list "CC=gcc")
+       (list (string-append "CC=" ,(cc-for-target)))
        #:phases
        (modify-phases %standard-phases
          (delete 'configure)
@@ -1397,7 +1397,7 @@ system administrator.")
 (define-public sudo
   (package
     (name "sudo")
-    (version "1.9.2")
+    (version "1.9.3p1")
     (source (origin
               (method url-fetch)
               (uri
@@ -1407,7 +1407,7 @@ system administrator.")
                                     version ".tar.gz")))
               (sha256
                (base32
-                "05432672iilb7s52j9l9xzrlambb1wg3k7qvf5973i41y40x563w"))
+                "17mldsg5d08s23cskmjxfa81ibnqw3slgf3l4023j72ywi9xxffw"))
               (modules '((guix build utils)))
               (snippet
                '(begin

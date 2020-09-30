@@ -3178,15 +3178,14 @@ and multipart/form-data.")
 (define-public perl-http-cookiejar
   (package
     (name "perl-http-cookiejar")
-    (version "0.008")
+    (version "0.010")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://cpan/authors/id/D/DA/DAGOLDEN/"
                            "HTTP-CookieJar-" version ".tar.gz"))
        (sha256
-        (base32
-         "0rfw6avcralggs7bf7n86flvhaahxjnqzvpwszp0sk4z4wwy01wm"))))
+        (base32 "1l7mqsca4fmls7agzwmp6yq1x16y9jwq4114i6i75n654gl37qsn"))))
     (build-system perl-build-system)
     (native-inputs
      `(("perl-test-deep" ,perl-test-deep)
@@ -3530,15 +3529,14 @@ algorithm specified in section 8.2.2.1 of the draft standard.")
 (define-public perl-io-socket-ip
   (package
     (name "perl-io-socket-ip")
-    (version "0.39")
+    (version "0.41")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://cpan/authors/id/P/PE/PEVANS/"
                            "IO-Socket-IP-" version ".tar.gz"))
        (sha256
-        (base32
-         "15kv5g1yb4a345sk3r5wfr99f868lhfqkddzsgpqddvccfkhv58i"))))
+        (base32 "0ihlpxrkq1xrvhnq52nhghanskic718ch8kpp642afgq72i4b6l4"))))
     (build-system perl-build-system)
     (native-inputs `(("perl-module-build" ,perl-module-build)))
     (home-page "https://metacpan.org/release/IO-Socket-IP")
@@ -3578,7 +3576,7 @@ select or poll.")
 (define-public perl-libwww
   (package
     (name "perl-libwww")
-    (version "6.41")
+    (version "6.48")
     (source (origin
              (method url-fetch)
              (uri (string-append
@@ -3586,7 +3584,7 @@ select or poll.")
                    version ".tar.gz"))
              (sha256
               (base32
-               "0jh67946fwd33ap3xy8df0421d2mr6lmhalhkf1p7dx2b7fil9wf"))))
+               "0bl3scmmrazhvyv13fwlarbq6k246csfq7ybq65i7i37xd3arkz3"))))
     (build-system perl-build-system)
     (native-inputs
      `(("perl-test-fatal" ,perl-test-fatal)
@@ -3715,7 +3713,7 @@ https schemed URLs with LWP.")
     (home-page "https://metacpan.org/release/LWP-UserAgent-Cached")
     (synopsis "Simple caching for LWP::UserAgent")
     (description "LWP::UserAgent::Cached is an LWP::UserAgent subclass with
-cache support.  It returns responses from the local filesystem if available
+cache support.  It returns responses from the local file system, if available,
 instead of making an HTTP request.")
     (license license:perl-license)))
 

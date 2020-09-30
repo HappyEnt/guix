@@ -33,6 +33,7 @@
 ;;; Copyright © 2020 Jonathan Frederickson <jonathan@terracrypt.net>
 ;;; Copyright © 2020 Giacomo Leidi <goodoldpaul@autistici.org>
 ;;; Copyright © 2020 Vinicius Monego <monego@posteo.net>
+;;; Copyright © 2020 Michael Rohleder <mike@rohleder.de>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -1046,7 +1047,7 @@ tools (analyzer, mono/stereo tools, crossovers).")
      `(("lv2" ,lv2)))
     ;; home-page of the original LADSPA version: http://quitte.de/dsp/caps.html
     (home-page "https://github.com/moddevices/caps-lv2")
-    (synopsis "LV2 port of the CAPS audio plugin colection")
+    (synopsis "LV2 port of the CAPS audio plugin collection")
     (description
      "LV2 port of CAPS, a collection of audio plugins comprising basic virtual
 guitar amplification and a small range of classic effects, signal processors and
@@ -1631,7 +1632,7 @@ follower.")
 (define-public fluidsynth
   (package
     (name "fluidsynth")
-    (version "2.1.4")
+    (version "2.1.5")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -1640,7 +1641,7 @@ follower.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1r3khwyw57ybg5m4x0rvdzq7hgw2484sd52k6bm19akbw8yicfna"))))
+                "0ccpq4p1h1g53ng3961g3lh590qnwvpzwdzpl6ai4j6iazq0bh73"))))
     (build-system cmake-build-system)
     (arguments
      '(#:tests? #f                      ; no check target
@@ -2680,20 +2681,21 @@ different audio devices such as ALSA or PulseAudio.")
 (define-public qjackctl
   (package
     (name "qjackctl")
-    (version "0.5.9")
+    (version "0.6.3")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://sourceforge/qjackctl/qjackctl/"
                                   version "/qjackctl-" version ".tar.gz"))
               (sha256
                (base32
-                "1saywsda9m124rmjp7i3n0llryaliabjxhqhvqr6dm983qy7pypk"))))
+                "0zbb4jlx56qvcqyhx34mbagkqf3wbxgj84hk0ppf5cmcrxv67d4x"))))
     (build-system gnu-build-system)
     (arguments
      '(#:tests? #f))                    ; no check target
     (inputs
      `(("jack" ,jack-1)
        ("alsa-lib" ,alsa-lib)
+       ("portaudio" ,portaudio)
        ("qtbase" ,qtbase)
        ("qtx11extras" ,qtx11extras)))
     (native-inputs

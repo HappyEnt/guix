@@ -1811,58 +1811,63 @@ Every puzzle has a complete solution, although there may be more than one.")
    (license license:gpl2+)))
 
 (define-public retux
-  (package
-    (name "retux")
-    (version "1.4")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append "https://github.com/retux-game/retux/"
-                                  "releases/download/v"
-                                  (version-major+minor version) "/retux-"
-                                  version "-src.tar.gz"))
-              (sha256
-               (base32
-                "1hxy1pvlxhk0ci3wh2i3mmr82faqdjnnxsiwwr5gcr93nfnw9w5f"))))
-    (build-system python-build-system)
-    (arguments
-     `(#:tests? #f ; no check target
-       #:phases
-       (modify-phases %standard-phases
-         ;; no setup.py script
-         (delete 'build)
-         (replace 'install
-           (lambda* (#:key outputs #:allow-other-keys)
-             (let* ((out    (assoc-ref outputs "out"))
-                    (bin    (string-append out "/bin"))
-                    (data   (string-append out "/share/retux")))
-               (mkdir-p bin)
+  (let ((release "1.4.1")
+        (revision 1))
+    (package
+      (name "retux")
+      (version (if (zero? revision)
+                   release
+                   (string-append release "-"
+                                  (number->string revision))))
+      (source (origin
+                (method url-fetch)
+                (uri (string-append "https://github.com/retux-game/retux/"
+                                    "releases/download/v"
+                                    version "/retux-"
+                                    release "-src.tar.gz"))
+                (sha256
+                 (base32
+                  "1vrldg2qh2gqfswj7vkpc589ldrrjd903j6cnfdik9zh0jhlq4h2"))))
+      (build-system python-build-system)
+      (arguments
+       `(#:tests? #f                    ; no check target
+         #:phases
+         (modify-phases %standard-phases
+           ;; no setup.py script
+           (delete 'build)
+           (replace 'install
+             (lambda* (#:key outputs #:allow-other-keys)
+               (let* ((out    (assoc-ref outputs "out"))
+                      (bin    (string-append out "/bin"))
+                      (data   (string-append out "/share/retux")))
+                 (mkdir-p bin)
 
-               (substitute* "retux.py"
-                 ;; Use the correct data directory.
-                 (("os\\.path\\.join\\(os\\.path\\.dirname\\(__file__\\), \"data\"\\),")
-                  (string-append "\"" data "\",")))
+                 (substitute* "retux.py"
+                   ;; Use the correct data directory.
+                   (("os\\.path\\.join\\(os\\.path\\.dirname\\(__file__\\), \"data\"\\),")
+                    (string-append "\"" data "\",")))
 
-               (copy-file "retux.py" (string-append bin "/retux"))
-               (copy-recursively "data" data)
-               #t))))))
-    (inputs
-     `(("python-sge-pygame" ,python-sge-pygame)
-       ("python-six" ,python-six)
-       ("python-xsge" ,python-xsge)))
-    (home-page "https://retux-game.github.io/")
-    (synopsis "Action platformer game")
-    (description
-     "ReTux is an action platformer loosely inspired by the Mario games,
+                 (copy-file "retux.py" (string-append bin "/retux"))
+                 (copy-recursively "data" data)
+                 #t))))))
+      (inputs
+       `(("python-sge-pygame" ,python-sge-pygame)
+         ("python-six" ,python-six)
+         ("python-xsge" ,python-xsge)))
+      (home-page "https://retux-game.github.io/")
+      (synopsis "Action platformer game")
+      (description
+       "ReTux is an action platformer loosely inspired by the Mario games,
 utilizing the art assets from the @code{SuperTux} project.")
-    ;; GPL version 3 or later is the license for the code and some art.
-    ;; The rest of the licenses are for the art exclusively, as listed in
-    ;; data/LICENSES.
-    (license (list license:cc0
-                   license:cc-by3.0
-                   license:cc-by-sa3.0
-                   license:cc-by-sa4.0
-                   license:gpl2+
-                   license:gpl3+))))
+      ;; GPL version 3 or later is the license for the code and some art.
+      ;; The rest of the licenses are for the art exclusively, as listed in
+      ;; data/LICENSES.
+      (license (list license:cc0
+                     license:cc-by3.0
+                     license:cc-by-sa3.0
+                     license:cc-by-sa4.0
+                     license:gpl2+
+                     license:gpl3+)))))
 
 (define-public roguebox-adventures
   (package
@@ -2721,7 +2726,7 @@ interface or via an external visual interface such as GNU XBoard.")
                   (ftp-directory . "/chess")))
     (license license:gpl3+)))
 
-(define freedink-engine
+(define-public freedink-engine
   (package
     (name "freedink-engine")
     (version "109.6")
@@ -2751,7 +2756,16 @@ interface or via an external visual interface such as GNU XBoard.")
 	     (invoke "autoreconf")
 	     ;; Build fails when autom4te.cache exists.
 	     (delete-file-recursively "autom4te.cache")
-             #t)))))
+             #t))
+         (add-after 'install 'delete-freedinkedit-desktop
+           (lambda* (#:key outputs #:allow-other-keys)
+             (let ((out (assoc-ref outputs "out")))
+             ;; freedinkedit does not know where to find freedink data
+             ;; freedink data is read-only, so it cannot be edited anyway.
+             ;; TODO: fix freedink.desktop
+             (delete-file-recursively (string-append
+                            out "/share/applications"))
+             #t))))))
     (native-inputs `(("autoconf" ,autoconf)
                      ("automake" ,automake)
                      ("cxxtest" ,cxxtest)
@@ -2773,7 +2787,7 @@ game data files but it also supports user-produced game mods or \"D-Mods\".
 To that extent, it also includes a front-end for managing all of your D-Mods.")
     (license license:gpl3+)))
 
-(define freedink-data
+(define-public freedink-data
   (package
     (name "freedink-data")
     (version "1.08.20190120")
@@ -3459,15 +3473,15 @@ This game is based on the GPL version of the famous game TuxRacer.")
 (define-public supertuxkart
   (package
     (name "supertuxkart")
-    (version "1.1")
+    (version "1.2")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://sourceforge/supertuxkart/SuperTuxKart/"
-                           version "/supertuxkart-" version "-src.tar.xz"))
+                           version "/SuperTuxKart-" version "-src.tar.xz"))
        (sha256
         (base32
-         "1s0ai07g3sswck9mr0142989mrgzzq1njc1qxk5als5b245jpc79"))
+         "0dvx56hmy6wdhl7m9dw8zc1n3jqfp05gnxl6zs1rbfdyzl5dybh5"))
        (modules '((guix build utils)))
        (snippet
         ;; Delete bundled library sources
@@ -3475,12 +3489,9 @@ This game is based on the GPL version of the famous game TuxRacer.")
            ;; Supertuxkart uses modified versions of the Irrlicht engine
            ;; and the bullet library.  The developers gave an explanation
            ;; here: http://forum.freegamedev.net/viewtopic.php?f=17&t=3906
-           ;; FIXME: try to unbundle angelscript and libraqm
+           ;; FIXME: try to unbundle angelscript, libmcpp and libraqm
            (for-each delete-file-recursively
-                     '("lib/zlib"
-                       "lib/libpng"
-                       "lib/jpeglib"
-                       "lib/glew"
+                     '("lib/glew"
                        "lib/wiiuse"
                        "lib/enet"))
            #t))))
@@ -3489,34 +3500,31 @@ This game is based on the GPL version of the famous game TuxRacer.")
      `(#:tests? #f ; no check target
        #:configure-flags
        (list "-DUSE_WIIUSE=0"
-             ;; Do not use the bundled zlib, glew and enet.
-             "-DNO_IRR_COMPILE_WITH_ZLIB_=TRUE"
              "-DUSE_SYSTEM_GLEW=TRUE"
              "-DUSE_SYSTEM_ENET=TRUE"
              ;; In order to use the system ENet library, IPv6 support (added in
              ;; SuperTuxKart version 1.1) must be disabled.
              "-DUSE_IPV6=FALSE"
              ;; FIXME: needs libopenglrecorder
-             "-DBUILD_RECORDER=0"
-             ;; Irrlicht returns an integer instead of a boolean
-             "-DCMAKE_C_FLAGS=-fpermissive")))
+             "-DBUILD_RECORDER=0")))
     (inputs
-     `(("glew" ,glew)
-       ("zlib" ,zlib)
-       ("openal" ,openal)
-       ("libvorbis" ,libvorbis)
+     `(("curl" ,curl)
        ("freetype" ,freetype)
        ("fribidi" ,fribidi)
+       ("glew" ,glew)
        ("harfbuzz" ,harfbuzz)
-       ("mesa" ,mesa)
+       ("libvorbis" ,libvorbis)
        ("libx11" ,libx11)
        ("libxrandr" ,libxrandr)
-       ("curl" ,curl)
+       ("mesa" ,mesa)
+       ("openal" ,openal)
+       ("sdl2" ,sdl2)
+       ("zlib" ,zlib)
        ;; The following input is needed to build the bundled and modified
        ;; version of irrlicht.
+       ("enet" ,enet)
        ("libjpeg" ,libjpeg-turbo)
-       ("openssl" ,openssl)
-       ("enet" ,enet)))
+       ("openssl" ,openssl)))
     (native-inputs
      `(("pkg-config" ,pkg-config)))
     (home-page "https://supertuxkart.net/Main_Page")
@@ -3904,7 +3912,7 @@ engine.  When you start it you will be prompted to download a graphics set.")
     (home-page "http://dev.openttdcoop.org/projects/opengfx")
     (synopsis "Base graphics set for OpenTTD")
     (description
-     "The OpenGFX projects is an implementation of the OpenTTD base grahics
+     "The OpenGFX project is an implementation of the OpenTTD base graphics
 set that aims to ensure the best possible out-of-the-box experience.
 
 OpenGFX provides you with...

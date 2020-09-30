@@ -3135,10 +3135,10 @@ is a library for creating graphical user interfaces.")
   (sbcl-package->cl-source-package sbcl-cl-cffi-gtk))
 
 (define-public sbcl-cl-webkit
-  (let ((commit "dccf9d25de4e9a69f716f8ed9578e58963ead967"))
+  (let ((commit "04bb5703b68f4db9de71529b81896cc428ef54e1"))
     (package
       (name "sbcl-cl-webkit")
-      (version (git-version "2.4" "5" commit))
+      (version (git-version "2.4" "8" commit))
       (source
        (origin
          (method git-fetch)
@@ -3148,7 +3148,7 @@ is a library for creating graphical user interfaces.")
          (file-name (git-file-name "cl-webkit" version))
          (sha256
           (base32
-           "0cn43ks2mgqkfnalq1p997z6q5pr1sfvz99gvvr5fp7r1acn7v5w"))))
+           "12dzqgkvgwi97r8dbflslj7nsx7p6iavx82fs48nj9wf7ln1c87s"))))
       (build-system asdf-build-system/sbcl)
       (inputs
        `(("cffi" ,sbcl-cffi)
@@ -13656,7 +13656,7 @@ simplify class and condition declarations.  Features include:
 
 @itemize
 @item Automatically export all or select slots at compile time.
-@item Define the @code{:initarg} and @code{:accesor} automatically.
+@item Define the @code{:initarg} and @code{:accessor} automatically.
 @item Specify a name transformer for both the @code{:initarg} and
 @code{:accessor}, etc.
 @item Specify the @code{:initform} as second slot value.

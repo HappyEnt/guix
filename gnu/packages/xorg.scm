@@ -6667,7 +6667,7 @@ output.")
 (define-public console-setup
   (package
     (name "console-setup")
-    (version "1.196")
+    (version "1.197")
     (source
      (origin
        (method git-fetch)
@@ -6675,7 +6675,7 @@ output.")
              (url "https://salsa.debian.org/installer-team/console-setup.git")
              (commit version)))
        (sha256
-        (base32 "0c79rycgpna8910as6blw3z3sajzzakz4qlvr6js2yr8zq2d0ylg"))
+        (base32 "0m2q30f94vd1wb2zqpiyplpgfchjlm8j41xiyxcqdjzdgqbs7l27"))
        (file-name (git-file-name name version))))
     (build-system gnu-build-system)
     (arguments
@@ -6724,7 +6724,7 @@ output.")
     (synopsis "Set up the Linux console font and keyboard")
     (description
      "console-setup provides the console with the same keyboard
-configuration scheme that X Window System has.  In particular, the
+configuration scheme that the X Window System has.  In particular, the
 @command{ckbcomp} program compiles an XKB keyboard description to a keymap
 suitable for @command{loadkeys} or @command{kbdcontrol}.  As a result, there
 is no need to duplicate or change the console keyboard files just to make

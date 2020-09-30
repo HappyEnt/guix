@@ -38,6 +38,7 @@
   #:use-module (guix monads)
   #:use-module (guix gexp)
   #:use-module (guix profiles)
+  #:use-module (guix diagnostics)
   #:autoload   (guix http-client) (http-fetch http-get-error?)
   #:use-module (ice-9 format)
   #:use-module (ice-9 match)
@@ -46,6 +47,7 @@
   #:use-module (srfi srfi-11)
   #:use-module (srfi srfi-26)
   #:use-module (srfi srfi-34)
+  #:use-module (srfi srfi-35)
   #:use-module (srfi srfi-37)
   #:use-module (gnu packages)
   #:autoload   (guix download) (download-to-store)
@@ -393,6 +395,25 @@ a checkout of the Git repository at the given URL."
         (rewrite obj)
         obj)))
 
+(define (transform-package-tests specs)
+  "Return a procedure that, when passed a package, sets #:tests? #f in its
+'arguments' field."
+  (define (package-without-tests p)
+    (package/inherit p
+      (arguments
+       (substitute-keyword-arguments (package-arguments p)
+         ((#:tests? _ #f) #f)))))
+
+  (define rewrite
+    (package-input-rewriting/spec (map (lambda (spec)
+                                         (cons spec package-without-tests))
+                                       specs)))
+
+  (lambda (store obj)
+    (if (package? obj)
+        (rewrite obj)
+        obj)))
+
 (define %transformations
   ;; Transformations that can be applied to things to build.  The car is the
   ;; key used in the option alist, and the cdr is the transformation
@@ -403,7 +424,8 @@ a checkout of the Git repository at the given URL."
     (with-graft  . ,transform-package-inputs/graft)
     (with-branch . ,transform-package-source-branch)
     (with-commit . ,transform-package-source-commit)
-    (with-git-url . ,transform-package-source-git-url)))
+    (with-git-url . ,transform-package-source-git-url)
+    (without-tests . ,transform-package-tests)))
 
 (define %transformation-options
   ;; The command-line interface to the above transformations.
@@ -423,11 +445,13 @@ a checkout of the Git repository at the given URL."
           (option '("with-commit") #t #f
                   (parser 'with-commit))
           (option '("with-git-url") #t #f
-                  (parser 'with-git-url)))))
+                  (parser 'with-git-url))
+          (option '("without-tests") #t #f
+                  (parser 'without-tests)))))
 
 (define (show-transformation-options-help)
   (display (G_ "
-      --with-source=SOURCE
+      --with-source=[PACKAGE=]SOURCE
                          use SOURCE when building the corresponding package"))
   (display (G_ "
       --with-input=PACKAGE=REPLACEMENT
@@ -443,7 +467,10 @@ a checkout of the Git repository at the given URL."
                          build PACKAGE from COMMIT"))
   (display (G_ "
       --with-git-url=PACKAGE=URL
-                         build PACKAGE from the repository at URL")))
+                         build PACKAGE from the repository at URL"))
+  (display (G_ "
+      --without-tests=PACKAGE
+                         build PACKAGE without running its tests")))
 
 
 (define (options->transformation opts)
@@ -805,7 +832,28 @@ must be one of 'package', 'all', or 'transitive'~%")
 build---packages, gexps, derivations, and so on."
   (define (validate-type x)
     (unless (or (derivation? x) (file-like? x) (gexp? x) (procedure? x))
-      (leave (G_ "~s: not something we can build~%") x)))
+      (raise (make-compound-condition
+               (formatted-message (G_ "~s: not something we can build~%") x)
+               (condition
+                (&fix-hint
+                 (hint
+                   (if (unspecified? x)
+                       (G_ "If you build from a file, make sure the last Scheme
+expression returns a package value.  @code{define-public} defines a variable,
+but returns @code{#<unspecified>}.  To fix this, add a Scheme expression at
+the end of the file that consists only of the package's variable name you
+defined, as in this example:
+
+@example
+(define-public my-package
+  (package
+    ...))
+
+my-package
+@end example")
+                       (G_ "If you build from a file, make sure the last
+Scheme expression returns a package, gexp, derivation or a list of such
+values.")))))))))
 
   (define (ensure-list x)
     (let ((lst (match x

@@ -357,8 +357,8 @@ services.")
        ("libsoup" ,libsoup)
        ("libxml2" ,libxml2)))
     (synopsis "Glib library for feeds")
-    (description "LibGRSS is a Glib abstaction to handle feeds in RSS, Atom and
-other formats.")
+    (description "LibGRSS is a Glib abstraction to handle feeds in RSS, Atom,
+and other formats.")
     (home-page "https://wiki.gnome.org/Projects/Libgrss")
     (license license:lgpl3+)))
 
@@ -2500,6 +2500,104 @@ on the GNOME Desktop with a single simple application.")
      "Gsettings-desktop-schemas contains a collection of GSettings schemas
 for settings shared by various components of the GNOME desktop.")
     (license license:lgpl2.1+)))
+
+(define-public python-liblarch
+  (package
+    (name "python-liblarch")
+    (version "3.0.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/getting-things-gnome/liblarch")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0xv2mfvyzipbny3iz8vll77wsqxfwh28xj6bj1ff0l452waph45m"))))
+    (build-system python-build-system)
+    (arguments
+     `(#:phases
+       (modify-phases %standard-phases
+         (add-before 'check 'start-xserver
+           (lambda* (#:key inputs #:allow-other-keys)
+             (system (format #f "~a/bin/Xvfb :1 &"
+                             (assoc-ref inputs "xorg-server")))
+             (setenv "DISPLAY" ":1")
+             #t)))))
+    (native-inputs
+     `(("xorg-server" ,xorg-server-for-tests)))
+    (inputs
+     `(("gtk+" ,gtk+)))
+    (propagated-inputs
+     `(("python-pygobject" ,python-pygobject)))
+    (home-page "https://wiki.gnome.org/Projects/liblarch")
+    (synopsis "Library to easily handle complex data structures")
+    (description
+     "Liblarch is a Python library built to easily handle data structures such
+as lists, trees and acyclic graphs.  There's also a GTK binding that will
+allow you to use your data structure in a @code{Gtk.Treeview}.
+
+Liblarch support multiple views of one data structure and complex filtering.
+That way, you have a clear separation between your data themselves (Model)
+and how they are displayed (View).")
+    (license license:lgpl3+)))
+
+(define-public gtg
+  (package
+    (name "gtg")
+    (version "0.4")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/getting-things-gnome/gtg")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0r28vyr88rj3kd3cg4gj7sd29wadjchi92wzmbx67d4hlg25h8kk"))))
+    (build-system meson-build-system)
+    (arguments
+     `(#:glib-or-gtk? #t
+       #:phases
+       (modify-phases %standard-phases
+         (add-after 'glib-or-gtk-wrap 'python-and-gi-wrap
+           (lambda* (#:key outputs #:allow-other-keys)
+             (let ((prog (string-append (assoc-ref outputs "out")
+                                        "/bin/gtg"))
+                   (pylib (string-append (assoc-ref outputs "out")
+                                         "/lib/python"
+                                         ,(version-major+minor
+                                           (package-version python))
+                                         "/site-packages")))
+               (wrap-program prog
+                 `("PYTHONPATH" = (,(getenv "PYTHONPATH") ,pylib))
+                 `("GI_TYPELIB_PATH" = (,(getenv "GI_TYPELIB_PATH"))))
+               #t))))))
+    (native-inputs
+     `(("desktop-file-utils" ,desktop-file-utils)
+       ("gettext" ,gettext-minimal)
+       ("glib:bin" ,glib "bin")
+       ("gobject-introspection" ,gobject-introspection)
+       ("gtk+:bin" ,gtk+ "bin")
+       ("pkg-config" ,pkg-config)))
+    (inputs
+     `(("gsettings-desktop-schemas" ,gsettings-desktop-schemas)
+       ("gtk+" ,gtk+)
+       ("python-dbus" ,python-dbus)
+       ("python-liblarch" ,python-liblarch)
+       ("python-pycairo" ,python-pycairo)
+       ("python-pygobject" ,python-pygobject)
+       ("python-pyxdg" ,python-pyxdg)))
+    (home-page "https://wiki.gnome.org/Apps/GTG")
+    (synopsis "Personal organizer for the GNOME desktop")
+    (description
+     "Getting Things GNOME! (GTG) is a personal tasks and TODO list items
+organizer for the GNOME desktop environment inspired by the Getting Things
+Done (GTD) methodology.  GTG is designed with flexibility, adaptability,
+and ease of use in mind so it can be used as more than just GTD software.
+GTG is intended to help you track everything you need to do and need to
+know, from small tasks to large projects.")
+    (license license:gpl3+)))
 
 (define-public icon-naming-utils
   (package
@@ -10028,7 +10126,7 @@ automatically and it can stream songs from online music services and charts.")
 (define-public gnome-video-effects
   (package
     (name "gnome-video-effects")
-    (version "0.4.3")
+    (version "0.5.0")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://gnome/sources/" name "/"
@@ -10036,14 +10134,10 @@ automatically and it can stream songs from online music services and charts.")
                                   version ".tar.xz"))
               (sha256
                (base32
-                "06c2f1kihyhawap1s3zg5w7q7fypsybkp7xry4hxkdz4mpsy0zjs"))))
-    (build-system glib-or-gtk-build-system)
-    (arguments
-     `(#:out-of-source? #f))
+                "1j6h98whgkcxrh30bwvnxvyqxrxchgpdgqhl0j71xz7x72dqxijd"))))
+    (build-system meson-build-system)
     (native-inputs
-     `(("glib:bin" ,glib "bin")
-       ("intltool" ,intltool)
-       ("gettext" ,gettext-minimal)
+     `(("gettext" ,gettext-minimal)
        ("pkg-config" ,pkg-config)))
     (home-page "https://wiki.gnome.org/Projects/GnomeVideoEffects")
     (synopsis "Video effects for Cheese and other GNOME applications")
@@ -10055,7 +10149,7 @@ photo-booth-like software, such as Cheese.")
 (define-public cheese
   (package
     (name "cheese")
-    (version "3.34.0")
+    (version "3.38.0")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://gnome/sources/" name "/"
@@ -10063,7 +10157,7 @@ photo-booth-like software, such as Cheese.")
                                   version ".tar.xz"))
               (sha256
                (base32
-                "0wvyc9wb0avrprvm529m42y5fkv3lirdphqydc9jw0c8mh05d1ni"))))
+                "0vyim2avlgq3a48rgdfz5g21kqk11mfb53b2l883340v88mp7ll8"))))
     (arguments
      `(#:glib-or-gtk? #t
        ;; Tests require GDK.
@@ -10076,6 +10170,15 @@ photo-booth-like software, such as Cheese.")
              (substitute* "meson_post_install.py"
                (("gtk-update-icon-cache") (which "true")))
              #t))
+         (add-after 'unpack 'patch-docbook-xml
+           (lambda* (#:key inputs #:allow-other-keys)
+             ;; Avoid a network connection attempt during the build.
+             (substitute* '("docs/reference/cheese.xml"
+                            "docs/reference/cheese-docs.xml")
+               (("http://www.oasis-open.org/docbook/xml/4.3/docbookx.dtd")
+                (string-append (assoc-ref inputs "docbook-xml")
+                               "/xml/dtd/docbook/docbookx.dtd")))
+             #t))
          (add-after 'install 'wrap-cheese
            (lambda* (#:key inputs outputs #:allow-other-keys)
              (let ((out             (assoc-ref outputs "out"))
@@ -10086,6 +10189,7 @@ photo-booth-like software, such as Cheese.")
     (build-system meson-build-system)
     (native-inputs
      `(("docbook-xsl" ,docbook-xsl)
+       ("docbook-xml" ,docbook-xml-4.3)
        ("glib:bin" ,glib "bin")
        ("gtk-doc" ,gtk-doc)
        ("intltool" ,intltool)
@@ -11026,6 +11130,49 @@ designed to work with various laser/ink-jet peel-off label and business
 card sheets that you’ll find at most office supply stores.")
     (license license:gpl3+)))
 
+;; Version 3.38.0 is out but requires tepl>=5 which requires glib>=2.64.
+(define-public gnome-latex
+  (package
+    (name "gnome-latex")
+    (version "3.36.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "mirror://gnome/sources/" name "/"
+                           (version-major+minor version)  "/"
+                           "gnome-latex-" version ".tar.xz"))
+       (sha256
+        (base32 "1869kr1zhcp04mzbi67lwgk497w840dbbc7427i9yh9b9s7j6mqn"))))
+    (build-system glib-or-gtk-build-system)
+    (native-inputs
+     `(("gettext" ,gettext-minimal)
+       ("glib:bin" ,glib "bin")
+       ("gobject-introspection" ,gobject-introspection)
+       ("gtk-doc" ,gtk-doc)
+       ("intltool" ,intltool)
+       ("itstool" ,itstool)
+       ("pkg-config" ,pkg-config)
+       ("vala" ,vala)))
+    (inputs
+     `(("amtk" ,amtk)
+       ("dconf" ,dconf)
+       ("glib" ,glib)
+       ("gsettings-desktop-schemas" ,gsettings-desktop-schemas)
+       ("gspell" ,gspell)
+       ("gtk+" ,gtk+)
+       ("gtksourceview" ,gtksourceview)
+       ("libgee" ,libgee)
+       ("tepl" ,tepl)
+       ("uchardet" ,uchardet)))
+    (home-page "https://wiki.gnome.org/Apps/GNOME-LaTeX")
+    (synopsis "LaTeX editor for the GNOME desktop")
+    (description
+     "GNOME LaTeX is a LaTeX editor for the GNOME desktop.  It has features
+such as build tools, completion of LaTeX commands, structure navigation,
+symbol tables, document templates, project management, spell-checking, menus
+and toolbars.")
+    (license license:gpl3+)))
+
 (define-public libratbag
   (package
     (name "libratbag")
@@ -11397,7 +11544,7 @@ integrated profiler via Sysprof, debugging support, and more.")
 (define-public komikku
   (package
     (name "komikku")
-    (version "0.20.0")
+    (version "0.21.1")
     (source
      (origin
        (method git-fetch)
@@ -11407,7 +11554,7 @@ integrated profiler via Sysprof, debugging support, and more.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "0m5dvqh2as5ffi9fmp3452kw44jwm6pl1jw0r5mdkpdxhid15aw8"))))
+         "17ss5k2hnymk6xyx1dy3q0y2pwcld78cw7d0cs9c0hnhskh5dirh"))))
     (build-system meson-build-system)
     (arguments
      `(#:glib-or-gtk? #t

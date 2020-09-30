@@ -15,6 +15,7 @@
 ;;; Copyright © 2020 Brice Waegeneire <brice@waegenei.re>
 ;;; Copyright © 2020 Mathieu Othacehe <m.othacehe@gmail.com>
 ;;; Copyright © 2020 Marius Bakke <mbakke@fastmail.com>
+;;; Copyright © 2020 Maxim Cournoyer <maxim.cournoyer@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -129,21 +130,19 @@
 (define-public qemu
   (package
     (name "qemu")
-    (version "5.0.0")
+    (version "5.1.0")
     (source (origin
-             (method url-fetch)
-             (uri (string-append "https://download.qemu.org/qemu-"
-                                 version ".tar.xz"))
-             (sha256
-              (base32
-               "1dlcwyshdp94fwd30pddxf9bn2q8dfw5jsvry2gvdj551wmaj4rg"))))
+              (method url-fetch)
+              (uri (string-append "https://download.qemu.org/qemu-"
+                                  version ".tar.xz"))
+              (sha256
+               (base32
+                "1rd41wwlvp0vpialjp2czs6i3lsc338xc72l3zkbb7ixjfslw5y9"))
+              (patches (search-patches "qemu-build-info-manual.patch"))))
+    (outputs '("out" "doc"))            ;4.7 MiB of HTML docs
     (build-system gnu-build-system)
     (arguments
-     `(;; Running tests in parallel can occasionally lead to failures, like:
-       ;; boot_sector_test: assertion failed (signature == SIGNATURE): (0x00000000 == 0x0000dead)
-       #:parallel-tests? #f
-
-       ;; FIXME: Disable tests on i686 to work around
+     `(;; FIXME: Disable tests on i686 to work around
        ;; <https://bugs.gnu.org/40527>.
        #:tests? ,(or (%current-target-system)
                      (not (string=? "i686-linux" (%current-system))))
@@ -178,6 +177,24 @@
                                               '("include")
                                               input-directories)
                #t)))
+         (add-after 'unpack 'disable-unusable-tests
+           (lambda _
+             (substitute* "tests/Makefile.include"
+               ;; Comment out the test-qga test, which needs /sys and
+               ;; fails within the build environment.
+               (("check-unit-.* tests/test-qga" all)
+                (string-append "# " all))
+               ;; Comment out the test-char test, which needs networking and
+               ;; fails within the build environment.
+               (("check-unit-.* tests/test-char" all)
+                (string-append "# " all)))
+             (substitute* "tests/qtest/Makefile.include"
+               ;; Disable the following test, which triggers a crash on some
+               ;; x86 CPUs (see https://issues.guix.info/43048 and
+               ;; https://bugs.launchpad.net/qemu/+bug/1896263).
+               (("check-qtest-i386-y \\+= bios-tables-test" all)
+                (string-append "# " all)))
+             #t))
          (add-after 'patch-source-shebangs 'patch-/bin/sh-references
            (lambda _
              ;; Ensure the executables created by these source files reference
@@ -188,7 +205,7 @@
              #t))
          (replace 'configure
            (lambda* (#:key inputs outputs (configure-flags '())
-                           #:allow-other-keys)
+                     #:allow-other-keys)
              ;; The `configure' script doesn't understand some of the
              ;; GNU options.  Thus, add a new phase that's compatible.
              (let ((out (assoc-ref outputs "out")))
@@ -218,23 +235,12 @@
                         ,(string-append "--prefix=" out)
                         ,(string-append "--sysconfdir=/etc")
                         ,@configure-flags)))))
-         (add-after 'install 'install-info
-           (lambda* (#:key inputs outputs #:allow-other-keys)
-             ;; Install the Info manual, unless Texinfo is missing.
-             (when (assoc-ref inputs "texinfo")
-               (let* ((out  (assoc-ref outputs "out"))
-                      (dir (string-append out "/share/info")))
-                 (invoke "make" "info")
-                 (for-each (lambda (info)
-                             (install-file info dir))
-                           (find-files "." "\\.info"))))
-             #t))
          ;; Create a wrapper for Samba. This allows QEMU to use Samba without
          ;; pulling it in as an input. Note that you need to explicitly install
          ;; Samba in your Guix profile for Samba support.
-         (add-after 'install-info 'create-samba-wrapper
+         (add-after 'install 'create-samba-wrapper
            (lambda* (#:key inputs outputs #:allow-other-keys)
-             (let* ((out    (assoc-ref %outputs "out"))
+             (let* ((out    (assoc-ref outputs "out"))
                     (libexec (string-append out "/libexec")))
                (call-with-output-file "samba-wrapper"
                  (lambda (port)
@@ -243,18 +249,14 @@ exec smbd $@")))
                (chmod "samba-wrapper" #o755)
                (install-file "samba-wrapper" libexec))
              #t))
-         (add-before 'check 'disable-unusable-tests
+         (add-after 'install 'move-html-doc
            (lambda* (#:key inputs outputs #:allow-other-keys)
-             (substitute* "tests/Makefile.include"
-               ;; Comment out the test-qga test, which needs /sys and
-               ;; fails within the build environment.
-               (("check-unit-.* tests/test-qga" all)
-                (string-append "# " all)))
-             (substitute* "tests/Makefile.include"
-               ;; Comment out the test-char test, which needs networking and
-               ;; fails within the build environment.
-               (("check-unit-.* tests/test-char" all)
-                (string-append "# " all)))
+             (let* ((out (assoc-ref outputs "out"))
+                    (doc (assoc-ref outputs "doc"))
+                    (qemu-doc (string-append doc "/share/doc/qemu-" ,version)))
+               (mkdir-p qemu-doc)
+               (rename-file (string-append out "/share/doc/qemu")
+                            (string-append qemu-doc "/html")))
              #t)))))
     (inputs                                       ; TODO: Add optional inputs.
      `(("alsa-lib" ,alsa-lib)

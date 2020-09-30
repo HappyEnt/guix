@@ -1316,7 +1316,7 @@ compresses it.")
 (define-public claws-mail
   (package
     (name "claws-mail")
-    (version "3.17.6")
+    (version "3.17.7")
     (source (origin
               (method url-fetch)
               (uri (string-append
@@ -1324,7 +1324,7 @@ compresses it.")
                     ".tar.xz"))
               (sha256
                (base32
-                "1s05qw0r0gqwvvkxvrrwbjkbi61dvilixiwrpgcq21qc9csc9r0m"))))
+                "1j6x09621wng0lavh53nwzh9vqjzpspl8kh5azh7kbihpi4ldfb0"))))
     (build-system gnu-build-system)
     (native-inputs `(("pkg-config" ,pkg-config)))
     (inputs `(("bogofilter" ,bogofilter)
@@ -1712,7 +1712,7 @@ scripts to prevent embarrassing errors later on.")
      "Technology for Resting Email Encrypted Storage (TREES) is a NaCL-based
 Dovecot encryption plugin.  This plugin adds individually encrypted mail
 storage to the Dovecot IMAP server.  It is inspired by Posteo's scrambler
-which uses OpenSSL and RSA keypairs.  TREES works in a similar way, but uses
+which uses OpenSSL and RSA key pairs.  TREES works in a similar way, but uses
 the Sodium crypto library (based on NaCL).
 
 How it works:
@@ -2590,7 +2590,7 @@ transfer protocols.")
     (description
      "Sieve-connect lets you view, upload, edit, delete, and otherwise manage
 Sieve scripts on any mail server that speaks the @dfn{ManageSieve} protocol,
-as specifed in RFC 5804.
+as specified in RFC 5804.
 
 @dfn{Sieve} (RFC 5228) is a specialised language for e-mail filtering.  Sieve
 scripts are stored on the server and run whenever mail arrives.  They can
@@ -3050,47 +3050,6 @@ installation on systems where resources are limited.  Its features include:
     (description
      "This package contains libraries and templates for Django-based interfaces
 interacting with Mailman.")
-    (properties `((python2-variant . ,(delay python2-django-mailman3))))
-    (license license:gpl3+)))
-
-;; This is the last version to support Python-2.
-(define-public python2-django-mailman3
-  (package
-    (name "python2-django-mailman3")
-    (version "1.1.0")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "django-mailman3" version))
-       (sha256
-        (base32
-         "1xjdkgfjwhgyrp5nxw65dcpcsr98ygj6856sp0bwkrmyxpd1xxk2"))))
-    (build-system python-build-system)
-    (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (replace 'check
-           (lambda _
-             (invoke "django-admin"
-                     "test"
-                     "--settings=django_mailman3.tests.settings_test"
-                     "django_mailman3"))))
-       #:python ,python-2))
-    (inputs
-     `(("python2-django" ,python2-django)))
-    (propagated-inputs
-     `(("python2-requests" ,python2-requests)
-       ("python2-requests-oauthlib" ,python2-requests-oauthlib)
-       ("python2-openid" ,python2-openid)
-       ("python2-mailmanclient" ,python2-mailmanclient)
-       ("python2-django-allauth" ,python2-django-allauth)
-       ("python2-django-gravatar2" ,python2-django-gravatar2)
-       ("python2-pytz" ,python2-pytz)))
-    (home-page "https://gitlab.com/mailman/django-mailman3")
-    (synopsis "Django library for Mailman UIs")
-    (description
-     "Libraries and templates for Django-based interfaces
-interacting with Mailman.")
     (license license:gpl3+)))
 
 (define-public python-mailman-hyperkitty
@@ -3150,16 +3109,12 @@ which sends emails to HyperKitty, the official Mailman3 web archiver.")
        (modify-phases %standard-phases
          (replace 'check
            (lambda _
-             ;; It is unclear why this test fails.
-             (substitute* "hyperkitty/tests/commands/test_import.py"
-               (("def test_bad_content_type_part_two")
-                "@SkipTest\n    def test_bad_content_type_part_two"))
              (setenv "PYTHONPATH" (string-append ".:" (getenv "PYTHONPATH")))
              (invoke "example_project/manage.py" "test"
                      "--settings=hyperkitty.tests.settings_test"))))))
     (propagated-inputs
      `(("python-dateutil" ,python-dateutil)
-       ("python-django" ,python-django)
+       ("python-django" ,python-django-2.2)
        ("python-django-compressor" ,python-django-compressor)
        ("python-django-extensions" ,python-django-extensions)
        ("python-django-gravatar2" ,python-django-gravatar2)

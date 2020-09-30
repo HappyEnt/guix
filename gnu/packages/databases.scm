@@ -1780,7 +1780,7 @@ module, and nothing else.")
     (synopsis "Parse and utilize MySQL's /etc/my.cnf and ~/.my.cnf files")
     (description
      "@code{MySQL::Config} emulates the @code{load_defaults} function from
-libmysqlclient.  It will fill an aray with long options, ready to be parsed by
+libmysqlclient.  It will fill an array with long options, ready to be parsed by
 @code{Getopt::Long}.")
     (license license:perl-license)))
 
@@ -2715,6 +2715,47 @@ You might also want to install the following optional dependencies:
 (define-public python2-sqlalchemy-utils
   (package-with-python2 python-sqlalchemy-utils))
 
+(define-public python-alchemy-mock
+  (package
+    (name "python-alchemy-mock")
+    (version "0.4.3")
+    (home-page "https://github.com/miki725/alchemy-mock")
+    (source (origin
+              (method url-fetch)
+              (uri (pypi-uri "alchemy-mock" version))
+              (sha256
+               (base32
+                "0ylxygl3bcdapzz529n8wgk7vx9gjwb3ism564ypkpd7dbsw653r"))))
+    (build-system python-build-system)
+    (arguments
+     '(#:phases (modify-phases %standard-phases
+                  (replace 'check
+                    (lambda _
+                      ;; Create pytest.ini that adds doctest options to
+                      ;; prevent test failure.  Taken from tox.ini.
+                      (call-with-output-file "pytest.ini"
+                        (lambda (port)
+                          (format port "[pytest]
+doctest_optionflags=IGNORE_EXCEPTION_DETAIL
+")))
+                      (invoke "pytest" "-vv" "--doctest-modules"
+                              "alchemy_mock/"))))))
+    (native-inputs
+     `(("python-mock" ,python-mock)
+       ("python-pytest" ,python-pytest)))
+    (propagated-inputs
+     `(("python-six" ,python-six)
+       ("python-sqlalchemy" ,python-sqlalchemy)))
+    (synopsis "Mock helpers for SQLAlchemy")
+    (description
+     "This package provides mock helpers for SQLAlchemy that makes it easy
+to mock an SQLAlchemy session while preserving the ability to do asserts.
+
+Normally Normally SQLAlchemy's expressions cannot be easily compared as
+comparison on binary expression produces yet another binary expression, but
+this library provides functions to facilitate such comparisons.")
+    (license license:expat)))
+
 (define-public python-alembic
   (package
     (name "python-alembic")
@@ -2954,24 +2995,19 @@ database).")
 (define-public python-mysqlclient
   (package
     (name "python-mysqlclient")
-    (version "1.3.13")
+    (version "2.0.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "mysqlclient" version))
        (sha256
         (base32
-         "0kv4a1icwdav8jpl7qvnr931lw5h3v22ids6lwq6qpi1hjzf33pz"))))
+         "1rf5l8hazs3v18hmcrm90z3hi9wxv553ipwd5l6kj8j7l6p7abzv"))))
     (build-system python-build-system)
-    (native-inputs
-     `(("nose" ,python-nose)
-       ("mock" ,python-mock)
-       ("py.test" ,python-pytest)))
+    (arguments '(#:tests? #f))          ;XXX: requires a live database
     (inputs
      `(("mysql" ,mariadb "lib")
-       ("mysql-dev" ,mariadb "dev")
-       ("libz" ,zlib)
-       ("openssl" ,openssl)))
+       ("mysql-dev" ,mariadb "dev")))
     (home-page "https://github.com/PyMySQL/mysqlclient-python")
     (synopsis "MySQLdb is an interface to the popular MySQL database server for Python")
     (description "MySQLdb is an interface to the popular MySQL database server
@@ -2982,9 +3018,6 @@ for Python.  The design goals are:
 @item Thread-friendliness (threads will not block each other).
 @end enumerate")
     (license license:gpl2)))
-
-(define-public python2-mysqlclient
-  (package-with-python2 python-mysqlclient))
 
 (define-public python-hiredis
   (package
@@ -3045,13 +3078,13 @@ reasonable substitute.")
 (define-public python-redis
   (package
     (name "python-redis")
-    (version "3.3.8")
+    (version "3.5.3")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "redis" version))
        (sha256
-        (base32 "0fyxzqax7lcwzwhvnz0i0q6v62hxyv1mv52ywx3bpff9a2vjz8lq"))))
+        (base32 "18h5b87g15x3j6pb1h2q27ri37p2qpvc9n2wgn5yl3b6m3y0qzhf"))))
     (build-system python-build-system)
     ;; Tests require a running Redis server.
     (arguments '(#:tests? #f))
@@ -3070,14 +3103,35 @@ reasonable substitute.")
 (define-public python-rq
   (package
     (name "python-rq")
-    (version "0.13.0")
+    (version "1.5.1")
     (source
      (origin
-       (method url-fetch)
-       (uri (pypi-uri "rq" version))
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/rq/rq")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
        (sha256
-        (base32 "0xvapd2bxnyq480i48bdkddzlqmv2axbsq85rlfy8k3al8zxxxrf"))))
+        (base32 "0i7yyw828wdvl7ap4gb7jhm4p94502is3xxrgrdgwwp0l1rac004"))))
     (build-system python-build-system)
+    (arguments
+     '(#:phases (modify-phases %standard-phases
+                  (add-before 'check 'start-redis
+                    (lambda _
+                      (invoke "redis-server" "--daemonize" "yes")))
+                  (replace 'check
+                    (lambda* (#:key outputs #:allow-other-keys)
+                      (let ((out (assoc-ref outputs "out")))
+                        ;; Drop test that needs the SDK for Sentry.io.
+                        (delete-file "tests/test_sentry.py")
+                        ;; Ensure 'rq' and 'rqworker' ends up on PATH.
+                        (setenv "PATH" (string-append out "/bin:"
+                                                      (getenv "PATH")))
+                        (invoke "pytest" "-vv")))))))
+    (native-inputs
+     `(("python-mock" ,python-mock)
+       ("python-pytest" ,python-pytest)
+       ("redis" ,redis)))
     (propagated-inputs
      `(("python-click" ,python-click)
        ("python-redis" ,python-redis)))
@@ -3091,6 +3145,44 @@ is designed to have a low barrier to entry.")
 
 (define-public python2-rq
   (package-with-python2 python-rq))
+
+(define-public python-rq-scheduler
+  (package
+    (name "python-rq-scheduler")
+    (version "0.10.0")
+    (home-page "https://github.com/rq/rq-scheduler")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url home-page)
+                    (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "0xg6yazqs5kbr2ayvhvljs1h5vgx5k5dds613fmhswln7gglf9hk"))))
+    (build-system python-build-system)
+    (arguments
+     '(#:phases (modify-phases %standard-phases
+                  (add-before 'check 'start-redis
+                    (lambda _
+                      (invoke "redis-server" "--daemonize" "yes")))
+                  (replace 'check
+                    (lambda _
+                      (substitute* "run_tests.py"
+                        (("/usr/bin/env")
+                         (which "env")))
+                      (invoke "./run_tests.py"))))))
+    (native-inputs
+     `(("redis" ,redis)
+       ("which" ,which)))
+    (propagated-inputs
+     `(("python-croniter" ,python-croniter)
+       ("python-rq" ,python-rq)))
+    (synopsis "Job scheduling capabilities for RQ (Redis Queue)")
+    (description
+     "This package provides job scheduling capabilities to @code{python-rq}
+(Redis Queue).")
+    (license license:expat)))
 
 (define-public python-trollius-redis
   (package
