@@ -349,7 +349,7 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
 
 ;; The current "stable" kernel. That is, the most recently released major
 ;; version.
-(define-public linux-libre-5.8-version "5.8.11")
+(define-public linux-libre-5.8-version "5.8.13")
 (define deblob-scripts-5.8
   (linux-libre-deblob-scripts
    linux-libre-5.8-version
@@ -357,7 +357,7 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "0j6jba5fcddqlb42f95gjl78jisfla4nswqila074gglcrbnl9q7")))
 (define-public linux-libre-5.8-pristine-source
   (let ((version linux-libre-5.8-version)
-        (hash (base32 "0jy0yrrixzql9dlk9305w98pja2pm6ijrdbai326595pnk740n9y")))
+        (hash (base32 "039j4ckx2p6rfpgqc5gzn6xc1krvhy0ivkjxck83s66xgqbkcngj")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-5.8)))
@@ -365,7 +365,7 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
 ;; The "longterm" kernels — the older releases with long-term upstream support.
 ;; Here are the support timelines:
 ;; <https://www.kernel.org/category/releases.html>
-(define-public linux-libre-5.4-version "5.4.67")
+(define-public linux-libre-5.4-version "5.4.69")
 (define deblob-scripts-5.4
   (linux-libre-deblob-scripts
    linux-libre-5.4-version
@@ -373,12 +373,12 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "1b3q88i2qfdxyvpi9f7jds0qlb8hfpw87mgia096ax6822c2cmyb")))
 (define-public linux-libre-5.4-pristine-source
   (let ((version linux-libre-5.4-version)
-        (hash (base32 "196avi0950qrd0lxdpdsl6lxa51f20sz476mcl1i5islbnfbsxf1")))
+        (hash (base32 "19vxsbwvfwyz1w6m7sp38d504w98zwjxaap4hfhh6wrrddqivcx8")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-5.4)))
 
-(define-public linux-libre-4.19-version "4.19.147")
+(define-public linux-libre-4.19-version "4.19.149")
 (define deblob-scripts-4.19
   (linux-libre-deblob-scripts
    linux-libre-4.19-version
@@ -386,12 +386,12 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "1jiaw0as1ippkrjdpd52657w5mz9qczg3y2hlra7m9k0xawwiqlf")))
 (define-public linux-libre-4.19-pristine-source
   (let ((version linux-libre-4.19-version)
-        (hash (base32 "19nnx61v7c0102ik1rjan0kdsj8av8v7iqz5vm3v3kjllmjmvr2x")))
+        (hash (base32 "001alvxgyb1n0fgbfi5dkzjviid32lyjfjwd3jwmcallcsdcpkfr")))
     (make-linux-libre-source version
                              (%upstream-linux-source version hash)
                              deblob-scripts-4.19)))
 
-(define-public linux-libre-4.14-version "4.14.199")
+(define-public linux-libre-4.14-version "4.14.200")
 (define deblob-scripts-4.14
   (linux-libre-deblob-scripts
    linux-libre-4.14-version
@@ -399,12 +399,12 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "1qij18inijj6c3ma8hv98yjagnzxdxyn134da9fd23ky8q6hbvky")))
 (define-public linux-libre-4.14-pristine-source
   (let ((version linux-libre-4.14-version)
-        (hash (base32 "1yflafb0n783igghk6d392pk6lbk3p2w7y01ams08f1b4qm47wq2")))
+        (hash (base32 "0f4sd4fqgm1wbhmrsib04ry5aza84mlc8747y5wm6jx34h14lh2x")))
     (make-linux-libre-source version
                              (%upstream-linux-source version hash)
                              deblob-scripts-4.14)))
 
-(define-public linux-libre-4.9-version "4.9.237")
+(define-public linux-libre-4.9-version "4.9.238")
 (define deblob-scripts-4.9
   (linux-libre-deblob-scripts
    linux-libre-4.9-version
@@ -412,12 +412,12 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "0fxajshb75siq39lj5h8xvhdj8lcmddkslwlyj65rhlwk6g2r4b2")))
 (define-public linux-libre-4.9-pristine-source
   (let ((version linux-libre-4.9-version)
-        (hash (base32 "07w6mwgh7i3bvg1w3w5i9kgxjmvqr7cv7nzrmx7j9p6cq295gv41")))
+        (hash (base32 "0gsa2g5yjc7459ja107nla700ma32sg57dyj8q2xzi0yfw5zdsmi")))
     (make-linux-libre-source version
                              (%upstream-linux-source version hash)
                              deblob-scripts-4.9)))
 
-(define-public linux-libre-4.4-version "4.4.237")
+(define-public linux-libre-4.4-version "4.4.238")
 (define deblob-scripts-4.4
   (linux-libre-deblob-scripts
    linux-libre-4.4-version
@@ -425,7 +425,7 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "0hhin1jpfkd6nwrb6xqxjzl3hdxy4pn8a15hy2d3d83yw6pflbsf")))
 (define-public linux-libre-4.4-pristine-source
   (let ((version linux-libre-4.4-version)
-        (hash (base32 "1q6hwjwvlsikgr8b04l7v2jia2wyqxgbli6i7y20aq49h13ap2qk")))
+        (hash (base32 "0r1kb7p0zf0nkavvf9nr9hs7bdjym43cqv87hkp7vrqpbh1i8y06")))
     (make-linux-libre-source version
                              (%upstream-linux-source version hash)
                              deblob-scripts-4.4)))
@@ -7200,7 +7200,7 @@ of Linux application development.")
   (package
     (inherit pipewire)
     (name "pipewire")
-    (version "0.3.10")
+    (version "0.3.13")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -7209,7 +7209,7 @@ of Linux application development.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1y293sfhhmzbgnlvs46bpiyimlii5nk71f8115qxs8sviwlsdr3w"))))
+                "19j5kmb7iaivkq2agfzncfm2qms41ckqi0ddxvhpc91ihwprdc5w"))))
     (arguments
      '(#:configure-flags
        (list (string-append "-Dudevrulesdir=" (assoc-ref %outputs "out")
@@ -7373,9 +7373,8 @@ persistent over reboots.")
      `(#:tests? #f                      ; no tests
        #:make-flags
        (list
-        (string-append "PREFIX=''")
-        (string-append "DESTDIR=" (assoc-ref %outputs "out"))
-        (string-append "LIBDIR=/lib")
+        (string-append "PREFIX=" (assoc-ref %outputs "out"))
+        (string-append "LIBDIR=$(PREFIX)/lib")
         (string-append
          "CC=" (assoc-ref %build-inputs "gcc") "/bin/gcc"))
        #:phases

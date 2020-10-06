@@ -2857,10 +2857,10 @@ Lisp implementations.")
   (sbcl-package->ecl-package sbcl-closer-mop))
 
 (define sbcl-cl-cffi-gtk-boot0
-  (let ((commit "412d17214e092220c65a5660f5cbbd9cb69b8fe4"))
+  (let ((commit "e9a46df65995d9a16e6c8dbdc1e09b775eb4a966"))
     (package
       (name "sbcl-cl-cffi-gtk-boot0")
-      (version (git-version "0.11.2" "1" commit))
+      (version (git-version "0.11.2" "2" commit))
       (source
        (origin
          (method git-fetch)
@@ -2870,7 +2870,7 @@ Lisp implementations.")
          (file-name (git-file-name "cl-cffi-gtk" version))
          (sha256
           (base32
-           "0n997yhcnzk048nalx8ys62ja2ac8iv4mbn3mb55iapl0321hghn"))))
+           "04vix0gmqsj91lm975sx7jhlnz5gq1xf9jp873mp7c8frc5dk1jj"))))
       (build-system asdf-build-system/sbcl)
       (inputs
        `(("iterate" ,sbcl-iterate)
@@ -3662,8 +3662,8 @@ Development into CL+SSL was done by David Lichteblau.")
   (sbcl-package->cl-source-package sbcl-cl+ssl))
 
 (define-public sbcl-kmrcl
-  (let ((version "1.109.0")
-        (commit "5260068b2eb735af6796740c2db4955afac21636")
+  (let ((version "1.111")
+        (commit "4a27407aad9deb607ffb8847630cde3d041ea25a")
         (revision "1"))
     (package
       (name "sbcl-kmrcl")
@@ -3676,53 +3676,48 @@ Development into CL+SSL was done by David Lichteblau.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "1va7xjgzfv674bpsli674i7zj3f7wg5kxic41kz18r6hh4n52dfv"))))
+          (base32 "06gx04mah5nc8w78s0j8628divbf1s5w7af8w7pvzb2d5mgvrbd2"))))
       (build-system asdf-build-system/sbcl)
-      (arguments
-       ;; Tests fail with: :FORCE and :FORCE-NOT arguments not allowed in a
-       ;; nested call to ASDF/OPERATE:OPERATE unless identically to toplevel
-       '(#:tests? #f))
       (inputs
        `(("sbcl-rt" ,sbcl-rt)))
       (home-page "http://files.kpe.io/kmrcl/")
       (synopsis "General utilities for Common Lisp programs")
       (description
        "KMRCL is a collection of utilities used by a number of Kevin
-Rosenberg's CL packages.")
+Rosenberg's Common Lisp packages.")
       (license license:llgpl))))
 
 (define-public cl-kmrcl
   (sbcl-package->cl-source-package sbcl-kmrcl))
 
 (define-public sbcl-cl-base64
-  (package
-    (name "sbcl-cl-base64")
-    (version "3.3.4")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (string-append "http://files.kpe.io/cl-base64/cl-base64-"
-                           version ".tar.gz"))
-       (sha256
-        (base32 "0pl4zwn5bf18dm8fh1kn1yshaa6kpmfrjyb33z9mq4raqmj3xpv2"))))
-    (build-system asdf-build-system/sbcl)
-    (arguments
-     ;; Tests fail with: :FORCE and :FORCE-NOT arguments not allowed
-     ;; in a nested call to ASDF/OPERATE:OPERATE unless identically
-     ;; to toplevel
-     '(#:tests? #f))
-    (inputs
-     `(("sbcl-ptester" ,sbcl-ptester)
-       ("sbcl-kmrcl" ,sbcl-kmrcl)))
-    (home-page "http://files.kpe.io/cl-base64/")
-    (synopsis
-     "Common Lisp package to encode and decode base64 with URI support")
-    (description
-     "This package provides highly optimized base64 encoding and decoding.
+  ;; 3.3.4 tests are broken, upstream fixes them.
+  (let ((commit "577683b18fd880b82274d99fc96a18a710e3987a"))
+    (package
+      (name "sbcl-cl-base64")
+      (version (git-version "3.3.4" "1" commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "http://git.kpe.io/cl-base64.git/")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "12jj54h0fs6n237cvnp8v6hn0imfksammq22ys6pi0gwz2w47rbj"))))
+      (build-system asdf-build-system/sbcl)
+      (native-inputs                    ; For tests.
+       `(("sbcl-ptester" ,sbcl-ptester)
+         ("sbcl-kmrcl" ,sbcl-kmrcl)))
+      (home-page "http://files.kpe.io/cl-base64/")
+      (synopsis
+       "Common Lisp package to encode and decode base64 with URI support")
+      (description
+       "This package provides highly optimized base64 encoding and decoding.
 Besides conversion to and from strings, integer conversions are supported.
 Encoding with Uniform Resource Identifiers is supported by using a modified
 encoding table that uses only URI-compatible characters.")
-    (license license:bsd-3)))
+      (license license:bsd-3))))
 
 (define-public cl-base64
   (sbcl-package->cl-source-package sbcl-cl-base64))
@@ -7360,8 +7355,8 @@ implementation specific equivalent.")
   (sbcl-package->ecl-package sbcl-trivial-macroexpand-all))
 
 (define-public sbcl-serapeum
-  (let ((commit "a2ca90cbdcb9f76c2822286110c7abe9ba5b76c2")
-        (revision "2"))
+  (let ((commit "c5e352a9f04a84a93742193c01734f4fb31d9f82")
+        (revision "3"))
     (package
       (name "sbcl-serapeum")
       (version (git-version "0.0.0" revision commit))
@@ -7375,7 +7370,7 @@ implementation specific equivalent.")
          (file-name (git-file-name name version))
          (sha256
           (base32
-           "1lrk2kf7qh5g6f8xvyg8wf89frzb5mw6m1jzgy46jy744f459i8q"))))
+           "16767pxl766c15jznr4srcbp7cnxf8w9lkyaqpp5w5crqymw84nw"))))
       (build-system asdf-build-system/sbcl)
       (inputs
        `(("alexandria" ,sbcl-alexandria)

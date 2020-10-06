@@ -65,6 +65,7 @@
   #:use-module (gnu packages protobuf)
   #:use-module (gnu packages python)
   #:use-module (gnu packages python-xyz)
+  #:use-module (gnu packages ragel)
   #:use-module (gnu packages shells)
   #:use-module (gnu packages sphinx)
   #:use-module (gnu packages swig)
@@ -806,23 +807,34 @@ Extensions} (DNSSEC).")
     (version "3.0.0")
     (source
      (origin
-       (method url-fetch)
-       (uri (string-append "https://secure.nic.cz/files/knot-dns/"
-                           "knot-" version ".tar.xz"))
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://gitlab.nic.cz/knot/knot-dns")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
        (sha256
-        (base32 "1i76zflc49jbsaj3idxx7a6x87c0lzal294c3fdjyfl7dvznmjgi"))))
+        (base32 "0fkvip7n5ihjfwnnivdc3jf44y8p85ifglvq7b0anxvj9cg1m78f"))
+       (modules '((guix build utils)))
+       (snippet
+        '(begin
+           ;; Remove Ragel-generated C files.  We'll recreate them below.
+           (for-each delete-file (find-files "." "\\.c\\.[gt]."))
+           (delete-file "src/libknot/yparser/ypbody.c")
+           #t))))
     (build-system gnu-build-system)
     (arguments
      `(#:configure-flags
        (list "--sysconfdir=/etc"
              "--localstatedir=/var"
              "--enable-dnstap"          ; let tools read/write capture files
-             "--with-module-dnstap=yes" ; detailed query capturing & logging
-             (string-append "--with-bash-completions="
-                            (assoc-ref %outputs "out")
-                            "/etc/bash_completion.d"))
+             "--enable-fast-parser"     ; disabled by default when .git/ exists
+             "--with-module-dnstap=yes") ; detailed query capturing & logging
        #:phases
        (modify-phases %standard-phases
+         (add-before 'bootstrap 'update-parser
+           (lambda _
+             (with-directory-excursion "src"
+               (invoke "sh" "../scripts/update-parser.sh"))))
          (add-before 'configure 'disable-directory-pre-creation
            (lambda _
              ;; Don't install empty directories like ‘/etc’ outside the store.
@@ -838,7 +850,11 @@ Extensions} (DNSSEC).")
                        (string-append "config_dir=" etc)
                        "install")))))))
     (native-inputs
-     `(("pkg-config" ,pkg-config)))
+     `(("autoconf" ,autoconf)
+       ("automake" ,automake)
+       ("libtool" ,libtool)
+       ("pkg-config" ,pkg-config)
+       ("ragel" ,ragel)))
     (inputs
      `(("fstrm" ,fstrm)
        ("gnutls" ,gnutls)

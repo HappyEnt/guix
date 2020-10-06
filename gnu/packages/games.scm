@@ -429,7 +429,9 @@ physics settings to tweak as well.")
     (build-system cmake-build-system)
     (arguments
      `(#:tests? #f                      ;no test
-       #:configure-flags '("-DDATADIR=share/astromenace")
+       #:configure-flags (list (string-append "-DDATADIR="
+                                              (assoc-ref %outputs "out")
+                                              "/share/astromenace"))
        #:phases
        (modify-phases %standard-phases
          (replace 'install
@@ -4793,7 +4795,7 @@ of war.  Widelands also offers an Artificial Intelligence to challenge you.")
 (define-public starfighter
   (package
     (name "starfighter")
-    (version "2.3.2")
+    (version "2.3.3")
     (source (origin
               (method url-fetch)
               (uri (string-append
@@ -4802,7 +4804,7 @@ of war.  Widelands also offers an Artificial Intelligence to challenge you.")
                     version "-src.tar.gz"))
               (sha256
                (base32
-                "1nvi277cazsw36b6nhd5nmk0cjvm71rlxasy24mf18j7fsvq9vp8"))))
+                "0jz2lgvmp299nks6ajg2yxbx4xcaxlc4cpfr61861p7m7z2nv84y"))))
     (build-system gnu-build-system)
     (native-inputs
      `(("pkg-config" ,pkg-config)))
@@ -7180,7 +7182,7 @@ original.")
        ("pkg-config" ,pkg-config)))
     (inputs
      `(("cmocka" ,cmocka)
-       ("perl-env-path", perl-env-path)
+       ("perl-env-path" ,perl-env-path)
        ("perl-inline" ,perl-inline)
        ("perl-inline-c" ,perl-inline-c)
        ("perl-string-shellquote" ,perl-string-shellquote)
@@ -10176,7 +10178,7 @@ This package is part of the KDE games module.")
      `(("extra-cmake-modules" ,extra-cmake-modules)
        ("kdoctools" ,kdoctools)))
     (inputs
-     `(("karchive", karchive)
+     `(("karchive" ,karchive)
        ("kconfig" ,kconfig)
        ("kconfigwidgets" ,kconfigwidgets)
        ("kcoreaddons" ,kcoreaddons)
@@ -10322,7 +10324,7 @@ This package is part of the KDE games module.")
      `(("extra-cmake-modules" ,extra-cmake-modules)
        ("kdoctools" ,kdoctools)))
     (inputs
-     `(("kcompletion", kcompletion)
+     `(("kcompletion" ,kcompletion)
        ("kconfig" ,kconfig)
        ("kconfigwidgets" ,kconfigwidgets)
        ("kcoreaddons" ,kcoreaddons)
@@ -10714,7 +10716,7 @@ This package is part of the KDE games module.")
        ("kdbusaddons" ,kdbusaddons)
        ("ki18n" ,ki18n)
        ("kio" ,kio)
-       ("knewstuff", knewstuff)
+       ("knewstuff" ,knewstuff)
        ("ktextwidgets" ,ktextwidgets)
        ("kxmlgui" ,kxmlgui)
        ("libkdegames" ,libkdegames)
@@ -11407,7 +11409,7 @@ etc.  You can also play games on FICS or against an engine.")
 (define-public stockfish
   (package
     (name "stockfish")
-    (version "11")
+    (version "12")
     (source
      (origin
        (method git-fetch)
@@ -11416,8 +11418,15 @@ etc.  You can also play games on FICS or against an engine.")
              (commit (string-append "sf_" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "12mppipinymj8s1ipq9a7is453vncly49c32ym9wvyklsgyxfzlk"))))
+        (base32 "0vcymbwp5nf114pp3ax40s21ki5dckda15vmhr77d1mnq3fn0l32"))))
     (build-system gnu-build-system)
+    (inputs
+     `(("neural-network"
+        ,(origin
+           (method url-fetch)
+           (uri "https://tests.stockfishchess.org/api/nn/nn-82215d0fd0df.nnue")
+           (sha256
+            (base32 "1r4yqrh4di05syyhl84hqcz84djpbd605b27zhbxwg6zs07ms8c2"))))))
     (arguments
      `(#:tests? #f
        #:make-flags (list "-C" "src"
@@ -11433,10 +11442,17 @@ etc.  You can also play games on FICS or against an engine.")
                                             ("mips64el-linux" "general-64")
                                             (_ "general-32"))))
        #:phases (modify-phases %standard-phases
-                  (delete 'configure))))
+                  (delete 'configure)
+                  ;; The official neural network file is needed for building
+                  ;; and is embedded in the resulting binary.
+                  (add-after 'unpack 'copy-net
+                    (lambda* (#:key inputs #:allow-other-keys)
+                      (copy-file (assoc-ref inputs "neural-network")
+                                 "src/nn-82215d0fd0df.nnue")
+                      #t)))))
     (synopsis "Strong chess engine")
     (description
-     "Stockfish is a very strong chess engines.  It is much stronger than the
+     "Stockfish is a very strong chess engine.  It is much stronger than the
 best human chess grandmasters.  It can be used with UCI-compatible GUIs like
 ChessX.")
     (home-page "https://stockfishchess.org/")

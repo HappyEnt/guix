@@ -40,7 +40,7 @@ Copyright @copyright{} 2016, 2017, 2018, 2019, 2020 Julien Lepiller@*
 Copyright @copyright{} 2016 Alex ter Weele@*
 Copyright @copyright{} 2016, 2017, 2018, 2019 Christopher Baines@*
 Copyright @copyright{} 2017, 2018, 2019 Clément Lassieur@*
-Copyright @copyright{} 2017, 2018 Mathieu Othacehe@*
+Copyright @copyright{} 2017, 2018, 2020 Mathieu Othacehe@*
 Copyright @copyright{} 2017 Federico Beffa@*
 Copyright @copyright{} 2017, 2018 Carlo Zancanaro@*
 Copyright @copyright{} 2017 Thomas Danckaert@*
@@ -2568,8 +2568,7 @@ The installation image described above was built using the @command{guix
 system} command, specifically:
 
 @example
-guix system disk-image --file-system-type=iso9660 \
-  gnu/system/install.scm
+guix system disk-image -t iso9660 gnu/system/install.scm
 @end example
 
 Have a look at @file{gnu/system/install.scm} in the source tree,
@@ -3101,6 +3100,29 @@ Note that this upgrades package to the latest version of packages found
 in the distribution currently installed.  To update your distribution,
 you should regularly run @command{guix pull} (@pxref{Invoking guix
 pull}).
+
+@cindex package transformations, upgrades
+When upgrading, package transformations that were originally applied
+when creating the profile are automatically re-applied (@pxref{Package
+Transformation Options}).  For example, assume you first installed Emacs
+from the tip of its development branch with:
+
+@example
+guix install emacs-next --with-branch=emacs-next=master
+@end example
+
+Next time you run @command{guix upgrade}, Guix will again pull the tip
+of the Emacs development branch and build @code{emacs-next} from that
+checkout.
+
+Note that transformation options such as @option{--with-branch} and
+@option{--with-source} depend on external state; it is up to you to
+ensure that they work as expected.  You can also discard a
+transformations that apply to a package by running:
+
+@example
+guix install @var{package}
+@end example
 
 @item --do-not-upgrade[=@var{regexp} @dots{}]
 When used together with the @option{--upgrade} option, do @emph{not}
@@ -9194,6 +9216,10 @@ This is a convenient way to create customized packages on the fly
 without having to type in the definitions of package variants
 (@pxref{Defining Packages}).
 
+Package transformation options are preserved across upgrades:
+@command{guix upgrade} attempts to apply transformation options
+initially used when creating the profile to the upgraded packages.
+
 @table @code
 
 @item --with-source=@var{source}
@@ -9350,6 +9376,12 @@ The command above installs @code{python-notebook} on top of
 @code{python} built without running its test suite.  To do so, it also
 rebuilds everything that depends on @code{python}, including
 @code{python-notebook} itself.
+
+Internally, @option{--without-tests} relies on changing the
+@code{#:tests?} option of a package's @code{check} phase (@pxref{Build
+Systems}).  Note that some packages use a customized @code{check} phase
+that does not respect a @code{#:tests? #f} setting.  Therefore,
+@option{--without-tests} has no effect on these packages.
 
 @end table
 
@@ -15544,6 +15576,81 @@ connection, such that port @var{n} is the base monitoring port and
 The list of command-line arguments to pass to @command{ssh} when it is
 run.  Options @option{-f} and @option{-M} are reserved for AutoSSH and
 may cause undefined behaviour.
+
+@end table
+@end deftp
+
+@cindex WebSSH
+@deffn {Scheme Variable} webssh-service-type
+This is the type for the @uref{https://webssh.huashengdun.org/, WebSSH}
+program that runs a web SSH client.  WebSSH can be run manually from the
+command-line by passing arguments to the binary @command{wssh} from the
+package @code{webssh}, but it can also be run as a Guix service.  This
+latter use case is documented here.
+
+For example, to specify a service running WebSSH on loopback interface
+on port @code{8888} with reject policy with a list of allowed to
+connection hosts, and NGINX as a reverse-proxy to this service listening
+for HTTPS connection, add this call to the operating system's
+@code{services} field:
+
+@lisp
+(service webssh-service-type
+  (webssh-configuration (address "127.0.0.1")
+                        (port 8888)
+                        (policy 'reject)
+                        (known-hosts '("localhost ecdsa-sha2-nistp256 AAAA…"
+                                       "127.0.0.1 ecdsa-sha2-nistp256 AAAA…"))))
+
+(service nginx-service-type
+         (nginx-configuration
+          (server-blocks
+           (list
+            (nginx-server-configuration
+             (inherit %webssh-configuration-nginx)
+             (server-name '("webssh.example.com"))
+             (listen '("443 ssl"))
+             (ssl-certificate (letsencrypt-certificate "webssh.example.com"))
+             (ssl-certificate-key (letsencrypt-key "webssh.example.com"))
+             (locations
+              (cons (nginx-location-configuration
+                     (uri "/.well-known")
+                     (body '("root /var/www;")))
+                    (nginx-server-configuration-locations %webssh-configuration-nginx))))))))
+@end lisp
+@end deffn
+
+@deftp {Data Type} webssh-configuration
+Data type representing the configuration for @code{webssh-service}.
+
+@table @asis
+@item @code{package} (default: @var{webssh})
+@code{webssh} package to use.
+
+@item @code{user-name} (default: @var{"webssh"})
+User name or user ID that file transfers to and from that module should take
+place.
+
+@item @code{group-name} (default: @var{"webssh"})
+Group name or group ID that will be used when accessing the module.
+
+@item @code{address} (default: @var{#f})
+IP address on which @command{webssh} listens for incoming connections.
+
+@item @code{port} (default: @var{8888})
+TCP port on which @command{webssh} listens for incoming connections.
+
+@item @code{policy} (default: @var{#f})
+Connection policy.  @var{reject} policy requires to specify @var{known-hosts}.
+
+@item @code{known-hosts} (default: @var{'()})
+List of hosts which allowed for SSH connection from @command{webssh}.
+
+@item @code{log-file} (default: @file{"/var/log/webssh.log"})
+Name of the file where @command{rsync} writes its log file.
+
+@item @code{log-level} (default: @var{#f})
+Logging level.
 
 @end table
 @end deftp
@@ -23256,6 +23363,60 @@ disables caching.
 @item @code{negative-cache?} (default: @code{#t})
 When false, disable negative caching.
 
+@item @code{tftp-enable?} (default: @code{#f})
+Whether to enable the built-in TFTP server.
+
+@item @code{tftp-no-fail?} (default: @code{#f})
+If true, does not fail dnsmasq if the TFTP server could not start up.
+
+@item @code{tftp-single-port?} (default: @code{#f})
+Whether to use only one single port for TFTP.
+
+@item @code{tftp-secure?} (default: @code{#f})
+If true, only files owned by the user running the dnsmasq process are accessible.
+
+If dnsmasq is being run as root, different rules apply:
+@code{tftp-secure?} has no effect, but only files which have the
+world-readable bit set are accessible.
+
+@item @code{tftp-max} (default: @code{#f})
+If set, sets the maximal number of concurrent connections allowed.
+
+@item @code{tftp-mtu} (default: @code{#f})
+If set, sets the MTU for TFTP packets to that value.
+
+@item @code{tftp-no-blocksize?} (default: @code{#f})
+If true, stops the TFTP server from negotiating the blocksize with a client.
+
+@item @code{tftp-lowercase?} (default: @code{#f})
+Whether to convert all filenames in TFTP requests to lowercase.
+
+@item @code{tftp-port-range} (default: @code{#f})
+If set, fixes the dynamical ports (one per client) to the given range
+(@code{"<start>,<end>"}).
+
+@item @code{tftp-root} (default: @code{/var/empty,lo})
+Look for files to transfer using TFTP relative to the given directory.
+When this is set, TFTP paths which include ".." are rejected, to stop clients
+getting outside the specified root. Absolute paths (starting with /) are
+allowed, but they must be within the tftp-root. If the optional interface
+argument is given, the directory is only used for TFTP requests via that
+interface.
+
+@item @code{tftp-unique-root} (default: @code{#f})
+If set, add the IP or hardware address of the TFTP client as a path component
+on the end of the TFTP-root.  Only valid if a TFTP root is set and the
+directory exists.  Defaults to adding IP address (in standard dotted-quad
+format).
+
+For instance, if --tftp-root is "/tftp" and client 1.2.3.4 requests file
+"myfile" then the effective path will be "/tftp/1.2.3.4/myfile" if
+/tftp/1.2.3.4 exists or /tftp/myfile otherwise. When "=mac" is specified
+it will append the MAC address instead, using lowercase zero padded digits
+separated by dashes, e.g.: 01-02-03-04-aa-bb Note that resolving MAC
+addresses is only possible if the client is in the local network or obtained
+a DHCP lease from dnsmasq.
+
 @end table
 @end deftp
 
@@ -27657,6 +27818,168 @@ The complete list of possible options can be found in the man page for
 @node Guix Services
 @subsection Guix Services
 
+@subsubheading Guix Build Coordinator
+The @uref{https://git.cbaines.net/guix/build-coordinator/,Guix Build
+Coordinator} aids in distributing derivation builds among machines
+running an @dfn{agent}.  The build daemon is still used to build the
+derivations, but the Guix Build Coordinator manages allocating builds
+and working with the results.
+
+@quotation Note
+This service is considered experimental.  Configuration options may be
+changed in a backwards-incompatible manner, and not all features have
+been thorougly tested.
+@end quotation
+
+The Guix Build Coordinator consists of one @dfn{coordinator}, and one or
+more connected @dfn{agent} processes. The coordinator process handles
+clients submitting builds, and allocating builds to agents. The agent
+processes talk to a build daemon to actually perform the builds, then
+send the results back to the coordinator.
+
+There is a script to run the coordinator component of the Guix Build
+Coordinator, but the Guix service uses a custom Guile script instead, to
+provide better integration with G-expressions used in the configuration.
+
+@defvar {Scheme Variable} guix-build-coordinator-service-type
+Service type for the Guix Build Coordinator.  Its value must be a
+@code{guix-build-coordinator-configuration} object.
+@end defvar
+
+@deftp {Data Type} guix-build-coordinator-configuration
+Data type representing the configuration of the Guix Build Coordinator.
+
+@table @asis
+@item @code{package} (default: @code{guix-build-coordinator})
+The Guix Build Coordinator package to use.
+
+@item @code{user} (default: @code{"guix-build-coordinator"})
+The system user to run the service as.
+
+@item @code{group} (default: @code{"guix-build-coordinator"})
+The system group to run the service as.
+
+@item @code{database-uri-string} (default: @code{"sqlite:///var/lib/guix-build-coordinator/guix_build_coordinator.db"})
+The URI to use for the database.
+
+@item @code{agent-communication-uri} (default: @code{"http://0.0.0.0:8745"})
+The URI describing how to listen to requests from agent processes.
+
+@item @code{client-communication-uri} (default: @code{"http://127.0.0.1:8746"})
+The URI describing how to listen to requests from clients.  The client
+API allows submitting builds and currently isn't authenticated, so take
+care when configuring this value.
+
+@item @code{allocation-strategy} (default: @code{#~basic-build-allocation-strategy})
+A G-expression for the allocation strategy to be used.  This is a
+procedure that takes the datastore as an argument and populates the
+allocation plan in the database.
+
+@item @code{hooks} (default: @var{'()})
+An association list of hooks.  These provide a way to execute arbitrary
+code upon certian events, like a build result being processed.
+
+@item @code{guile} (default: @code{guile-3.0-latest})
+The Guile package with which to run the Guix Build Coordinator.
+
+@end table
+@end deftp
+
+@defvar {Scheme Variable} guix-build-coordinator-agent-service-type
+Service type for a Guix Build Coordinator agent.  Its value must be a
+@code{guix-build-coordinator-agent-configuration} object.
+@end defvar
+
+@deftp {Data Type} guix-build-coordinator-agent-configuration
+Data type representing the configuration a Guix Build Coordinator agent.
+
+@table @asis
+@item @code{package} (default: @code{guix-build-coordinator})
+The Guix Build Coordinator package to use.
+
+@item @code{user} (default: @code{"guix-build-coordinator-agent"})
+The system user to run the service as.
+
+@item @code{coordinator} (default: @code{"http://localhost:8745"})
+The URI to use when connecting to the coordinator.
+
+@item @code{uuid}
+The UUID of the agent.  This should be generated by the coordinator
+process, stored in the coordinator database, and used by the intended
+agent.
+
+@item @code{password} (default: @code{#f})
+The password to use when connecting to the coordinator.  A file to read
+the password from can also be specified, and this is more secure.
+
+@item @code{password-file} (default: @code{#f})
+A file containing the password to use when connecting to the
+coordinator.
+
+@item @code{systems} (default: @var{#f})
+The systems for which this agent should fetch builds.  The agent process
+will use the current system it's running on as the default.
+
+@item @code{max-parallel-builds} (default: @code{1})
+The number of builds to perform in parallel.
+
+@item @code{derivation-substitute-urls} (default: @code{1})
+URLs from which to attempt to fetch substitutes for derivations, if the
+derivations aren't already available.
+
+@item @code{non-derivation-substitute-urls} (default: @code{1})
+URLs from which to attempt to fetch substitutes for build inputs, if the
+input store items aren't already available.
+
+@end table
+@end deftp
+
+The Guix Build Coordinator package contains a script to query an
+instance of the Guix Data Service for derivations to build, and then
+submit builds for those derivations to the coordinator.  The service
+type below assists in running this script.  This is an additional tool
+that may be useful when building derivations contained within an
+instance of the Guix Data Service.
+
+@defvar {Scheme Variable} guix-build-coordinator-queue-builds-service-type
+Service type for the
+guix-build-coordinator-queue-builds-from-guix-data-service script.  Its
+value must be a @code{guix-build-coordinator-queue-builds-configuration}
+object.
+@end defvar
+
+@deftp {Data Type} guix-build-coordinator-queue-builds-configuration
+Data type representing the options to the queue builds from guix data
+service script.
+
+@table @asis
+@item @code{package} (default: @code{guix-build-coordinator})
+The Guix Build Coordinator package to use.
+
+@item @code{user} (default: @code{"guix-build-coordinator-queue-builds"})
+The system user to run the service as.
+
+@item @code{coordinator} (default: @code{"http://localhost:8745"})
+The URI to use when connecting to the coordinator.
+
+@item @code{systems} (default: @code{#f})
+The systems for which to fetch derivations to build.
+
+@item @code{systems-and-targets} (default: @code{#f})
+An association list of system and target pairs for which to fetch
+derivations to build.
+
+@item @code{guix-data-service} (default: @code{"https://data.guix.gnu.org"})
+The Guix Data Service instance from which to query to find out about
+derivations to build.
+
+@item @code{processed-commits-file} (default: @code{"/var/cache/guix-build-coordinator-queue-builds/processed-commits"})
+A file to record which commits have been processed, to avoid needlessly
+processing them again if the service is restarted.
+
+@end table
+@end deftp
+
 @subsubheading Guix Data Service
 The @uref{http://data.guix.gnu.org,Guix Data Service} processes, stores
 and provides data about GNU Guix.  This includes information about
@@ -29375,23 +29698,27 @@ a value.  Docker images are built to contain exactly what they need, so
 the @option{--image-size} option is ignored in the case of
 @code{docker-image}.
 
-You can specify the root file system type by using the
-@option{--file-system-type} option.  It defaults to @code{ext4}.  When its
-value is @code{iso9660}, the @option{--label} option can be used to specify
-a volume ID with @code{disk-image}.
+The @code{disk-image} command can produce various image types.  The
+image type can be selected using the @command{--image-type} option.  It
+defaults to @code{raw}. When its value is @code{iso9660}, the
+@option{--label} option can be used to specify a volume ID with
+@code{disk-image}.
 
-When using @code{vm-image}, the returned image is in qcow2 format, which
-the QEMU emulator can efficiently use. @xref{Running Guix in a VM},
-for more information on how to run the image in a virtual machine.
-
-When using @code{disk-image}, a raw disk image is produced; it can be
-copied as is to a USB stick, for instance.  Assuming @code{/dev/sdc} is
-the device corresponding to a USB stick, one can copy the image to it
-using the following command:
+When using the @code{raw} image type, a raw disk image is produced; it
+can be copied as is to a USB stick, for instance.  Assuming
+@code{/dev/sdc} is the device corresponding to a USB stick, one can copy
+the image to it using the following command:
 
 @example
 # dd if=$(guix system disk-image my-os.scm) of=/dev/sdc status=progress
 @end example
+
+The @code{--list-image-types} command lists all the available image
+types.
+
+When using @code{vm-image}, the returned image is in qcow2 format, which
+the QEMU emulator can efficiently use. @xref{Running Guix in a VM},
+for more information on how to run the image in a virtual machine.
 
 When using @code{docker-image}, a Docker image is produced.  Guix builds
 the image from scratch, not from a pre-existing Docker base image.  As a
@@ -29494,17 +29821,17 @@ information, one can rebuild the image to make sure it really contains
 what it pretends to contain; or they could use that to derive a variant
 of the image.
 
-@item --file-system-type=@var{type}
+@item --image-type=@var{type}
 @itemx -t @var{type}
-For the @code{disk-image} action, create a file system of the given
-@var{type} on the image.
+For the @code{disk-image} action, create an image with given @var{type}.
 
-When this option is omitted, @command{guix system} uses @code{ext4}.
+When this option is omitted, @command{guix system} uses the @code{raw}
+image type.
 
 @cindex ISO-9660 format
 @cindex CD image format
 @cindex DVD image format
-@option{--file-system-type=iso9660} produces an ISO-9660 image, suitable
+@option{--image-type=iso9660} produces an ISO-9660 image, suitable
 for burning on CDs and DVDs.
 
 @item --image-size=@var{size}

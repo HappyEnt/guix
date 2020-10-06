@@ -56,6 +56,7 @@
   #:use-module (gnu system vm)
   #:use-module (gnu system install)
   #:use-module (gnu system images hurd)
+  #:use-module (gnu system images pine64)
   #:use-module (gnu tests)
   #:use-module (srfi srfi-1)
   #:use-module (srfi srfi-26)
@@ -75,28 +76,36 @@
                          #:optional (package-derivation package-derivation))
   "Convert PACKAGE to an alist suitable for Hydra."
   (parameterize ((%graft? #f))
-    `((derivation . ,(derivation-file-name
-                      (package-derivation store package system
-                                          #:graft? #f)))
-      (description . ,(package-synopsis package))
-      (long-description . ,(package-description package))
+    (let ((drv (package-derivation store package system
+                                   #:graft? #f)))
+      `((derivation . ,(derivation-file-name drv))
+        (log . ,(log-file store (derivation-file-name drv)))
+        (outputs . ,(filter-map (lambda (res)
+                                  (match res
+                                    ((name . path)
+                                     `(,name . ,path))))
+                                (derivation->output-paths drv)))
+        (nix-name . ,(derivation-name drv))
+        (system . ,(derivation-system drv))
+        (description . ,(package-synopsis package))
+        (long-description . ,(package-description package))
 
-      ;; XXX: Hydra ignores licenses that are not a <license> structure or a
-      ;; list thereof.
-      (license . ,(let loop ((license (package-license package)))
-                    (match license
-                      ((? license?)
-                       (license-name license))
-                      ((lst ...)
-                       (map loop license)))))
+        ;; XXX: Hydra ignores licenses that are not a <license> structure or a
+        ;; list thereof.
+        (license . ,(let loop ((license (package-license package)))
+                      (match license
+                        ((? license?)
+                         (license-name license))
+                        ((lst ...)
+                         (map loop license)))))
 
-      (home-page . ,(package-home-page package))
-      (maintainers . ("bug-guix@gnu.org"))
-      (max-silent-time . ,(or (assoc-ref (package-properties package)
-                                         'max-silent-time)
-                              3600))              ;1 hour by default
-      (timeout . ,(or (assoc-ref (package-properties package) 'timeout)
-                      72000)))))                  ;20 hours by default
+        (home-page . ,(package-home-page package))
+        (maintainers . ("bug-guix@gnu.org"))
+        (max-silent-time . ,(or (assoc-ref (package-properties package)
+                                           'max-silent-time)
+                                3600))              ;1 hour by default
+        (timeout . ,(or (assoc-ref (package-properties package) 'timeout)
+                        72000))))))                  ;20 hours by default
 
 (define (package-job store job-name package system)
   "Return a job called JOB-NAME that builds PACKAGE on SYSTEM."
@@ -195,12 +204,21 @@ SYSTEM."
   '("x86_64-linux" "i686-linux"))
 
 (define %guix-system-images
-  (list hurd-barebones-qcow2-image))
+  (list hurd-barebones-qcow2-image
+        pine64-barebones-raw-image))
 
 (define (image-jobs store system)
   "Return a list of jobs that build images for SYSTEM."
   (define (->alist drv)
     `((derivation . ,(derivation-file-name drv))
+      (log . ,(log-file store (derivation-file-name drv)))
+      (outputs . ,(filter-map (lambda (res)
+                                (match res
+                                  ((name . path)
+                                   `(,name . ,path))))
+                              (derivation->output-paths drv)))
+      (nix-name . ,(derivation-name drv))
+      (system . ,(derivation-system drv))
       (description . "Stand-alone image of the GNU system")
       (long-description . "This is a demo stand-alone image of the GNU
 system.")
@@ -304,6 +322,14 @@ system.")
             (system-test-value test))))
 
       `((derivation . ,(derivation-file-name drv))
+        (log . ,(log-file store (derivation-file-name drv)))
+        (outputs . ,(filter-map (lambda (res)
+                                  (match res
+                                    ((name . path)
+                                     `(,name . ,path))))
+                                (derivation->output-paths drv)))
+        (nix-name . ,(derivation-name drv))
+        (system . ,(derivation-system drv))
         (description . ,(format #f "Guix '~a' system test"
                                 (system-test-name test)))
         (long-description . ,(system-test-description test))
@@ -333,6 +359,14 @@ system.")
   "Return Hydra jobs to build the self-contained Guix binary tarball."
   (define (->alist drv)
     `((derivation . ,(derivation-file-name drv))
+      (log . ,(log-file store (derivation-file-name drv)))
+      (outputs . ,(filter-map (lambda (res)
+                                (match res
+                                  ((name . path)
+                                   `(,name . ,path))))
+                              (derivation->output-paths drv)))
+      (nix-name . ,(derivation-name drv))
+      (system . ,(derivation-system drv))
       (description . "Stand-alone binary Guix tarball")
       (long-description . "This is a tarball containing binaries of Guix and
 all its dependencies, and ready to be installed on \"foreign\" distributions.")

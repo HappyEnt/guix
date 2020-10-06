@@ -308,7 +308,7 @@ supported, including rtmp://, rtmpt://, rtmpe://, rtmpte://, and rtmps://.")
 (define-public srt
   (package
     (name "srt")
-    (version "1.4.1")
+    (version "1.4.2")
     (source
      (origin
        (method git-fetch)
@@ -318,7 +318,7 @@ supported, including rtmp://, rtmpt://, rtmpe://, rtmpte://, and rtmps://.")
          (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "01xaq44j95kbgqfl41pnybvqy0yq6wd4wdw88ckylzf0nzp977xz"))))
+        (base32 "01nx3a35hzq2x0dvp2n2b86phpdy1z83kdraag7aq3hmc7f8iagg"))))
     (build-system cmake-build-system)
     (arguments
      `(#:configure-flags
@@ -840,18 +840,17 @@ transparently check connection attempts against an access control list.")
     (license (license:non-copyleft "file://DISCLAIMER"
                                    "See the file DISCLAIMER in the distribution."))))
 
-
 (define-public zeromq
   (package
     (name "zeromq")
-    (version "4.3.2")
+    (version "4.3.3")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://github.com/zeromq/libzmq/releases"
                                   "/download/v" version "/zeromq-" version ".tar.gz"))
               (sha256
                (base32
-                "0qzp80ky4y2k7k1ya09v9gkivvfbz2km813snrb8jhnn634bbmzb"))))
+                "18km71p77jm1w7wly2a5mxvphjb0f2l6s08cg382x55f6zdqb4lx"))))
     (build-system gnu-build-system)
     (home-page "https://zeromq.org")
     (synopsis "Library for message-based applications")
@@ -1272,14 +1271,14 @@ of the same name.")
 (define-public wireshark
   (package
     (name "wireshark")
-    (version "3.2.6")
+    (version "3.2.7")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "https://www.wireshark.org/download/src/wireshark-"
                            version ".tar.xz"))
        (sha256
-        (base32 "1wmlbrym6l5fkvic596yx74jz1pn4pfjihsx341fxv5w76zfxcgb"))))
+        (base32 "1nkhglzxj05hwhgzrgan4glv0z67rmasf9djx1dmqicwdnw2z0xy"))))
     (build-system cmake-build-system)
     (arguments
      `(#:phases
@@ -1793,7 +1792,7 @@ private (reserved).")
 (define-public perl-net-dns
  (package
   (name "perl-net-dns")
-  (version "1.24")
+  (version "1.27")
   (source
     (origin
       (method url-fetch)
@@ -1804,7 +1803,7 @@ private (reserved).")
         (string-append "mirror://cpan/authors/id/N/NL/NLNETLABS/Net-DNS-"
                        version ".tar.gz")))
       (sha256
-       (base32 "0qyy5k4k0llqjjmkkfg96919gqybdc1z5fy9047n9imidjxc59hi"))))
+       (base32 "0hdx5ajr34f39rycai090y9w8gq9v0shgziynaaj0rzk21vjfdpk"))))
   (build-system perl-build-system)
   (inputs
     `(("perl-digest-hmac" ,perl-digest-hmac)))
@@ -2661,14 +2660,14 @@ can be whipped up with little effort.")
 (define-public mtr
   (package
     (name "mtr")
-    (version "0.93")
+    (version "0.94")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "ftp://ftp.bitwizard.nl/mtr/"
                            "mtr-" version ".tar.gz"))
        (sha256
-        (base32 "03gid8g4r6a9r40855s4345xm1bylj2kfqkicjwxpmvvccyng712"))))
+        (base32 "1glxvlqskcmjkxlqk9i12hcfaxb389cx2n8ji7776gmix3aq4z1z"))))
     (build-system gnu-build-system)
     (inputs
      `(("libcap" ,libcap)
@@ -3275,9 +3274,9 @@ communication over HTTP.")
        ("pcre2" ,pcre2)
        ("sobjectizer" ,sobjectizer)))
     (propagated-inputs
-     `(("asio", asio)
+     `(("asio" ,asio)
        ("fmt" ,fmt)
-       ("http-parser", http-parser)))
+       ("http-parser" ,http-parser)))
     (arguments
      `(#:configure-flags '("-DRESTINIO_INSTALL=on")
        #:tests? #f ; TODO: The tests are called from the root CMakelist, need RESTINIO_TEST=on.

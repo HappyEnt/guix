@@ -1391,9 +1391,9 @@ B.Choppr is the successor of B.Slizr.")
         (base32
          "0kl6hrxmqrdf0195bfnzsa2h1073fgiqrfhg2276fm1954sm994v"))))
     (inputs
-     `(("cairo", cairo)
-       ("libsndfile", libsndfile)
-       ("lv2", lv2)))
+     `(("cairo" ,cairo)
+       ("libsndfile" ,libsndfile)
+       ("lv2" ,lv2)))
     (synopsis "Pattern-controlled audio stream/sample re-sequencer LV2 plugin")
     (description "B.Jumblr is a pattern-controlled audio stream / sample
 re-sequencer LV2 plugin.")
@@ -1416,11 +1416,11 @@ re-sequencer LV2 plugin.")
         (base32
          "1c09acqrbd387ba41f8ch1qykdap5h6cg9if5pgd16i4dmjnpghj"))))
     (inputs
-     `(("cairo", cairo)
+     `(("cairo" ,cairo)
        ("fontconfig" ,fontconfig)
-       ("libsndfile", libsndfile)
+       ("libsndfile" ,libsndfile)
        ("libx11" ,libx11)
-       ("lv2", lv2)))
+       ("lv2" ,lv2)))
     (home-page "https://github.com/sjaehn/BSchaffl")
     (synopsis "Pattern-controlled MIDI amp & time stretch LV2 plugin")
     (description "This package provides an LV2 plugin that allows for
@@ -2916,7 +2916,7 @@ event-based scripts for scrobbling, notifications, etc.")
 (define-public picard
   (package
     (name "picard")
-    (version "2.1.3")
+    (version "2.4.4")
     (source (origin
               (method url-fetch)
               (uri (string-append
@@ -2924,7 +2924,8 @@ event-based scripts for scrobbling, notifications, etc.")
                     "picard/picard-" version ".tar.gz"))
               (sha256
                (base32
-                "19w5k3bf4886gdycxjds9nkjvir0gwy2r5cqkz0lbls4ikk4y14f"))))
+                "1c5l7i43jaj3s4wklc0cba6nn2x9cmpcggk4q4h9m1bci2xilsiy"))
+              (patches (search-patches "picard-fix-id3-rename-test.patch"))))
     (build-system python-build-system)
     (arguments
      '(#:use-setuptools? #f
@@ -2943,7 +2944,8 @@ event-based scripts for scrobbling, notifications, etc.")
                  (assoc-ref inputs "chromaprint") "/bin/fpcalc")))
              #t)))))
     (native-inputs
-     `(("gettext" ,gettext-minimal)))
+     `(("gettext" ,gettext-minimal)
+       ("python-dateutil" ,python-dateutil)))
     (inputs
      `(("chromaprint" ,chromaprint)
        ("python-discid" ,python-discid)
@@ -2959,16 +2961,18 @@ formats, looking up tracks through metadata and audio fingerprints.")
 (define-public python-mutagen
   (package
     (name "python-mutagen")
-    (version "1.38")
+    (version "1.45.1")
     (source (origin
               (method url-fetch)
               (uri (pypi-uri "mutagen" version))
               (sha256
                (base32
-                "0rl7sxn1rcjl48fwga3dqf9f6pzspsny4ngxyf6pp337mrq0z693"))))
+                "1qdk6i8gyhbi1c4j5jmbfpac3q8sff2ysri1pnp7nb9wzcp615v3"))))
     (build-system python-build-system)
     (native-inputs
-     `(("python-pytest" ,python-pytest)))
+     `(("python-pytest" ,python-pytest)
+       ("python-hypothesis" ,python-hypothesis)
+       ("python-flake8" ,python-flake8)))
     (home-page "https://bitbucket.org/lazka/mutagen")
     (synopsis "Read and write audio tags")
     (description "Mutagen is a Python module to handle audio metadata.  It
@@ -5075,7 +5079,7 @@ and reverb.")
 (define-public lsp-plugins
   (package
     (name "lsp-plugins")
-    (version "1.1.24")
+    (version "1.1.26")
     (source
       (origin
         (method git-fetch)
@@ -5084,7 +5088,7 @@ and reverb.")
                (commit (string-append "lsp-plugins-" version))))
         (file-name (git-file-name name version))
         (sha256
-         (base32 "0rzgzkg6wvhjcf664i16nz4v30drgv80s34bhdflcjzx2x7ix5zk"))))
+         (base32 "1apw8zh3a3il4smkjji6bih4vbsymj0hjs10fgkrd4nazqkjvgyd"))))
     (build-system gnu-build-system)
     (arguments
      `(#:make-flags
@@ -5095,18 +5099,18 @@ and reverb.")
          (string-append "ETC_PATH=" (assoc-ref %outputs "out") "/etc"))
        #:phases
        (modify-phases %standard-phases
-         (delete 'configure))   ; no configure
+         (delete 'configure))           ; no configure script
        #:test-target "test"))
     (inputs
-     `(("cairo", cairo)
-       ("hicolor-icon-theme", hicolor-icon-theme)
-       ("jack", jack-1)
-       ("ladspa", ladspa)
-       ("libsndfile", libsndfile)
-       ("lv2", lv2)
-       ("mesa", mesa)))
+     `(("cairo" ,cairo)
+       ("hicolor-icon-theme" ,hicolor-icon-theme)
+       ("jack" ,jack-1)
+       ("ladspa" ,ladspa)
+       ("libsndfile" ,libsndfile)
+       ("lv2" ,lv2)
+       ("mesa" ,mesa)))
     (native-inputs
-     `(("pkg-config", pkg-config)))
+     `(("pkg-config" ,pkg-config)))
     (synopsis "Audio plugin collection")
     (description "LSP (Linux Studio Plugins) is a collection of audio
 plugins available as LADSPA/LV2 plugins and as standalone JACK
@@ -5216,12 +5220,12 @@ as a whole to realisticly reproduce the features and flaws of the real deal.")
      `(("pkg-config" ,pkg-config)
        ("xxd" ,xxd)))
     (inputs
-     `(("cairo", cairo)
-       ("fftw", fftw)
-       ("fftwf", fftwf)
-       ("jack", jack-1)
-       ("lv2", lv2)
-       ("mesa", mesa)))
+     `(("cairo" ,cairo)
+       ("fftw" ,fftw)
+       ("fftwf" ,fftwf)
+       ("jack" ,jack-1)
+       ("lv2" ,lv2)
+       ("mesa" ,mesa)))
     (synopsis "Realtime graphical spectrum analyzer")
     (description "Spectacle is a real-time spectral analyzer using the
 short-time Fourier transform, available as LV2 audio plugin and JACK client.")
@@ -5337,7 +5341,7 @@ ZaMultiComp, ZaMultiCompX2 and ZamSynth.")
 (define-public geonkick
   (package
     (name "geonkick")
-    (version "2.3.7")
+    (version "2.3.8")
     (source
      (origin
        (method git-fetch)
@@ -5346,8 +5350,7 @@ ZaMultiComp, ZaMultiCompX2 and ZamSynth.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32
-         "1wdcbwiyy6i5agq5lffkyilyc8mv1cc4mp9h0nybn240vb2flqc2"))))
+        (base32 "07809yy2q7dd6fcp0yndlg1vw2ca2zisnsplb3xrxvzdvrqlw910"))))
     (build-system cmake-build-system)
     (arguments
      `(#:tests? #f                      ;no tests included
@@ -5515,12 +5518,12 @@ MIDI drums and comes as two separate drumkits: Black Pearl and Red Zeppelin.")
        ("freetype2" ,freetype)
        ("hicolor-icon-theme" ,hicolor-icon-theme)
        ("libxcursor" ,libxcursor)
-       ("libxinerama", libxinerama)
-       ("jack", jack-1)
+       ("libxinerama" ,libxinerama)
+       ("jack" ,jack-1)
        ("mesa" ,mesa)))
     (native-inputs
      `(("pkg-config" ,pkg-config)
-       ("lv2", lv2)))
+       ("lv2" ,lv2)))
     (home-page "https://tytel.org/helm/")
     (synopsis "Polyphonic synth with lots of modulation")
     (description "Helm is a cross-platform polyphonic synthesizer available standalone
@@ -5535,7 +5538,7 @@ and as an LV2 plugin.")
     ;; distros to make necessary changes to integrate the software into the
     ;; distribution.
     (name "zrythm")
-    (version "0.8.911")
+    (version "1.0.0-alpha.3.0.1")
     (source
       (origin
         (method url-fetch)
@@ -5543,7 +5546,7 @@ and as an LV2 plugin.")
                             version ".tar.xz"))
         (sha256
           (base32
-            "1xyp70sjc2k5pfdqbwqa988v86da0rmmyl8ry86bqv4ja80sc6g9"))))
+            "06025367x08y4g9grhcn35bk1dsrpgm04c8l8j50i3p49dl3s1n0"))))
    (build-system meson-build-system)
    (arguments
     `(#:glib-or-gtk? #t
@@ -5555,15 +5558,8 @@ and as an LV2 plugin.")
         "-Dgraphviz=enabled" ; for exporting routing graphs
         "-Dguile=enabled" ; for Guile scripting
         "-Djack=enabled" ; for JACK audio/MIDI backend
-        "-Dsdl=enabled") ; for SDL audio backend (which uses ALSA)
-      #:phases
-      (modify-phases %standard-phases
-        (add-after 'unpack 'patch-xdg-open
-          (lambda _
-            (substitute* "src/utils/io.c"
-                         (("OPEN_DIR_CMD")
-                          (string-append "\"" (which "xdg-open") "\"")))
-            #t)))))
+        "-Drtmidi=enabled" ; for RtMidi backend (ALSA sequencer)
+        "-Dsdl=enabled"))) ; for SDL audio backend (which uses ALSA)
    (inputs
     `(("alsa-lib" ,alsa-lib)
       ("jack" ,jack-1)
@@ -5845,9 +5841,9 @@ plugin and a standalone JACK application.")
                               "/lib/lv2")
                        "install"))))))
       (inputs
-        `(("lv2", lv2)))
+        `(("lv2" ,lv2)))
       (native-inputs
-        `(("pkg-config", pkg-config)))
+        `(("pkg-config" ,pkg-config)))
       (synopsis "Audio plugin collection")
       (description "TAP (Tom's Audio Processing) plugins is a collection of
   audio effect plugins originally released as LADSPA plugins.  This package
@@ -5903,9 +5899,9 @@ plugin and a standalone JACK application.")
     (native-inputs
      `(("pkg-config" ,pkg-config)))
     (inputs
-      `(("jack", jack-1)
-        ("lv2", lv2)
-        ("mesa", mesa)))
+      `(("jack" ,jack-1)
+        ("lv2" ,lv2)
+        ("mesa" ,mesa)))
     (synopsis "Waveshaper plugin")
     (description "Wolf Shaper is a waveshaper plugin with a graph editor.
 It is provided as an LV2 plugin and as a standalone Jack application.")
@@ -5985,12 +5981,12 @@ It is provided as an LV2 plugin and as a standalone Jack application.")
       (native-inputs
        `(("pkg-config" ,pkg-config)))
       (inputs
-        `(("cairo", cairo)
-          ("glu", glu)
-          ("jack", jack-1)
-          ("lv2", lv2)
-          ("mesa", mesa)
-          ("pango", pango)))
+        `(("cairo" ,cairo)
+          ("glu" ,glu)
+          ("jack" ,jack-1)
+          ("lv2" ,lv2)
+          ("mesa" ,mesa)
+          ("pango" ,pango)))
       (synopsis "Audio plugin collection")
       (description "Shiru plugins is a collection of audio plugins created
   by Shiru, ported to LV2 by the Linux MAO project using the DISTRHO plugin

@@ -13,6 +13,63 @@
 (channel-news
  (version 0)
 
+ (entry (commit "8e1907a72430aa989125b053573ef0897c480697")
+        (title (en "Package transformation options now recorded in profiles")
+               (de "Paketumwandlungsoptionen werden nun in Profilen gesichert")
+               (fr "Options de transformation sauvegardées dans les profils"))
+        (body
+         (en "When installing packages in a profile, package transformation
+options such as @option{--with-input} are now recorded in the profile.  When
+you eventually run @command{guix upgrade}, those transformations will be
+automatically applied to the upgraded packages.
+
+Run @command{info \"(guix) Package Transformation Options\"} for more info.")
+         (de "Wenn Sie ein Paket in ein Profil installieren, werden nun
+Paketumwandlungsoptionen wie @option{--with-input} im Profil gespeichert.
+Sobald Sie später @command{guix upgrade} ausführen, werden dieselben
+Umwandlungen automatisch auf die aktualisierten Pakete angewandt.
+
+Führen Sie für mehr Informationen @command{info \"(guix.de)
+Paketumwandlungsoptionen\"} aus.")
+         (fr "Lorsqu'on installe des paquets dans un profil, les options de
+transformation telles que @option{--with-input} sont désormais enregistrées
+dans le profil.  Quand on le met plus tard à jour avec @command{guix upgrade},
+ces transformations sont automatiquement appliquées aux nouveaux paquets.
+
+Voir @command{info \"(guix.fr) Options de transformation de paquets\"} pour
+plus de détails.")))
+
+ (entry (commit "313f492657f1d0863c641fa5ee7f5b7028e27c94")
+        (title (en "New @option{--image-type} option for @command{guix system disk-image}.")
+               (de "Neue Option @option{--image-type} für @command{guix system disk-image}.")
+               (fr "Nouvelle option @option{--image-type} pour @command{guix system disk-image}."))
+        (body
+         (en "The @option{--file-system-type} option for @command{guix system
+disk-image} command has been replaced by the new @option{--image-type} option.
+By default, @code{raw} disk images are produced, but @code{hurd-qcow2},
+@code{hurd-raw}, @code{uncompressed-iso9660} and @code{iso9660} image types
+are also available.
+
+The @option{--list-image-types} option lists all the available image types.")
+         (de "Anstelle der Befehlszeilenoption @option{--file-system-type} für
+@command{guix system disk-image} gibt es nun die neue Option
+@option{--image-type}.  In der Vorgabeeinstellung @code{raw} werden rohe
+Disk-Images erzeugt, aber es können auch die Abbildtypen @code{hurd-qcow2},
+@code{hurd-raw}, @code{uncompressed-iso9660} und @code{iso9660} ausgewählt
+werden.
+
+Mit der Option @option{--list-image-types} werden alle verfügbaren Abbildtypen
+aufgelistet.")
+         (fr "L'option @option{--file-system-type} pour la commande
+@command{guix system disk-image} a été remplacée par la nouvelle option
+@option{--image-type}. Par défaut, l'option @code{raw}, produisant des images
+disque brutes est sélectionnée. Les options @code{hurd-qcow2},
+@code{hurd-raw}, @code{uncompressed-iso9660} et @code{iso9660} sont également
+disponibles.
+
+La nouvelle option @option{--list-image-types} énumère les types d'image
+disponibles.")))
+
  (entry (commit "8819551c8d2a12cd4e84e09b51e434d05a012c9d")
         (title (en "Package transformations now apply to implicit inputs")
                (de "Paketumwandlungen betreffen jetzt auch implizite Eingaben")

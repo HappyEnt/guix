@@ -53,6 +53,7 @@
   #:use-module (gnu packages cmake)
   #:use-module (gnu packages compression)
   #:use-module (gnu packages crates-io)
+  #:use-module (gnu packages crates-graphics)
   #:use-module (gnu packages crypto)
   #:use-module (gnu packages docbook)
   #:use-module (gnu packages fontutils)
@@ -220,24 +221,29 @@ text-based approach to terminal recording.")
     (package
       (name "libtsm")
       (version (git-version "0.0.0" revision commit))
-      (source (origin
-                (method git-fetch)
-                ;; The freedesktop repository is no longer maintained.
-                (uri (git-reference
-                      (url (string-append "https://github.com/Aetf/" name))
-                      (commit commit)))
-                (file-name (git-file-name name version))
-                (sha256
-                 (base32
-                  "0mwn91i5h5d518i1s05y7hzv6bc13vzcvxszpfh77473iwg4wprx"))))
+      (source
+       (origin
+         (method git-fetch)
+         ;; The freedesktop repository is no longer maintained.
+         (uri (git-reference
+               (url (string-append "https://github.com/Aetf/" name))
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "0mwn91i5h5d518i1s05y7hzv6bc13vzcvxszpfh77473iwg4wprx"))
+         (modules '((guix build utils)))
+         (snippet
+          '(begin
+             ;; Remove a bundled copy of libxkbcommon's xkbcommon-keysyms.h.
+             (delete-file-recursively "external/xkbcommon")
+             #t))))
       (build-system cmake-build-system)
       (arguments
        `(#:configure-flags '("-DBUILD_TESTING=ON")))
       (native-inputs
-       `(("pkg-config" ,pkg-config)))
-      (inputs
-       `(("libxkbcommon" ,libxkbcommon)
-         ("check" ,check)))
+       `(("check" ,check)
+         ("libxkbcommon" ,libxkbcommon) ; for xkbcommon-keysyms.h
+         ("pkg-config" ,pkg-config)))
       (synopsis "Xterm state machine library")
       (description "TSM is a state machine for DEC VT100-VT520 compatible
 terminal emulators.  It tries to support all common standards while keeping
@@ -731,7 +737,7 @@ programmer to write text-based user interfaces.")
 (define-public go-github-com-junegunn-fzf
   (package
     (name "go-github-com-junegunn-fzf")
-    (version "0.18.0")
+    (version "0.22.0")
     (source
      (origin
        (method git-fetch)
@@ -741,7 +747,7 @@ programmer to write text-based user interfaces.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "0pwpr4fpw56yzzkcabzzgbgwraaxmp7xzzmap7w1xsrkbj7dl2xl"))))
+         "0n0cy5q2r3dm1a3ivlzrv9c5d11awxlqim5b9x8zc85dlr73n35l"))))
     (build-system go-build-system)
     (arguments
      `(#:import-path "github.com/junegunn/fzf"))
@@ -750,6 +756,8 @@ programmer to write text-based user interfaces.")
        ("go-github-com-mattn-go-shellwords" ,go-github-com-mattn-go-shellwords)
        ("go-github-com-mattn-go-isatty" ,go-github-com-mattn-go-isatty)
        ("go-github-com-gdamore-tcell" ,go-github-com-gdamore-tcell)
+       ("go-github-com-saracen-walker" ,go-github-com-saracen-walker)
+       ("go-golang.org-x-sync-errgroup" ,go-golang.org-x-sync-errgroup)
        ("go-golang-org-x-crypto" ,go-golang-org-x-crypto)))
     (home-page "https://github.com/junegunn/fzf")
     (synopsis "Command-line fuzzy-finder")

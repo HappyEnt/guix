@@ -1,5 +1,5 @@
 # GNU Guix --- Functional package management for GNU
-# Copyright © 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019 Ludovic Courtès <ludo@gnu.org>
+# Copyright © 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020 Ludovic Courtès <ludo@gnu.org>
 # Copyright © 2013 Nikita Karetnikov <nikita@karetnikov.org>
 #
 # This file is part of GNU Guix.
@@ -184,6 +184,21 @@ grep -E 'emacs[[:blank:]]+42\.5\.9rc7' "$tmpfile"
 rm "$emacs_tarball" "$tmpfile"
 rmdir "$module_dir"
 
+# Install with package transformations.
+guix install --bootstrap -p "$profile" sed --with-input=sed=guile-bootstrap
+grep "sed=guile-bootstrap" "$profile/manifest"
+test "$(readlink -f "$profile/bin/guile")" \
+     = "$(guix build guile-bootstrap)/bin/guile"
+test ! -f "$profile/bin/sed"
+
+# Make sure the package transformation is preserved.
+guix package --bootstrap -p "$profile" -u
+grep "sed=guile-bootstrap" "$profile/manifest"
+test "$(readlink -f "$profile/bin/guile")" \
+     = "$(guix build guile-bootstrap)/bin/guile"
+test ! -f "$profile/bin/sed"
+rm "$profile" "$profile"-[0-9]-link
+
 # Profiles with a relative file name.  Make sure we don't create dangling
 # symlinks--see bug report at
 # <https://lists.gnu.org/archive/html/guix-devel/2018-07/msg00036.html>.
@@ -257,7 +272,7 @@ cat > "$module_dir/foo.scm"<<EOF
 (define-public x
   (package (inherit emacs)
     (name "emacs-foo-bar")
-    (version "42")))
+    (version "42.77.0")))
 EOF
 
 guix package -A emacs-foo-bar -L "$module_dir" | grep 42
@@ -298,7 +313,7 @@ cat > "$module_dir/foo.scm"<<EOF
     (source (origin (inherit (package-source emacs))
               (patches (list (search-patch "emacs.patch")))))
     (name "emacs-foo-bar-patched")
-    (version "42")))
+    (version "42.42.42")))
 
 (define-public y
   (package (inherit emacs)

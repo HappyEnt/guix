@@ -144,6 +144,8 @@ GNU_SYSTEM_MODULES =				\
   %D%/packages/cppi.scm				\
   %D%/packages/cran.scm				\
   %D%/packages/crates-io.scm			\
+  %D%/packages/crates-graphics.scm		\
+  %D%/packages/crates-gtk.scm			\
   %D%/packages/cross-base.scm			\
   %D%/packages/crypto.scm			\
   %D%/packages/cryptsetup.scm			\
@@ -646,6 +648,7 @@ GNU_SYSTEM_MODULES =				\
   %D%/system/vm.scm				\
 						\
   %D%/system/images/hurd.scm			\
+  %D%/system/images/pine64.scm			\
 						\
   %D%/machine.scm				\
 						\
@@ -1085,6 +1088,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/gpsbabel-qstring.patch     		\
   %D%/packages/patches/grantlee-merge-theme-dirs.patch		\
   %D%/packages/patches/grep-timing-sensitive-test.patch		\
+  %D%/packages/patches/grim-revert-output-rotation.patch	\
   %D%/packages/patches/grocsvs-dont-use-admiral.patch		\
   %D%/packages/patches/gromacs-tinyxml2.patch			\
   %D%/packages/patches/groovy-add-exceptionutilsgenerator.patch	\
@@ -1133,6 +1137,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/hubbub-sort-entities.patch		\
   %D%/packages/patches/hurd-cross.patch				\
   %D%/packages/patches/hurd-xattr.patch				\
+  %D%/packages/patches/hplip-fix-bug-1898438.patch		\
   %D%/packages/patches/hplip-remove-imageprocessor.patch	\
   %D%/packages/patches/hydra-disable-darcs-test.patch		\
   %D%/packages/patches/icecat-makeicecat.patch			\
@@ -1202,7 +1207,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/kodi-increase-test-timeout.patch		\
   %D%/packages/patches/kodi-set-libcurl-ssl-parameters.patch		\
   %D%/packages/patches/kodi-skip-test-449.patch		\
-  %D%/packages/patches/konversation-Fix-build-with-Qt-5.11.patch	\
   %D%/packages/patches/laby-make-install.patch			\
   %D%/packages/patches/lcalc-default-parameters-1.patch		\
   %D%/packages/patches/lcalc-default-parameters-2.patch		\
@@ -1230,7 +1234,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/libgnomeui-utf8.patch			\
   %D%/packages/patches/libjxr-fix-function-signature.patch	\
   %D%/packages/patches/libjxr-fix-typos.patch			\
-  %D%/packages/patches/liblouisutdml-fix-tests.patch		\
   %D%/packages/patches/libofa-ftbfs-1.diff		\
   %D%/packages/patches/libofa-curl.diff		\
   %D%/packages/patches/libofa-ftbfs-2.diff		\
@@ -1287,6 +1290,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/lm-sensors-hwmon-attrs.patch		\
   %D%/packages/patches/lrcalc-includes.patch    		\
   %D%/packages/patches/lrzip-CVE-2017-8842.patch		\
+  %D%/packages/patches/lsh-fix-x11-forwarding.patch		\
   %D%/packages/patches/lua-CVE-2014-5461.patch                      \
   %D%/packages/patches/lua-pkgconfig.patch                      \
   %D%/packages/patches/lua51-liblua-so.patch                    \
@@ -1429,6 +1433,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/perl-module-pluggable-search.patch	\
   %D%/packages/patches/perl-reproducible-build-date.patch	\
   %D%/packages/patches/perl-www-curl-remove-symbol.patch	\
+  %D%/packages/patches/picard-fix-id3-rename-test.patch		\
   %D%/packages/patches/picprog-non-intel-support.patch		\
   %D%/packages/patches/pidgin-add-search-path.patch		\
   %D%/packages/patches/pidgin-libnm.patch			\

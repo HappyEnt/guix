@@ -944,7 +944,7 @@ Language.")
      `(("bison" ,bison)
        ;; XXX: On armhf, use GCC 5 to work around <https://bugs.gnu.org/37605>.
        ,@(if (string-prefix? "armhf" (%current-system))
-             `(("gcc@5", gcc-5))
+             `(("gcc@5" ,gcc-5))
              '())
        ("perl" ,perl)))
     (inputs
@@ -970,7 +970,7 @@ as a drop-in replacement of MySQL.")
 (define-public mariadb-connector-c
   (package
     (name "mariadb-connector-c")
-    (version "3.1.9")
+    (version "3.1.10")
     (source (origin
               (method url-fetch)
               (uri (string-append
@@ -979,7 +979,7 @@ as a drop-in replacement of MySQL.")
                     version "-src.tar.gz"))
               (sha256
                (base32
-                "1izjzf7yzjqzlk8dkp327fa9lawsv2hnnlnr7g5lshyx5azrk38h"))))
+                "13v5z4w1cl890lnr2fbwbziw638lqw2aga45vdq1z0cyrc9mcgmg"))))
     (inputs
      `(("openssl" ,openssl)))
     (build-system cmake-build-system)
@@ -1741,7 +1741,7 @@ columns, primary keys, unique constraints and relationships.")
 (define-public perl-dbd-sqlite
   (package
     (name "perl-dbd-sqlite")
-    (version "1.64")
+    (version "1.66")
     (source (origin
               (method url-fetch)
               (uri (string-append
@@ -1749,7 +1749,7 @@ columns, primary keys, unique constraints and relationships.")
                     version ".tar.gz"))
               (sha256
                (base32
-                "00gz5aw3xrr92lf9nfk0dhmy7a8jzmxhznddd9b0a8w4a1xqzbpl"))))
+                "1zljln5nh61gj3k22a1fv2vhx5l83waizmarwkh77hk6kzzmvrw9"))))
     (build-system perl-build-system)
     (inputs `(("sqlite" ,sqlite)))
     (propagated-inputs `(("perl-dbi" ,perl-dbi)))
@@ -2123,14 +2123,14 @@ database.")
 (define-public perl-db-file
  (package
   (name "perl-db-file")
-  (version "1.853")
+  (version "1.854")
   (source
     (origin
       (method url-fetch)
       (uri (string-append "mirror://cpan/authors/id/P/PM/PMQS/DB_File-"
                           version ".tar.gz"))
       (sha256
-        (base32 "1y967si45vj0skip1hnhicbv9da29fv6qcfwnsbnvj06n36mkj6h"))))
+        (base32 "0fv0any5am6vr6h1wcwhnraj70hd55fs4d8c2y7chsc9alf9di5y"))))
   (build-system perl-build-system)
   (inputs `(("bdb" ,bdb)))
   (native-inputs `(("perl-test-pod" ,perl-test-pod)))
@@ -2143,8 +2143,7 @@ database.")
                        (("/usr/local/BerkeleyDB") (assoc-ref inputs "bdb")))
                      #t)))))
   (home-page "https://metacpan.org/release/DB_File")
-  (synopsis
-    "Perl5 access to Berkeley DB version 1.x")
+  (synopsis "Perl5 access to Berkeley DB version 1.x")
   (description
     "The DB::File module provides Perl bindings to the Berkeley DB version 1.x.")
   (license license:perl-license)))
@@ -2453,13 +2452,13 @@ etc., and an SQL engine for performing simple SQL queries.")
 (define-public python-lmdb
   (package
     (name "python-lmdb")
-    (version "0.99")
+    (version "1.0.0")
     (source (origin
               (method url-fetch)
               (uri (pypi-uri "lmdb" version))
               (sha256
                (base32
-                "12fwlzfd82471ss9xzbqwcqc6f5miy51y72y2yya9j5cm9589szr"))
+                "1di1gj2agbxwqqwrpk4w58dpfah0kl10ha20s63dlqdd1bgzydj1"))
               (modules '((guix build utils)))
               (snippet
                ;; Delete bundled lmdb source files.
@@ -2478,6 +2477,7 @@ etc., and an SQL engine for performing simple SQL queries.")
          (add-before 'build 'use-system-lmdb
            (lambda* (#:key inputs #:allow-other-keys)
              (let ((lmdb (assoc-ref inputs "lmdb")))
+               (setenv "LMDB_PURE" "set") ; don't apply env-copy-txn.patch
                (setenv "LMDB_FORCE_SYSTEM" "set")
                (setenv "LMDB_INCLUDEDIR" (string-append lmdb "/include"))
                (setenv "LMDB_LIBDIR" (string-append lmdb "/lib"))
@@ -2759,13 +2759,13 @@ this library provides functions to facilitate such comparisons.")
 (define-public python-alembic
   (package
     (name "python-alembic")
-    (version "1.4.2")
+    (version "1.4.3")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "alembic" version))
        (sha256
-        (base32 "1gsdrzx9h7wfva200qvvsc9sn4w79mk2vs0bbnzjhxi1jw2b0nh3"))))
+        (base32 "0if2dgb088clk738p26bwk50735h6jpd2kacdgc5capv2hiz6d2k"))))
     (build-system python-build-system)
     (arguments
      '(#:phases (modify-phases %standard-phases
@@ -3103,7 +3103,7 @@ reasonable substitute.")
 (define-public python-rq
   (package
     (name "python-rq")
-    (version "1.5.1")
+    (version "1.5.2")
     (source
      (origin
        (method git-fetch)
@@ -3112,7 +3112,7 @@ reasonable substitute.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0i7yyw828wdvl7ap4gb7jhm4p94502is3xxrgrdgwwp0l1rac004"))))
+        (base32 "0ikqmpq0g1qiqwd7ar1286l4hqjb6aj2wr844gihhb8ijzwhp8va"))))
     (build-system python-build-system)
     (arguments
      '(#:phases (modify-phases %standard-phases

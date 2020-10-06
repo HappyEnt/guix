@@ -89,6 +89,8 @@
   #:use-module (gnu packages cmake)
   #:use-module (gnu packages compression)
   #:use-module (gnu packages crates-io)
+  #:use-module (gnu packages crates-graphics)
+  #:use-module (gnu packages crates-gtk)
   #:use-module (gnu packages cups)
   #:use-module (gnu packages curl)
   #:use-module (gnu packages cyrus-sasl)
@@ -105,6 +107,7 @@
   #:use-module (gnu packages fontutils)
   #:use-module (gnu packages freedesktop)
   #:use-module (gnu packages game-development)
+  #:use-module (gnu packages gcc)
   #:use-module (gnu packages gettext)
   #:use-module (gnu packages ghostscript)
   #:use-module (gnu packages gimp)
@@ -986,7 +989,7 @@ freedesktop.org desktop notification specification.")
 (define-public mm-common
   (package
     (name "mm-common")
-    (version "1.0.1")
+    (version "1.0.2")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://gnome/sources/mm-common/"
@@ -994,7 +997,7 @@ freedesktop.org desktop notification specification.")
                                   "mm-common-" version ".tar.xz"))
               (sha256
                (base32
-                "1jasx9a9g7nqf7jcv3mrg4qh5cp9sq724jxjaz4wa1dzmxsxg8i8"))))
+                "07b4s5ckcz9q5gwx8vchim19mhfgl8wysqwi30pndks3m4zrzad2"))))
     (build-system meson-build-system)
     (arguments
      `(#:phases
@@ -1299,7 +1302,7 @@ and implementation of UPnP A/V profiles.")
      `(("gdk-pixbuf" ,gdk-pixbuf)
        ("gettext" ,gettext-minimal)
        ("gobject-introspection" ,gobject-introspection)
-       ("gtk+:doc", gtk+ "doc")
+       ("gtk+:doc" ,gtk+ "doc")
        ("vala" ,vala)))
     (synopsis "Media art library for the GNOME desktop")
     (description
@@ -1663,6 +1666,44 @@ uses duplicity as the backend, which supports incremental backups and storage
 either on a local, or remote machine via a number of methods.")
     (license license:gpl3+)))
 
+(define-public gnome-commander
+  (package
+    (name "gnome-commander")
+    (version "1.10.3")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "mirror://gnome/sources/" name "/"
+                           (version-major+minor version)  "/"
+                           "gnome-commander-" version ".tar.xz"))
+       (sha256
+        (base32 "0bis36awb73vhkncq8yr0qlnyaxynqkvmyqbg57ijqwd0m8hh4zg"))))
+    (build-system glib-or-gtk-build-system)
+    (native-inputs
+     `(("desktop-file-utils" ,desktop-file-utils)
+       ("gcc" ,gcc-8) ;required for -Wcast-function-type
+       ("gettext" ,gettext-minimal)
+       ("glib:bin" ,glib "bin")
+       ("gobject-introspection" ,gobject-introspection)
+       ("googletest" ,googletest)
+       ("intltool" ,intltool)
+       ("itstool" ,itstool)
+       ("libtool" ,libtool)
+       ("pkg-config" ,pkg-config)))
+    (inputs
+     `(("gconf" ,gconf)
+       ("gnome-vfs" ,gnome-vfs)
+       ("gtk+" ,gtk+-2)
+       ("libxml2" ,libxml2)))
+    (home-page "https://gcmd.github.io/")
+    (synopsis "Two-pane graphical file manager for the GNOME desktop")
+    (description
+     "GNOME Commander is a two-pane graphical file manager using GNOME
+libraries.  It aims to fulfill the demands of more advanced users who
+like to focus on file management, their work through special applications
+and running smart commands.")
+    (license license:gpl2+)))
+
 (define-public gnome-user-docs
   (package
    (name "gnome-user-docs")
@@ -1961,7 +2002,7 @@ commonly used macros.")
        ("telepathy-glib" ,telepathy-glib)
        ("vala" ,vala)))
     (propagated-inputs
-     `(("folks", folks)
+     `(("folks" ,folks)
        ("telepathy-mission-control" ,telepathy-mission-control)))
     (synopsis "GNOME's integrated address book")
     (description
@@ -3164,7 +3205,7 @@ library.")
 (define-public librsvg-next
   (package
     (name "librsvg")
-    (version "2.48.8")
+    (version "2.50.1")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://gnome/sources/librsvg/"
@@ -3172,7 +3213,7 @@ library.")
                                   "librsvg-" version ".tar.xz"))
               (sha256
                (base32
-                "14i6xzghcidv64cyd3g0wdjbl82rph737yxn9s3x29nzpcjs707l"))
+                "02csvx2nzygh8kyal2qiy3y6xb7d52vszxxr37dzav704a9pkncv"))
               (modules '((guix build utils)))
               (snippet
                '(begin (delete-file-recursively "vendor")
@@ -3184,6 +3225,7 @@ library.")
        ((guix build cargo-build-system)
         (guix build utils)
         ((guix build gnu-build-system) #:prefix gnu:))
+       #:rust ,rust-1.40
        #:cargo-inputs
        (("rust-bitflags" ,rust-bitflags-1)
         ("rust-cairo-rs" ,rust-cairo-rs-0.8)
@@ -3191,9 +3233,8 @@ library.")
         ("rust-cast" ,rust-cast-0.2)
         ("rust-cssparser" ,rust-cssparser-0.27)
         ("rust-data-url" ,rust-data-url-0.1)
-        ("rust-downcast-rs" ,rust-downcast-rs-1.1)
         ("rust-encoding" ,rust-encoding-0.2)
-        ("rust-float-cmp" ,rust-float-cmp-0.6)
+        ("rust-float-cmp" ,rust-float-cmp-0.8)
         ("rust-gdk-pixbuf" ,rust-gdk-pixbuf-0.8)
         ("rust-gdk-pixbuf-sys" ,rust-gdk-pixbuf-sys-0.9)
         ("rust-gio" ,rust-gio-0.8)
@@ -3201,14 +3242,14 @@ library.")
         ("rust-glib" ,rust-glib-0.9)
         ("rust-glib-sys" ,rust-glib-sys-0.9)
         ("rust-gobject-sys" ,rust-gobject-sys-0.9)
-        ("rust-itertools" ,rust-itertools-0.8)
+        ("rust-itertools" ,rust-itertools-0.9)
         ("rust-language-tags" ,rust-language-tags-0.2)
         ("rust-libc" ,rust-libc-0.2)
         ("rust-locale-config" ,rust-locale-config-0.3)
         ("rust-markup5ever" ,rust-markup5ever-0.10)
-        ("rust-nalgebra" ,rust-nalgebra-0.19)
+        ("rust-nalgebra" ,rust-nalgebra-0.21)
         ("rust-num-traits" ,rust-num-traits-0.2)
-        ("rust-once-cell" ,rust-once-cell-1.2)
+        ("rust-once-cell" ,rust-once-cell-1)
         ("rust-pkg-config" ,rust-pkg-config-0.3)
         ("rust-pango" ,rust-pango-0.8)
         ("rust-pango-sys" ,rust-pango-sys-0.9)
@@ -3218,11 +3259,20 @@ library.")
         ("rust-rgb" ,rust-rgb-0.8)
         ("rust-regex" ,rust-regex-1)
         ("rust-selectors" ,rust-selectors-0.22)
+        ("rust-string-cache" ,rust-string-cache-0.8)
+        ("rust-tinyvec" ,rust-tinyvec-0.3)
         ("rust-url" ,rust-url-2.1)
         ("rust-xml5ever" ,rust-xml5ever-0.16))
        #:cargo-development-inputs
-       (("rust-cairo-rs" ,rust-cairo-rs-0.8)
-        ("rust-criterion" ,rust-criterion-0.3))
+       (("rust-assert-cmd" ,rust-assert-cmd-1)
+        ("rust-cairo-rs" ,rust-cairo-rs-0.8)
+        ("rust-chrono" ,rust-chrono-0.4)
+        ("rust-criterion" ,rust-criterion-0.3)
+        ("rust-float-cmp" ,rust-float-cmp-0.8)
+        ("rust-lopdf" ,rust-lopdf-0.25)
+        ("rust-png" ,rust-png-0.16)
+        ("rust-predicates" ,rust-predicates-1)
+        ("rust-tempfile" ,rust-tempfile-3))
        #:phases
        (modify-phases %standard-phases
          (add-after 'unpack 'patch-docbook-xml
@@ -3275,6 +3325,31 @@ library.")
              #t))
          (replace 'build
            (assoc-ref gnu:%standard-phases 'build))
+         (add-before 'check 'ignore-failing-tests
+           ;; stderr=```/tmp/guix-build-.../librsvg-2.50.1/rsvg-convert: line 150: ls: command not found
+           (lambda _
+             (substitute* "tests/src/cmdline/rsvg_convert.rs"
+               (("fn background_color_option_invalid_color_yields_error" all)
+                (string-append "#[ignore] " all))
+               (("fn empty_input_yields_error" all)
+                (string-append "#[ignore] " all))
+               (("fn empty_svg_yields_error" all)
+                (string-append "#[ignore] " all))
+               (("fn env_source_data_epoch_empty" all)
+                (string-append "#[ignore] " all))
+               (("fn env_source_data_epoch_no_digits" all)
+                (string-append "#[ignore] " all))
+               (("fn env_source_data_epoch_trailing_garbage" all)
+                (string-append "#[ignore] " all))
+               (("fn export_id_option_error" all)
+                (string-append "#[ignore] " all))
+               (("fn huge_zoom_factor_yields_error" all)
+                (string-append "#[ignore] " all))
+               (("fn multiple_input_files_not_allowed_for_png_output" all)
+                (string-append "#[ignore] " all))
+               (("fn stylesheet_option_error" all)
+                (string-append "#[ignore] " all)))
+             #t))
          (replace 'check
            (lambda* args
              ((assoc-ref gnu:%standard-phases 'check)
@@ -3894,14 +3969,14 @@ Hints specification (EWMH).")
 (define-public goffice
   (package
     (name "goffice")
-    (version "0.10.47")
+    (version "0.10.48")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://gnome/sources/goffice/"
                                   (version-major+minor version)  "/"
                                   "goffice-" version ".tar.xz"))
               (sha256
-               (base32 "0xmigfdzvmlpa0fw79mf3xwchmxc8rlidryn5syv8bz7msmrb215"))))
+               (base32 "1z6f3q8fxkd1ysqrwdxdi0844zqa00vjpf07gq8mh3kal8picfd4"))))
     (build-system gnu-build-system)
     (outputs '("out"
                "doc"))                  ; 4.0 MiB of gtk-doc
@@ -4055,7 +4130,7 @@ engineering.")
 (define-public seahorse
   (package
     (name "seahorse")
-    (version "3.34")
+    (version "3.36.2")
     (source
      (origin
        (method url-fetch)
@@ -4063,8 +4138,7 @@ engineering.")
                            (version-major+minor version) "/" name "-"
                            version ".tar.xz"))
        (sha256
-        (base32
-         "16sfnqrdlr5xx6kixx2ln1mva7nngjlw1k3f5n454vyaigffjh2v"))))
+        (base32 "16wmxxppgcgfj8zkagcny5af1c81x32ysm9d6j9f2k7bmik21ss5"))))
     (build-system meson-build-system)
     (arguments
      '(#:glib-or-gtk? #t
@@ -4084,6 +4158,7 @@ engineering.")
        ("openldap" ,openldap)
        ("openssh" ,openssh)
        ("avahi" ,avahi)
+       ("libhandy" ,libhandy-0.0)
        ("libpwquality" ,libpwquality)
        ("libsecret" ,libsecret)
        ("libsoup" ,libsoup)))
@@ -5025,7 +5100,7 @@ output devices.")
        ("gobject-introspection" ,gobject-introspection)
        ("modem-manager" ,modem-manager)
        ("libnotify" ,libnotify)
-       ("gtk-doc", gtk-doc)
+       ("gtk-doc" ,gtk-doc)
        ("intltool" ,intltool)))
     (inputs
      `(("avahi" ,avahi)
@@ -8015,7 +8090,7 @@ usage and information about running processes.")
 (define-public gnome-bluetooth
   (package
     (name "gnome-bluetooth")
-    (version "3.34.1")
+    (version "3.34.2")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://gnome/sources/" name "/"
@@ -8023,7 +8098,7 @@ usage and information about running processes.")
                                   name "-" version ".tar.xz"))
               (sha256
                (base32
-                "11nk8nvz5yrbx7wp75vsiaf4rniv7ik2g3nwmgwx2b42q9v11j9y"))))
+                "0lmjvb49vgr4jjplrisv6pi29jsn1q42715i6c5a0p9ad3gawyyv"))))
     (build-system meson-build-system)
     (native-inputs
      `(("glib:bin" ,glib "bin") ; for gdbus-codegen, etc.
@@ -10894,6 +10969,44 @@ really fit in other upstream packages.  It offers legacy support for GTK+ 2
 versions of Adwaita, Adwaita-dark and HighContrast themes.  It also provides
 index files needed for Adwaita to be used outside of GNOME.")
     (license license:lgpl2.1+)))
+
+(define-public gnote
+  (package
+    (name "gnote")
+    (version "3.38.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "mirror://gnome/sources/" name "/"
+                           (version-major+minor version)  "/"
+                           "gnote-" version ".tar.xz"))
+       (sha256
+        (base32 "1ingbaw4d8vpjn083xvzqw7kz8z0k2bx7msk78pbzd68bwgkadpx"))))
+    (build-system glib-or-gtk-build-system)
+    (native-inputs
+     `(("desktop-file-utils" ,desktop-file-utils)
+       ("glib:bin" ,glib "bin")
+       ("gobject-introspection" ,gobject-introspection)
+       ("intltool" ,intltool)
+       ("itstool" ,itstool)
+       ("pkg-config" ,pkg-config)
+       ("unittest-cpp" ,unittest-cpp))) ;FIXME: not found by pkg-config
+    (inputs
+     `(("glibmm" ,glibmm)
+       ("gsettings-desktop-schemas" ,gsettings-desktop-schemas)
+       ("gspell" ,gspell)
+       ("gtk+" ,gtk+)
+       ("gtkmm" ,gtkmm)
+       ("libsecret" ,libsecret)
+       ("libuuid" ,util-linux "lib")
+       ("libxml2" ,libxml2)
+       ("libxslt" ,libxslt)))
+    (synopsis "Note-taking application for the GNOME desktop")
+    (description
+     "Gnote is a note-taking application written for the GNOME desktop
+environment.")
+    (home-page "https://wiki.gnome.org/Apps/Gnote")
+    (license license:gpl3+)))
 
 (define-public polari
   (package

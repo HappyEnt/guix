@@ -1277,7 +1277,7 @@ to the OSM opening hours specification.")
 (define-public josm
   (package
     (name "josm")
-    (version "16812")
+    (version "17013")
     (source (origin
               (method svn-fetch)
               (uri (svn-reference
@@ -1286,7 +1286,7 @@ to the OSM opening hours specification.")
                      (recursive? #f)))
               (sha256
                (base32
-                "131ly6ah9ygrah1wq1h2199v4hyzgflnh62ychs4jqvy9wz0dal6"))
+                "12mcqswjijvx2n7hz7lnx83i3vjr5ib58cazqin10hczcwnd778q"))
               (file-name (string-append name "-" version "-checkout"))
               (modules '((guix build utils)))
             (snippet
@@ -1776,7 +1776,7 @@ track your position right from your laptop.")
           (base32 "1fwsm99kz0bxvjk7442qq1h45ikrmhba8bqclafb61gqg1q6ymrk"))))
       (build-system gnu-build-system)
       (inputs
-       `(("bzip2", bzip2)
+       `(("bzip2" ,bzip2)
          ("cairo" ,cairo)
          ("fftw" ,fftw)
          ("freetype" ,freetype)

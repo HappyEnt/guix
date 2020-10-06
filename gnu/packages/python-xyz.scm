@@ -1623,18 +1623,18 @@ of @code{xmlfile}.")
 (define-public python-openpyxl
   (package
     (name "python-openpyxl")
-    (version "2.6.2")
+    (version "3.0.5")
     (source
      (origin
        ;; We use the upstream repository, as the tests are not included in the
        ;; PyPI releases.
        (method hg-fetch)
        (uri (hg-reference
-             (url "https://bitbucket.org/openpyxl/openpyxl")
+             (url "https://foss.heptapod.net/openpyxl/openpyxl")
              (changeset version)))
        (file-name (string-append name "-" version "-checkout"))
        (sha256
-        (base32 "1qhij6kcvdxqjy4g6193nsv4q7fy8n4fwyd3c2z047idlm6s3j4w"))))
+        (base32 "0s6fgwwkcfz1bnrp5gjd4g2lcbl4a76147ylkrmkbabi2nf4xlli"))))
     (build-system python-build-system)
     (arguments
      `(#:phases (modify-phases %standard-phases
@@ -4076,6 +4076,27 @@ matching of file paths.")
     (synopsis "The uncompromising code formatter")
     (description "Black is the uncompromising Python code formatter.")
     (license license:expat)))
+
+(define-public python-black-macchiato
+  (package
+    (name "python-black-macchiato")
+    (version "1.3.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "black-macchiato" version))
+       (sha256
+        (base32
+         "1drp5p697ni1xn5y2lbjpalgpkzy2i4cyxjj5pk4dxr0vk97dd7i"))))
+    (build-system python-build-system)
+    (propagated-inputs
+     `(("python-black" ,python-black)))
+    (home-page "https://github.com/wbolster/black-macchiato")
+    (synopsis "Partial @code{python-black} formatting")
+    (description
+     "This package is built on top the @{python-black} code formatter to
+enable formatting of partial files.")
+    (license license:bsd-3)))
 
 (define-public python-blinker
   (package
@@ -8037,13 +8058,13 @@ complexity of Python source code.")
 (define-public python-flake8
   (package
     (name "python-flake8")
-    (version "3.8.3")
+    (version "3.8.4")
     (source (origin
               (method url-fetch)
               (uri (pypi-uri "flake8" version))
               (sha256
                (base32
-                "02527892hh0qjivxaiphzalj7q32qkna1cqaikjs7c03mk5ryjzh"))))
+                "0fvcrsbyzjpcli8ldbpsdbpmf238nkvwc1dy4hy82lf63rvfinma"))))
     (build-system python-build-system)
     (arguments
      `(#:phases
@@ -10800,36 +10821,40 @@ Pytest but stripped of Pytest specific details.")
 
 (define-public python-tox
   (package
-   (name "python-tox")
-   (version "2.8.1")
-   (source
-    (origin
-     (method url-fetch)
-     (uri (pypi-uri "tox" version))
-     (sha256
-      (base32
-       "1drp6mwm8wdypjym15ia8lwjxbhcksb9vzxg4ay5dh4ji57by2ny"))))
-   (build-system python-build-system)
-   (arguments
-    ;; FIXME: Tests require pytest-timeout, which itself requires
-    ;; pytest>=2.8.0 for installation.
-    '(#:tests? #f))
-   (propagated-inputs
-    `(("python-pluggy" ,python-pluggy) ; >=0.3.0,<0.4.0
-      ("python-py" ,python-py)
-      ("python-virtualenv" ,python-virtualenv)))
-   (native-inputs
-    `(; FIXME: Missing: ("python-pytest-timeout" ,python-pytest-timeout)
-      ("python-pytest" ,python-pytest)  ; >= 2.3.5
-      ("python-setuptools-scm" ,python-setuptools-scm)))
-   (home-page "https://tox.readthedocs.io")
-   (synopsis "Virtualenv-based automation of test activities")
-   (description "Tox is a generic virtualenv management and test command line
+    (name "python-tox")
+    (version "3.20.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "tox" version))
+       (sha256
+        (base32
+         "0nk0nyzhzamcrvn0qqzzy54isxxqwdi28swml7a2ym78c3f9sqpb"))))
+    (build-system python-build-system)
+    (arguments
+     ;; FIXME: Tests require pytest-timeout, which itself requires
+     ;; pytest>=2.8.0 for installation.
+     '(#:tests? #f))
+    (propagated-inputs
+     `(("python-filelock" ,python-filelock)
+       ("python-packaging" ,python-packaging)
+       ("python-pluggy" ,python-pluggy)
+       ("python-py" ,python-py)
+       ("python-six" ,python-six)
+       ("python-toml" ,python-toml)
+       ("python-virtualenv" ,python-virtualenv)))
+    (native-inputs
+     `(; FIXME: Missing: ("python-pytest-timeout" ,python-pytest-timeout)
+       ("python-pytest" ,python-pytest)  ; >= 2.3.5
+       ("python-setuptools-scm" ,python-setuptools-scm)))
+    (home-page "https://tox.readthedocs.io")
+    (synopsis "Virtualenv-based automation of test activities")
+    (description "Tox is a generic virtualenv management and test command line
 tool.  It can be used to check that a package installs correctly with
 different Python versions and interpreters, or run tests in each type of
 supported environment, or act as a frontend to continuous integration
 servers.")
-   (license license:expat)))
+    (license license:expat)))
 
 (define-public python2-tox
   (package-with-python2 python-tox))
@@ -20415,15 +20440,31 @@ tests.")
 (define-public python-gssapi
   (package
     (name "python-gssapi")
-    (version "1.6.5")
+    (version "1.6.9")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "gssapi" version))
        (sha256
         (base32
-         "02i5s7998dg5kcr4m0xwamd8vjqk1816xbzldyp68l91f6bynwcr"))))
+         "1fa78pn5jzfbwf3y6mj4fc8sh11wjf1hwh5qv39cdlxb71qsq2hb"))))
     (build-system python-build-system)
+    (arguments
+     `(#:phases
+       (modify-phases %standard-phases
+         ;; Work around
+         ;; https://github.com/pythongssapi/python-gssapi/issues/220.
+         (add-before 'check 'disable-failing-tests
+           (lambda _
+             (let ((reason "Disabled failing test (see: \
+https://github.com/pythongssapi/python-gssapi/issues/220)."))
+               (substitute* "gssapi/tests/test_high_level.py"
+                 ((".*def test_add_with_impersonate.*" all)
+                  (string-append all "        self.skipTest('" reason "')\n")))
+               (substitute* "gssapi/tests/test_raw.py"
+                 ((".*def test_.*impersonate_name.*" all)
+                  (string-append all "        self.skipTest('" reason "')\n")))
+               #t))))))
     (propagated-inputs
      `(("python-decorator" ,python-decorator)
        ("python-six" ,python-six)))
@@ -20788,13 +20829,13 @@ content models.")
     ;; Testing requires undocumented setup changes, and so testing is disabled here.
     (arguments `(#:tests? #f))
     (propagated-inputs
-      `(("python-certifi", python-certifi)
-        ("python-six", python-six)
-        ("python-dateutil", python-dateutil)
-        ("python-urllib3", python-urllib3)
-        ("python-pyjwt", python-pyjwt)
-        ("python-cryptography", python-cryptography)
-        ("python-nose", python-nose)))
+      `(("python-certifi" ,python-certifi)
+        ("python-six" ,python-six)
+        ("python-dateutil" ,python-dateutil)
+        ("python-urllib3" ,python-urllib3)
+        ("python-pyjwt" ,python-pyjwt)
+        ("python-cryptography" ,python-cryptography)
+        ("python-nose" ,python-nose)))
     (synopsis "DocuSign Python Client")
     (description "The Official DocuSign Python Client Library used to interact
  with the eSign REST API.  Send, sign, and approve documents using this client.")

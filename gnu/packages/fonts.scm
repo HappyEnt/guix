@@ -1148,14 +1148,14 @@ later hand-tweaked with the gbdfed(1) editor:
 (define-public font-comic-neue
   (package
     (name "font-comic-neue")
-    (version "2.5")
+    (version "2.51")
     (source (origin
               (method url-fetch/zipbomb)
               (uri (string-append
                     "http://www.comicneue.com/comic-neue-" version ".zip"))
               (sha256
                (base32
-                "1ng0m0zs7qr91qy5ff0l01l27npr76961c6zfkxnhxf68zpwz5k4"))))
+                "0883542v915crz98v1ij6smgy40dg6gxwsid3j5nbmmqjf69kpal"))))
     (build-system font-build-system)
     (arguments
      `(#:phases
@@ -1736,7 +1736,7 @@ This package provides the TrueType fonts.")
 (define-public font-jetbrains-mono
   (package
     (name "font-jetbrains-mono")
-    (version "2.001")
+    (version "2.002")
     (source
      (origin
        (method url-fetch)
@@ -1744,17 +1744,16 @@ This package provides the TrueType fonts.")
         (string-append "https://download.jetbrains.com/fonts/"
                        "JetBrainsMono-" version ".zip"))
        (sha256
-        (base32 "0r3dk3kn536rik4mvpcjin9mwmifl3v8mawvb4a5l59pww0vcxzq"))))
+        (base32 "0lcsl718jhkqgld1xqll7fsv8j968jlf292541fkqxwm8i5g93sn"))))
     (build-system font-build-system)
     (arguments
      `(#:phases
        (modify-phases %standard-phases
-         (replace 'install-license-files
-           (lambda* (#:key outputs #:allow-other-keys)
-             (let* ((out (assoc-ref outputs "out"))
-                    (doc (string-append out "/share/doc/" ,name "-" ,version)))
-               (install-file "../LICENSE" doc)
-               #t))))))
+         (add-before 'install-license-files 'change-directory-to-archive-root
+           ;; Find the LICENSE file outside of the default subdirectory.
+           (lambda _
+             (chdir "..")
+             #t)))))
     (home-page "https://www.jetbrains.com/lp/mono/")
     (synopsis "Mono typeface for developers")
     (description
