@@ -17,6 +17,7 @@
 ;;; Copyright © 2020 Arun Isaac <arunisaac@systemreboot.net>
 ;;; Copyright © 2020 Leo Famulari <leo@famulari.name>
 ;;; Copyright © 2020 Brice Waegeneire <brice@waegenei.re>
+;;; Copyright © 2020 Simon South <simon@simonsouth.net>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -45,6 +46,7 @@
   #:use-module (gnu packages compression)
   #:use-module (gnu packages crypto)
   #:use-module (gnu packages datastructures)
+  #:use-module (gnu packages elf)
   #:use-module (gnu packages flex)
   #:use-module (gnu packages freedesktop)
   #:use-module (gnu packages gcc)
@@ -69,6 +71,7 @@
   #:use-module (gnu packages shells)
   #:use-module (gnu packages sphinx)
   #:use-module (gnu packages swig)
+  #:use-module (gnu packages texinfo)
   #:use-module (gnu packages tls)
   #:use-module (gnu packages web)
   #:use-module (gnu packages xml)
@@ -314,7 +317,7 @@ and BOOTP/TFTP for network booting of diskless machines.")
   (package
     (name "bind")
     ;; When updating, check whether isc-dhcp's bundled copy should be as well.
-    (version "9.16.7")
+    (version "9.16.8")
     (source (origin
               (method url-fetch)
               (uri (string-append
@@ -322,7 +325,7 @@ and BOOTP/TFTP for network booting of diskless machines.")
                     "/bind-" version ".tar.xz"))
               (sha256
                (base32
-                "1l8lhgnkj3fnl1101bs3pzj5gv2x5m9ahvrbyscsc9mxxc91hzcz"))))
+                "0ccdbqmpvnxlbrxjsx2w8ir4xh961svzcw7n87n8dglj6rb9r6wy"))))
     (build-system gnu-build-system)
     (outputs `("out" "utils"))
     (inputs
@@ -530,14 +533,14 @@ asynchronous fashion.")
 (define-public nsd
   (package
     (name "nsd")
-    (version "4.3.2")
+    (version "4.3.3")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "https://www.nlnetlabs.nl/downloads/nsd/nsd-"
                            version ".tar.gz"))
        (sha256
-        (base32 "0ac3mbn5z4nc18782m9aswdpi2m9f4665vidw0ciyigdh0pywp2v"))))
+        (base32 "0lgdiqnkfvy245h6kkiqic586qjwmg51lsfs86vlc0kwjwddiijz"))))
     (build-system gnu-build-system)
     (arguments
      `(#:configure-flags
@@ -757,16 +760,16 @@ served by AS112.  Stub and forward zones are supported.")
 (define-public yadifa
   (package
     (name "yadifa")
-    (version "2.3.10")
+    (version "2.4.0")
     (source
-     (let ((build "9729"))
+     (let ((build "9809"))
        (origin
          (method url-fetch)
          (uri
-          (string-append "http://cdn.yadifa.eu/sites/default/files/releases/"
+          (string-append "https://www.yadifa.eu/sites/default/files/releases/"
                          "yadifa-" version "-" build ".tar.gz"))
          (sha256
-          (base32 "0azaignqmylfdzr4x02s8y3pkn4f0xkpz3d1pkiiz8mwk92zgybn")))))
+          (base32 "114a1y4pzzzq0s9hyn65nd4fg19xijsqpfhsd0wkvjndsazg63ky")))))
     (build-system gnu-build-system)
     (native-inputs
      `(("which" ,which)))
@@ -779,19 +782,19 @@ served by AS112.  Stub and forward zones are supported.")
            (lambda _
              (substitute* "Makefile.in"
                ((" (etc|var)") ""))
+             #t))
+         (add-after 'configure 'omit-spurious-references
+           (lambda _
+             ;; The many Makefile.in grep this(!) to #define BUILD_OPTIONS.
+             (substitute* "config.log"
+               (("(=/gnu/store/)[^-]*" _ match)
+                (string-append match "...")))
              #t)))
        #:configure-flags
        (list "--sysconfdir=/etc"
              "--localstatedir=/var"
-             "--disable-build-timestamp" ; build reproducibly
-             "--enable-shared"
-             "--disable-static"
-             "--enable-acl"
-             "--enable-caching"
-             "--enable-ctrl"            ; enable remote control
-             "--enable-nsec"
-             "--enable-nsec3"
-             "--enable-tsig")))
+             "--enable-shared" "--disable-static"
+             "--disable-build-timestamp"))) ; build reproducibly
     (home-page "https://www.yadifa.eu/")
     (synopsis "Authoritative DNS name server")
     (description "YADIFA is an authoritative name server for the @dfn{Domain
@@ -804,7 +807,7 @@ Extensions} (DNSSEC).")
 (define-public knot
   (package
     (name "knot")
-    (version "3.0.0")
+    (version "3.0.1")
     (source
      (origin
        (method git-fetch)
@@ -813,24 +816,41 @@ Extensions} (DNSSEC).")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0fkvip7n5ihjfwnnivdc3jf44y8p85ifglvq7b0anxvj9cg1m78f"))
+        (base32 "10mlzldxqvbaw78nghkr0s73rlbpz9wg16z14321xw2l9xfibkad"))
        (modules '((guix build utils)))
        (snippet
         '(begin
            ;; Remove Ragel-generated C files.  We'll recreate them below.
            (for-each delete-file (find-files "." "\\.c\\.[gt]."))
            (delete-file "src/libknot/yparser/ypbody.c")
+           ;; Remove bundled library to ensure we always use the system's.
+           (delete-file-recursively "src/contrib/libbpf")
            #t))))
     (build-system gnu-build-system)
+    (outputs (list "out" "doc" "lib" "tools"))
     (arguments
      `(#:configure-flags
-       (list "--sysconfdir=/etc"
+       (list (string-append "--docdir=" (assoc-ref %outputs "doc")
+                            "/share/" ,name "-" ,version)
+             (string-append "--infodir=" (assoc-ref %outputs "doc")
+                            "/share/info")
+             (string-append "--libdir=" (assoc-ref %outputs "lib") "/lib")
+             "--sysconfdir=/etc"
              "--localstatedir=/var"
              "--enable-dnstap"          ; let tools read/write capture files
-             "--enable-fast-parser"     ; disabled by default when .git/ exists
+             "--enable-fastparser"      ; disabled by default when .git/ exists
+             "--enable-xdp=auto"        ; XXX [=yes] currently means =embedded
              "--with-module-dnstap=yes") ; detailed query capturing & logging
        #:phases
        (modify-phases %standard-phases
+         (add-after 'unpack 'link-missing-libbpf-dependency
+           ;; Linking against -lbpf later would fail to find -lz: libbpf.pc has
+           ;; zlib in its Requires.private (not Requires) field.  Add it here.
+           (lambda _
+             (substitute* "configure.ac"
+               (("enable_xdp=yes" match)
+                (string-append match "\nlibbpf_LIBS=\"$libbpf_LIBS -lz\"")))
+             #true))
          (add-before 'bootstrap 'update-parser
            (lambda _
              (with-directory-excursion "src"
@@ -841,6 +861,9 @@ Extensions} (DNSSEC).")
              ;; This is needed even when using ‘make config_dir=... install’.
              (substitute* "src/Makefile.in" (("\\$\\(INSTALL\\) -d") "true"))
              #t))
+         (add-after 'build 'build-info
+           (lambda _
+             (invoke "make" "info")))
          (replace 'install
            (lambda* (#:key outputs #:allow-other-keys)
              (let* ((out (assoc-ref outputs "out"))
@@ -848,20 +871,47 @@ Extensions} (DNSSEC).")
                     (etc (string-append doc "/examples/etc")))
                (invoke "make"
                        (string-append "config_dir=" etc)
-                       "install")))))))
+                       "install"))))
+         (add-after 'install 'install-info
+           (lambda _
+             (invoke "make" "install-info")))
+         (add-after 'install 'break-circular-:lib->:out-reference
+           (lambda* (#:key outputs #:allow-other-keys)
+             (let ((lib (assoc-ref outputs "lib")))
+               (for-each (lambda (file)
+                           (substitute* file
+                             (("(prefix=).*" _ assign)
+                              (string-append assign lib "\n"))))
+                         (find-files lib "\\.pc$"))
+               #true)))
+         (add-after 'install 'split-:tools
+           (lambda* (#:key outputs #:allow-other-keys)
+             (let* ((out   (assoc-ref outputs "out"))
+                    (tools (assoc-ref outputs "tools")))
+               (mkdir-p (string-append tools "/share/man"))
+               (rename-file (string-append out   "/bin")
+                            (string-append tools "/bin"))
+               (rename-file (string-append out   "/share/man/man1")
+                            (string-append tools "/share/man/man1"))
+               #true))))))
     (native-inputs
      `(("autoconf" ,autoconf)
        ("automake" ,automake)
        ("libtool" ,libtool)
        ("pkg-config" ,pkg-config)
-       ("ragel" ,ragel)))
+       ("python-sphinx" ,python-sphinx)
+       ("ragel" ,ragel)
+       ("texinfo" ,texinfo)))
     (inputs
      `(("fstrm" ,fstrm)
        ("gnutls" ,gnutls)
        ("jansson" ,jansson)
+       ("libbpf" ,libbpf)
        ("libcap-ng" ,libcap-ng)
        ("libedit" ,libedit)
+       ("libelf" ,libelf)
        ("libidn" ,libidn)
+       ("libnghttp2" ,nghttp2 "lib")
        ("liburcu" ,liburcu)
        ("lmdb" ,lmdb)
        ("ncurses" ,ncurses)
@@ -936,7 +986,7 @@ synthesis, and on-the-fly re-configuration.")
     (inputs
      `(("fstrm" ,fstrm)
        ("gnutls" ,gnutls)
-       ("knot" ,knot)
+       ("knot:lib" ,knot "lib")
        ("libuv" ,libuv)
        ("lmdb" ,lmdb)
        ("luajit" ,luajit)

@@ -1455,6 +1455,8 @@ operate properly.")
        ("sdl" ,sdl2)
        ("soxr" ,soxr)
        ("speex" ,speex)
+       ;; FFmpeg is not yet compatible with SRT > 1.4.1.
+       ("srt" ,srt-1.4.1)
        ("twolame" ,twolame)
        ("vidstab" ,vidstab)
        ("x265" ,x265)
@@ -1539,6 +1541,7 @@ operate properly.")
                '())
          "--enable-libsoxr"
          "--enable-libspeex"
+         "--enable-libsrt"
          "--enable-libtheora"
          "--enable-libtwolame"
          "--enable-libvidstab"
@@ -1632,11 +1635,19 @@ audio/video codec library.")
                "1j7mdk9szrljgv4sdx69bm1pnbb3cldbdxbkr42jbdi9zn11gl7g"))))
     (arguments
      (substitute-keyword-arguments (package-arguments ffmpeg)
+       ((#:modules modules %gnu-build-system-modules)
+        `((srfi srfi-1)
+          ,@modules))
        ((#:configure-flags flags)
-        `(delete "--enable-libdav1d" (delete "--enable-libaom" (delete "--enable-librav1e"
-                  ,flags))))))
-    (inputs (alist-delete "dav1d" (alist-delete "libaom" (alist-delete "rav1e"
-                           (package-inputs ffmpeg)))))))
+        `(fold delete
+               ,flags
+               '("--enable-libdav1d"
+                 "--enable-libaom"
+                 "--enable-librav1e"
+                 "--enable-libsrt")))))
+    (inputs (fold alist-delete
+                  (package-inputs ffmpeg)
+                  '("dav1d" "libaom" "rav1e" "srt")))))
 
 (define-public ffmpeg-2.8
   (package
@@ -1830,6 +1841,8 @@ videoformats depend on the configuration flags of ffmpeg.")
        ("sdl-image" ,sdl-image)
        ("speex" ,speex)
        ("speexdsp" ,speexdsp)
+       ;; VLC is not yet compatible with SRT > 1.4.1.
+       ("srt" ,srt-1.4.1)
        ("taglib" ,taglib)
        ("twolame" ,twolame)
        ("unzip" ,unzip)
@@ -2129,9 +2142,8 @@ To load this plugin, specify the following option when starting mpv:
 (define-public libvpx
   (package
     (name "libvpx")
-    (version "1.8.2")
+    (version "1.9.0")
     (source (origin
-              ;; XXX: Upstream does not provide tarballs for > 1.6.1.
               (method git-fetch)
               (uri (git-reference
                     (url "https://chromium.googlesource.com/webm/libvpx")
@@ -2139,7 +2151,7 @@ To load this plugin, specify the following option when starting mpv:
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0gyq4fkbd2fv7m1mm9xrvn6rk6f4jsmbv8bnlhingmnrvyncnmnr"))
+                "16xv6ambc82g14h1y0q1vyy57wp6j9fbp0nk0wd5csnrw407rhry"))
               (patches (search-patches "libvpx-CVE-2016-2818.patch"))))
     (build-system gnu-build-system)
     (arguments
@@ -2157,7 +2169,11 @@ To load this plugin, specify the following option when starting mpv:
                       ;; The configure script does not understand some of the GNU
                       ;; options, so we only add the flags specified above.
                       (apply invoke  "./configure" configure-flags))))
-       #:tests? #f)) ; no check target
+
+       ;; XXX: The test suite wants to download 871 files from a cloud storage
+       ;; service (see test/test-data.sha1).  It is possible to specify a
+       ;; custom directory, but there seems to be no tarball with all files.
+       #:tests? #f))
     (native-inputs
      `(("perl" ,perl)
        ("yasm" ,yasm)))
@@ -2997,7 +3013,7 @@ be used for realtime video capture via Linux-specific APIs.")
 (define-public obs
   (package
     (name "obs")
-    (version "26.0.1")
+    (version "26.0.2")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -3006,12 +3022,21 @@ be used for realtime video capture via Linux-specific APIs.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1w6hbj83w91ni4fkkvpr2yz443xsgzilpip1fn7cnbvyizr89c1y"))))
+                "1d502f80whh686mvq0yn6zpa5nvmnlzxwp5sjz43vpbbvhpbrdqj"))))
     (build-system cmake-build-system)
     (arguments
      `(#:configure-flags
        (list (string-append "-DOBS_VERSION_OVERRIDE=" ,version)
-             "-DENABLE_UNIT_TESTS=TRUE")))
+             "-DENABLE_UNIT_TESTS=TRUE")
+       #:phases
+       (modify-phases %standard-phases
+         (add-after 'install 'wrap-executable
+           (lambda* (#:key outputs #:allow-other-keys)
+             (let ((out (assoc-ref outputs "out"))
+                   (plugin-path (getenv "QT_PLUGIN_PATH")))
+               (wrap-program (string-append out "/bin/obs")
+                 `("QT_PLUGIN_PATH" ":" prefix (,plugin-path))))
+             #t)))))
     (native-inputs
      `(("cmocka" ,cmocka)
        ("pkg-config" ,pkg-config)))
@@ -3602,7 +3627,7 @@ practically any type of media.")
 (define-public libmediainfo
   (package
     (name "libmediainfo")
-    (version "20.08")
+    (version "20.09")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://mediaarea.net/download/source/"
@@ -3610,7 +3635,7 @@ practically any type of media.")
                                   name "_" version ".tar.xz"))
               (sha256
                (base32
-                "19n8h9jq42b6r3dbag77fzwfksfywszmzpi636w87fvc1nqldlqj"))))
+                "15ni9pnch6688m72swwax109a7mg4a08yx75qknrx7qa6dbyhz6h"))))
     ;; TODO add a Big Buck Bunny webm for tests.
     (native-inputs
      `(("autoconf" ,autoconf)
@@ -3660,7 +3685,7 @@ MPEG-2, MPEG-4, DVD (VOB)...
 (define-public mediainfo
   (package
     (name "mediainfo")
-    (version "20.08")
+    (version "20.09")
     (source (origin
               (method url-fetch)
               ;; Warning: This source has proved unreliable 1 time at least.
@@ -3671,7 +3696,7 @@ MPEG-2, MPEG-4, DVD (VOB)...
                                   name "_" version ".tar.xz"))
               (sha256
                (base32
-                "1baf2dj5s3g1x4ssqli1b2r1203syk42m09zhp36qcinmfixv11l"))))
+                "0rqg9z7s5bk7vlvjrs4gackzg7ib05a0dffi2ihsjf5a7kw7wcir"))))
     (native-inputs
      `(("autoconf" ,autoconf)
        ("automake" ,automake)
@@ -4541,7 +4566,7 @@ result in several formats:
         ("rust-arrayvec" ,rust-arrayvec-0.5)
         ("rust-backtrace" ,rust-backtrace-0.3)
         ("rust-bitstream-io" ,rust-bitstream-io-0.8)
-        ("rust-byteorder" ,rust-byteorder-1.3)
+        ("rust-byteorder" ,rust-byteorder-1)
         ("rust-cfg-if" ,rust-cfg-if-0.1)
         ("rust-clap" ,rust-clap-2)
         ("rust-console" ,rust-console-0.11)
@@ -4565,7 +4590,7 @@ result in several formats:
         ("rust-serde" ,rust-serde-1)
         ("rust-signal-hook" ,rust-signal-hook-0.1)
         ("rust-simd-helpers" ,rust-simd-helpers-0.1)
-        ("rust-thiserror" ,rust-thiserror-1.0)
+        ("rust-thiserror" ,rust-thiserror-1)
         ("rust-toml" ,rust-toml-0.5)
         ("rust-y4m" ,rust-y4m-0.5)
         ("rust-cc" ,rust-cc-1)

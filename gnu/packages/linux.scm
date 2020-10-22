@@ -49,6 +49,8 @@
 ;;; Copyright © 2020 Michael Rohleder <mike@rohleder.de>
 ;;; Copyright © 2020 Anders Thuné <asse.97@gmail.com>
 ;;; Copyright © 2020 Maxim Cournoyer <maxim.cournoyer@gmail.com>
+;;; Copyright © 2020 Greg Hogan <code@greghogan.com>
+;;; Copyright © 2020 Zhu Zihao <all_but_last@163.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -349,15 +351,15 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
 
 ;; The current "stable" kernel. That is, the most recently released major
 ;; version.
-(define-public linux-libre-5.8-version "5.8.13")
+(define-public linux-libre-5.8-version "5.8.16")
 (define deblob-scripts-5.8
   (linux-libre-deblob-scripts
    linux-libre-5.8-version
    (base32 "07z7sglyrfh0706icqqf3shadf638pvyid9386r661ds5lbsa2mw")
-   (base32 "0j6jba5fcddqlb42f95gjl78jisfla4nswqila074gglcrbnl9q7")))
+   (base32 "0z28yj4f7hhc253hssslm6xl9sg92agbiw50jxb9y72d8zp6sksq")))
 (define-public linux-libre-5.8-pristine-source
   (let ((version linux-libre-5.8-version)
-        (hash (base32 "039j4ckx2p6rfpgqc5gzn6xc1krvhy0ivkjxck83s66xgqbkcngj")))
+        (hash (base32 "1icxa0pgqhji924ryz37mpjjf4zlkrm8bidanjyn2mzbar7migzx")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-5.8)))
@@ -365,20 +367,20 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
 ;; The "longterm" kernels — the older releases with long-term upstream support.
 ;; Here are the support timelines:
 ;; <https://www.kernel.org/category/releases.html>
-(define-public linux-libre-5.4-version "5.4.69")
+(define-public linux-libre-5.4-version "5.4.72")
 (define deblob-scripts-5.4
   (linux-libre-deblob-scripts
    linux-libre-5.4-version
    (base32 "0ckxn7k5zgcqk30dq943bnamr6a6zjbw2aqjl3x30f4kvh5f6k25")
-   (base32 "1b3q88i2qfdxyvpi9f7jds0qlb8hfpw87mgia096ax6822c2cmyb")))
+   (base32 "1h6gbc9cfhb7dqx669iq26a23whka6km5av0ysk61aaz2z57vkrk")))
 (define-public linux-libre-5.4-pristine-source
   (let ((version linux-libre-5.4-version)
-        (hash (base32 "19vxsbwvfwyz1w6m7sp38d504w98zwjxaap4hfhh6wrrddqivcx8")))
+        (hash (base32 "0whi5kr1ziy9y20p42adnmqks41cavsraa36g9dbbrbgsmdn890f")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-5.4)))
 
-(define-public linux-libre-4.19-version "4.19.149")
+(define-public linux-libre-4.19-version "4.19.152")
 (define deblob-scripts-4.19
   (linux-libre-deblob-scripts
    linux-libre-4.19-version
@@ -386,12 +388,12 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "1jiaw0as1ippkrjdpd52657w5mz9qczg3y2hlra7m9k0xawwiqlf")))
 (define-public linux-libre-4.19-pristine-source
   (let ((version linux-libre-4.19-version)
-        (hash (base32 "001alvxgyb1n0fgbfi5dkzjviid32lyjfjwd3jwmcallcsdcpkfr")))
+        (hash (base32 "0p857b1gmmc2bv8limrdbfb3zsnchvg275sx5fkyy4185jfam9m5")))
     (make-linux-libre-source version
                              (%upstream-linux-source version hash)
                              deblob-scripts-4.19)))
 
-(define-public linux-libre-4.14-version "4.14.200")
+(define-public linux-libre-4.14-version "4.14.202")
 (define deblob-scripts-4.14
   (linux-libre-deblob-scripts
    linux-libre-4.14-version
@@ -399,12 +401,12 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "1qij18inijj6c3ma8hv98yjagnzxdxyn134da9fd23ky8q6hbvky")))
 (define-public linux-libre-4.14-pristine-source
   (let ((version linux-libre-4.14-version)
-        (hash (base32 "0f4sd4fqgm1wbhmrsib04ry5aza84mlc8747y5wm6jx34h14lh2x")))
+        (hash (base32 "0a739g3s0lc579zp4478xr645qzvhmrm1w19x0rj7p8bbfmigiwm")))
     (make-linux-libre-source version
                              (%upstream-linux-source version hash)
                              deblob-scripts-4.14)))
 
-(define-public linux-libre-4.9-version "4.9.238")
+(define-public linux-libre-4.9-version "4.9.240")
 (define deblob-scripts-4.9
   (linux-libre-deblob-scripts
    linux-libre-4.9-version
@@ -412,12 +414,12 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "0fxajshb75siq39lj5h8xvhdj8lcmddkslwlyj65rhlwk6g2r4b2")))
 (define-public linux-libre-4.9-pristine-source
   (let ((version linux-libre-4.9-version)
-        (hash (base32 "0gsa2g5yjc7459ja107nla700ma32sg57dyj8q2xzi0yfw5zdsmi")))
+        (hash (base32 "0vvpvw5wsvjnwch5ci63x08qc7qyzpyxbiaxx4521nl8d7371r06")))
     (make-linux-libre-source version
                              (%upstream-linux-source version hash)
                              deblob-scripts-4.9)))
 
-(define-public linux-libre-4.4-version "4.4.238")
+(define-public linux-libre-4.4-version "4.4.240")
 (define deblob-scripts-4.4
   (linux-libre-deblob-scripts
    linux-libre-4.4-version
@@ -425,7 +427,7 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "0hhin1jpfkd6nwrb6xqxjzl3hdxy4pn8a15hy2d3d83yw6pflbsf")))
 (define-public linux-libre-4.4-pristine-source
   (let ((version linux-libre-4.4-version)
-        (hash (base32 "0r1kb7p0zf0nkavvf9nr9hs7bdjym43cqv87hkp7vrqpbh1i8y06")))
+        (hash (base32 "131pamgxxmx4ba4gn2qxczv8w3lxrmwlqg0a7pdjzg0sy9lirygk")))
     (make-linux-libre-source version
                              (%upstream-linux-source version hash)
                              deblob-scripts-4.4)))
@@ -976,7 +978,16 @@ It has been modified to remove all non-free binary blobs.")
                      #:extra-options
                      (append
                       `(;; needed to fix the RTC on rockchip platforms
-                        ("CONFIG_RTC_DRV_RK808" . #t))
+                        ("CONFIG_RTC_DRV_RK808" . #t)
+                        ;; Pinebook display, battery, charger and usb
+                        ("CONFIG_DRM_ANALOGIX_ANX6345" . m)
+                        ("CONFIG_CHARGER_AXP20X" . m)
+                        ("CONFIG_INPUT_AXP20X_PEK" . m)
+                        ("CONFIG_CHARGER_AXP20X" . m)
+                        ("CONFIG_BATTERY_AXP20X" . m)
+                        ("CONFIG_PINCTRL_AXP209" . m)
+                        ("CONFIG_AXP20X_POWER" . m)
+                        ("CONFIG_AXP20X_ADC" . m))
                       %default-extra-linux-options)))
 
 (define-public linux-libre-arm64-generic-5.4
@@ -1109,8 +1120,8 @@ RTL8812AU, RTL8821AU, and RTL8814AU chips.")
       (license license:gpl2+))))
 
 (define-public rtl8821ce-linux-module
-  (let ((commit "69765eb288a8dfad3b055b906760b53e02ab1dea")
-        (revision "0"))
+  (let ((commit "fe97b5003f2f3dd070f76ec38c00b83798c1cdea")
+        (revision "1"))
     (package
       (name "rtl8821ce-linux-module")
       (version (git-version "0.0.0" revision commit))
@@ -1123,7 +1134,7 @@ RTL8812AU, RTL8821AU, and RTL8814AU chips.")
          (file-name (git-file-name name version))
          (sha256
           (base32
-           "17jiw25k74kv5lnvgycvj2g1n06hbrpjz6p4znk4a62g136rhn4s"))))
+           "10mrp63npbqb39c442vx8mra278hw7sczb3b6bjrpr3gan6ljshn"))))
       (build-system linux-module-build-system)
       (arguments
        `(#:make-flags
@@ -2268,7 +2279,7 @@ that the Ethernet protocol is much simpler than the IP protocol.")
 (define-public iproute
   (package
     (name "iproute2")
-    (version "5.8.0")
+    (version "5.9.0")
     (source (origin
               (method url-fetch)
               (uri (string-append
@@ -2276,7 +2287,7 @@ that the Ethernet protocol is much simpler than the IP protocol.")
                     version ".tar.xz"))
               (sha256
                (base32
-                "0vk4vickrpahdhl3zazr2qn2bf99v5549ncirjpwiy4h0a4izkfg"))))
+                "1kys6dmhrl43iaq95n5sh02p39d7bq8i5y672qrzgwnwpjaaqpd2"))))
     (build-system gnu-build-system)
     (arguments
      `( ;; There is a test suite, but it wants network namespaces and sudo.
@@ -6425,17 +6436,18 @@ available in the kernel Linux.")
 (define-public cpuid
   (package
     (name "cpuid")
-    (version "20200427")
+    (version "20201006")
     (source (origin
               (method url-fetch)
               (uri (string-append "http://www.etallen.com/cpuid/cpuid-"
                                   version ".src.tar.gz"))
               (sha256
                (base32
-                "1m31238z2ya8f8pzpyklwp0ksf5xicqrw1z941hhhx913wzldaf1"))))
+                "19jnkh57f979b78ak5mpxmdvnkgc33r55cw9shgd2hc380b3zi8k"))))
     (build-system gnu-build-system)
     (arguments
-     '(#:make-flags '("CC=gcc")
+     `(#:make-flags
+       (list (string-append "CC=" ,(cc-for-target)))
        #:tests? #f                      ; no tests
        #:phases (modify-phases %standard-phases
                   (delete 'configure)   ; no configure script
@@ -7002,19 +7014,25 @@ the superuser to make device nodes.")
 (define-public fakeroot
   (package
     (name "fakeroot")
-    (version "1.24")
+    (version "1.25.3")
     (source (origin
+              ;; There are no tags in the repository, so take this snapshot.
               (method url-fetch)
               (uri (string-append "https://deb.debian.org/debian/pool/main/f/"
                                   "fakeroot/fakeroot_" version ".orig.tar.gz"))
               (file-name (string-append name "-" version ".tar.gz"))
               (sha256
                (base32
-                "1vb6f93hjyqnwx8dc8mm3dgma7axgqk8s7sdsjs8l2rpc0qmn11f"))))
+                "0v4m3v1bdqvblwj3vqsb3mllgbci6dsgsydq6765nzvz6n1kd44f"))))
     (build-system gnu-build-system)
     (arguments
      `(#:phases
        (modify-phases %standard-phases
+         (replace 'bootstrap
+           (lambda _
+             ;; The "preroll" script takes care of Autoconf and also
+             ;; prepares the translated manuals.
+             (invoke "sh" "./preroll")))
         (add-after 'configure 'patch-Makefile
           (lambda _
             ;; Note: The root of the problem is already in "Makefile.am".
@@ -7054,21 +7072,21 @@ the superuser to make device nodes.")
             ;; We don't have an /etc/passwd entry for "root" - use numeric IDs.
             (substitute* "test/compare-tar"
              (("tar -tvf") "tar --numeric-owner -tvf"))
-
-            ;; coreutils 8.32 changed 'ls' to use the statx() syscall instead
-            ;; of lstat().  fakeroot 1.24 does not support the former, so
-            ;; adjust these tests to use 'test -b' instead of 'ls' to test for
-            ;; block device.  See <https://bugs.gnu.org/41090>.
-            (substitute* '("test/t.mknod" "test/t.chmod_dev")
-              (("ls -ld? \\$tmp/hda3")
-               "test -b $tmp/hda3 && echo block || echo fail"))
             #t)))))
     (native-inputs
-     `(("acl" ,acl)
-       ("sharutils" ,sharutils) ; for the tests
-       ("xz" ,xz))) ; for the tests
+     `(;; For bootstrapping the package.
+       ("autoconf" ,autoconf)
+       ("automake" ,automake)
+       ("libtool" ,libtool)
+       ("gettext" ,gettext-minimal)
+       ("po4a" ,po4a)
+
+       ;; For tests.
+       ("sharutils" ,sharutils)
+       ("xz" ,xz)))
     (inputs
-     `(("libcap" ,libcap/next)
+     `(("acl" ,acl)
+       ("libcap" ,libcap/next)
        ("util-linux" ,util-linux)
        ("sed" ,sed)
        ("coreutils" ,coreutils)))
@@ -7585,3 +7603,38 @@ iptables rule and benefit from the speed of IP sets.
 @end itemize\n
 then IP sets may be the proper tool for you.")
     (license license:gpl2+)))
+
+(define-public liburing
+  (package
+    (name "liburing")
+    (version "0.7")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://git.kernel.dk/liburing")
+                    (commit (string-append "liburing-" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "15z44l7y4c6s6dlf7v8lq4znlsjbja2r4ifbni0l8cdcnq0w3zh3"))))
+    (build-system gnu-build-system)
+    (arguments
+     `(;; Tests are dependent on kernel version and features
+       #:tests? #f
+       #:phases
+       (modify-phases %standard-phases
+         (replace 'configure
+           ;; configure fails if it is followed by SHELL, CONFIG_SHELL,
+           ;; --enable-fast-install, and --build
+           (lambda* (#:key outputs #:allow-other-keys)
+             (let ((out (assoc-ref outputs "out")))
+               (setenv "SHELL" (which "sh"))
+               (setenv "CONFIG_SHELL" (which "sh"))
+               (invoke "./configure" (string-append "--prefix=" out))))))))
+    (home-page "https://github.com/axboe/liburing")
+    (synopsis "Interface to the Linux kernel @code{io_uring} interface")
+    (description "This is the io_uring library, liburing. liburing provides
+helpers to setup and teardown io_uring instances, and also a simplified
+interface for applications that don't need (or want) to deal with the full
+kernel side implementation.")
+    (license license:expat)))

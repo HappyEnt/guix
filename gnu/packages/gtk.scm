@@ -173,6 +173,12 @@ affine transformation (scale, rotation, shear, etc.).")
    (license license:lgpl2.1) ; or Mozilla Public License 1.1
    (home-page "https://cairographics.org/")))
 
+(define-public cairo-sans-poppler
+  ;; Variant used to break the dependency cycle between Poppler and Cairo.
+  (package/inherit cairo
+    (inputs (alist-delete "poppler" (package-inputs cairo)))
+    (properties `((hidden? . #t)))))
+
 (define-public cairo-xcb
   (package
     (inherit cairo)
@@ -1899,14 +1905,14 @@ does not deal with windowing system surfaces, drawing, scene graphs, or input.")
 (define-public spread-sheet-widget
   (package
     (name "spread-sheet-widget")
-    (version "0.6")
+    (version "0.7")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "https://alpha.gnu.org/gnu/ssw/"
                            "spread-sheet-widget-" version ".tar.gz"))
        (sha256
-        (base32 "08ck9l697xg8vpya5h07raq837i4pqxjqzx30vhscq4xpps2b8kj"))))
+        (base32 "09rzgp7gabnzab460x874a1ibgyjiibpwzsz5srn9zs6jv2jdxjb"))))
     (build-system gnu-build-system)
     (native-inputs
      `(("glib" ,glib "bin")             ; for glib-genmarshal, etc.

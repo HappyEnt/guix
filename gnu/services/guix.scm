@@ -363,6 +363,8 @@
   #~(begin
       (use-modules (guix build utils))
 
+      (define %user (getpw "guix-build-coordinator-agent"))
+
       (mkdir-p "/var/log/guix-build-coordinator")
 
       ;; Allow writing the PID file
@@ -535,7 +537,7 @@ ca-certificates.crt file in the system profile."
                 #:environment-variables
                 `(,(string-append
                     "GUIX_LOCPATH=" #$glibc-utf8-locales "/lib/locale")
-                  "LC_ALL=en_US.utf8")
+                  "LC_ALL=en_US.UTF-8")
                 #:log-file "/var/log/guix-data-service/web.log"))
       (stop #~(make-kill-destructor)))
 
@@ -559,7 +561,7 @@ ca-certificates.crt file in the system profile."
                   "GIT_SSL_CAINFO=/etc/ssl/certs/ca-certificates.crt"
                   ,(string-append
                     "GUIX_LOCPATH=" #$glibc-utf8-locales "/lib/locale")
-                  "LC_ALL=en_US.utf8")
+                  "LC_ALL=en_US.UTF-8")
                 #:log-file "/var/log/guix-data-service/process-jobs.log"))
       (stop #~(make-kill-destructor))))))
 

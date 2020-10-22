@@ -135,7 +135,7 @@ This package contains GUI widgets for baloo.")
      (list license:lgpl2.1+ license:fdl1.2+))))
 
 (define-public kdenlive
-  (let ((version "20.08.1"))
+  (let ((version "20.08.2"))
     (package
       (name "kdenlive")
       (version version)
@@ -147,8 +147,7 @@ This package contains GUI widgets for baloo.")
                (commit (string-append "v" version))))
          (file-name (string-append name "-" version "-checkout"))
          (sha256
-          (base32
-           "15mpw1sysy7mky8fcj0x4zbspz0na7q76xdfj0j8hsggg9d3yq8l"))))
+          (base32 "1zcckv4wj12pvxjg85c8l67vi3amz79yv8mf7m4fbxnam3yxhy90"))))
       (build-system cmake-build-system)
       (native-inputs
        `(("extra-cmake-modules" ,extra-cmake-modules)
@@ -375,7 +374,7 @@ illustrate project schedules.")
 (define-public krita
   (package
     (name "krita")
-    (version "4.3.0")
+    (version "4.4.0")
     (source (origin
               (method url-fetch)
               (uri (string-append
@@ -383,7 +382,7 @@ illustrate project schedules.")
                     "/krita-" version ".tar.gz"))
               (sha256
                (base32
-                "1njbxv7b56if838gv7ydzm1sprgmaabnp0jlj0bxryxzfdy8hwfh"))))
+                "13r7x4gql5wp88hmpv9m6m3lh7gsybm4la48hqbjcb3iwiv86pzw"))))
     (build-system cmake-build-system)
     (arguments
      `(#:tests? #f
@@ -628,7 +627,10 @@ different notification systems.")
        ("qca" ,qca)
        ("qtbase" ,qtbase)
        ("qtdeclarative" ,qtdeclarative)
+       ("qtgraphicaleffects" ,qtgraphicaleffects)
        ("qtmultimedia" ,qtmultimedia)
+       ("qtquickcontrols" ,qtquickcontrols)
+       ("qtquickcontrols2" ,qtquickcontrols2)
        ("qtx11extras" ,qtx11extras)))
     (home-page "https://community.kde.org/KDEConnect")
     (synopsis "Enable your devices to communicate with each other")

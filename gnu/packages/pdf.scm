@@ -18,6 +18,7 @@
 ;;; Copyright © 2019 Ben Sturmfels <ben@sturm.com.au>
 ;;; Copyright © 2019,2020 Hartmut Goebel <h.goebel@crazy-compilers.com>
 ;;; Copyright © 2020 Nicolas Goaziou <mail@nicolasgoaziou.fr>
+;;; Copyright © 2020 Michael Rohleder <mike@rohleder.de>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -190,9 +191,7 @@ please install the @code{flyer-composer-gui} package.")))
 
              ;; To build poppler-glib (as needed by Evince), we need Cairo and
              ;; GLib.  But of course, that Cairo must not depend on Poppler.
-             ("cairo" ,(package (inherit cairo)
-                         (inputs (alist-delete "poppler"
-                                               (package-inputs cairo)))))))
+             ("cairo" ,cairo-sans-poppler)))
    (propagated-inputs
     ;; As per poppler-cairo and poppler-glib.pc.
     ;; XXX: Ideally we'd propagate Cairo too, but that would require a
@@ -580,7 +579,7 @@ by using the poppler rendering engine.")
 (define-public zathura
   (package
     (name "zathura")
-    (version "0.4.5")
+    (version "0.4.7")
     (source (origin
               (method url-fetch)
               (uri
@@ -588,7 +587,7 @@ by using the poppler rendering engine.")
                               version ".tar.xz"))
               (sha256
                (base32
-                "0b3nrcvykkpv2vm99kijnic2gpfzva520bsjlihaxandzfm9ff8c"))))
+                "1rx1fk9s556fk59lmqgvhwrmv71ashh89bx9adjq46wq5gzdn4p0"))))
     (native-inputs `(("pkg-config" ,pkg-config)
                      ("gettext" ,gettext-minimal)
                      ("glib:bin" ,glib "bin")

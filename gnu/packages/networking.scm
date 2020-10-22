@@ -13,7 +13,7 @@
 ;;; Copyright © 2016 Benz Schenk <benz.schenk@uzh.ch>
 ;;; Copyright © 2016, 2017 Pjotr Prins <pjotr.guix@thebird.nl>
 ;;; Copyright © 2017 Mathieu Othacehe <m.othacehe@gmail.com>
-;;; Copyright © 2017 Leo Famulari <leo@famulari.name>
+;;; Copyright © 2017, 2020 Leo Famulari <leo@famulari.name>
 ;;; Copyright © 2017, 2018, 2019, 2020 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2017, 2018, 2019 Rutger Helling <rhelling@mykolab.com>
 ;;; Copyright © 2017, 2019 Gábor Boskovits <boskovits@gmail.com>
@@ -240,13 +240,13 @@ Android, and ChromeOS.")
        ("gtk-doc" ,gtk-doc)
        ("pkg-config" ,pkg-config)))
     (inputs
-     `(("gnutls" ,gnutls)
-       ("gstreamer" ,gstreamer)
+     `(("gstreamer" ,gstreamer)
        ("gst-plugins-base" ,gst-plugins-base)
        ("libnsl" ,libnsl)))
     (propagated-inputs
      `(("glib" ,glib)
-       ("glib-networking" ,glib-networking)))
+       ("glib-networking" ,glib-networking)
+       ("gnutls" ,gnutls)))
     (synopsis "GLib ICE implementation")
     (description "LibNice is a library that implements the Interactive
 Connectivity Establishment (ICE) standard (RFC 5245 & RFC 8445).  It provides a
@@ -345,6 +345,24 @@ supported, including rtmp://, rtmpt://, rtmpe://, rtmpte://, and rtmps://.")
 performance across unpredictable networks, such as the Internet.")
     (home-page "https://www.srtalliance.org/")
     (license license:mpl2.0)))
+
+;; FFmpeg, GStreamer, and VLC don't support SRT 1.4.2 yet.
+(define-public srt-1.4.1
+  (package
+    (inherit srt)
+    (name "srt")
+    (version "1.4.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri
+        (git-reference
+         (url "https://github.com/Haivision/srt.git")
+         (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "01xaq44j95kbgqfl41pnybvqy0yq6wd4wdw88ckylzf0nzp977xz"))))))
 
 (define-public lksctp-tools
   (package
@@ -882,10 +900,14 @@ more.")
        #:phases (modify-phases %standard-phases
                   (add-before 'check 'patch-tests
                     (lambda _
-                      ;; XXX FIXME: Disable the zproc test, which fails on some
-                      ;; hardware: <https://github.com/zeromq/czmq/issues/2007>.
                       (substitute* "src/czmq_selftest.c"
+                        ;; Disable the zproc test, which fails on some hardware
+                        ;; (see: https://github.com/zeromq/czmq/issues/2007).
                         (("\\{ \"zproc\", zproc_test.*")
+                         "")
+                        ;; Also disable the zarmour test, which fails as well
+                        ;; (see: https://github.com/zeromq/czmq/issues/2125).
+                        (("\\{ \"zarmour\", zarmour_test.*")
                          ""))
                       #t)))))
     (inputs
@@ -1023,14 +1045,14 @@ receiving NDP messages.")
 (define-public ethtool
   (package
     (name "ethtool")
-    (version "5.8")
+    (version "5.9")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://kernel.org/software/network/"
                                   "ethtool/ethtool-" version ".tar.xz"))
               (sha256
                (base32
-                "0ikmz36bdfwxscsfcgjmyzg70hwr8i3wpdhcp1vmk3q4ip858frg"))))
+                "0vwam1ay184z237vnl8ivb0rdjjbljp9pj3kjzhc6yzq180k4aai"))))
     (build-system gnu-build-system)
     (native-inputs
      `(("pkg-config" ,pkg-config)))

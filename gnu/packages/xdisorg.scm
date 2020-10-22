@@ -40,6 +40,7 @@
 ;;; Copyright © 2020 Ivan Kozlov <kanichos@yandex.ru>
 ;;; Copyright © 2020 Brett Gilio <brettg@gnu.org>
 ;;; Copyright © 2020 Gabriel Arazas <foo.dogsquared@gmail.com>
+;;; Copyright © 2020 James Smith <jsubuntuxp@disroot.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -104,6 +105,7 @@
   #:use-module (gnu packages xorg)
   #:use-module (gnu packages fontutils)
   #:use-module (gnu packages bison)
+  #:use-module (gnu packages sphinx)
   #:use-module (ice-9 match))
 
 ;; packages outside the x.org system proper
@@ -985,7 +987,8 @@ compact configuration syntax.")
      ;; This sets the destination when installing the necessary terminal
      ;; capability data, which are not provided by 'ncurses'.  See
      ;; https://lists.gnu.org/archive/html/bug-ncurses/2009-10/msg00031.html
-     `(#:make-flags (list (string-append "TERMINFO="
+     `(#:configure-flags (list "--enable-256-color")
+       #:make-flags (list (string-append "TERMINFO="
                                          (assoc-ref %outputs "out")
                                          "/share/terminfo"))
        #:phases
@@ -2515,4 +2518,35 @@ using @command{dmenu}.")
      "Wofi is a launcher/menu program for wlroots based wayland compositors
 such as sway, similar to @command{rofi}.")
     (home-page "https://hg.sr.ht/~scoopta/wofi")
+    (license license:gpl3+)))
+
+(define-public dex
+  (package
+    (name "dex")
+    (version "0.9.0")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url (string-append "https://github.com/jceb/dex"))
+                    (commit (string-append "v" version))))
+              (sha256
+               (base32
+                "03aapcywnz4kl548cygpi25m8adwbmqlmwgxa66v4156ax9dqs86"))
+              (file-name (git-file-name name version))))
+    (build-system gnu-build-system)
+    (arguments
+     `(#:make-flags (list (string-append "PREFIX=" (assoc-ref %outputs "out")))
+       #:phases
+       (modify-phases %standard-phases
+         (delete 'configure))
+       #:tests? #f))
+    (inputs
+     `(("python", python)))
+    (native-inputs
+     `(("python-sphinx" ,python-sphinx)))
+    (home-page "https://github.com/jceb/dex")
+    (synopsis "Execute DesktopEntry files")
+    (description
+     "@command{dex}, @dfn{DesktopEntry Execution}, is a program to generate
+and execute @file{.desktop} files of the Application type.")
     (license license:gpl3+)))

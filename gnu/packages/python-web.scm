@@ -90,14 +90,13 @@
 (define-public python-aiohttp
   (package
     (name "python-aiohttp")
-    (version "3.6.2")
+    (version "3.6.3")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "aiohttp" version))
        (sha256
-        (base32
-         "09pkw6f1790prnrq0k8cqgnf1qy57ll8lpmc6kld09q7zw4vi6i5"))
+        (base32 "0i9n7h8n06m2d8ryqyk4fv1si1m44ibq7blbfaxq46vx7jydg339"))
        (patches (search-patches "python-aiohttp-3.6.2-no-warning-fail.patch"))))
     (build-system python-build-system)
     (arguments
@@ -872,14 +871,14 @@ is Python’s.")
 (define-public python-openid
   (package
     (name "python-openid")
-    (version "3.1.0")
+    (version "3.2.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "python3-openid" version))
        (sha256
         (base32
-         "00l5hrjh19740w00b3fnsqldnla41wbr2rics09dl4kyd1fkd3b2"))))
+         "1bxf9a3ny1js422j962zfzl4a9dhj192pvai05whn7j0iy9gdyrk"))))
     (build-system python-build-system)
     (arguments
      `(#:phases
@@ -2164,13 +2163,13 @@ adapter for use with the Requests library.")
 (define-public python-oauthlib
   (package
     (name "python-oauthlib")
-    (version "3.0.1")
+    (version "3.1.0")
     (source (origin
               (method url-fetch)
               (uri (pypi-uri "oauthlib" version))
               (sha256
                (base32
-                "163jg4a8f7c5ki655grrr47kgljy12wri3qly7ijf64sk1fjrqqc"))))
+                "12gqnabwck30gdlpwm6af3s28qm9p2yc7b1w8s4fk9ncbz1irr5y"))))
     (build-system python-build-system)
     (arguments
      `(#:phases (modify-phases %standard-phases
@@ -2343,13 +2342,13 @@ and to spawn subprocesses to handle requests.")
 (define-public python-pastedeploy
   (package
     (name "python-pastedeploy")
-    (version "2.1.0")
+    (version "2.1.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "PasteDeploy" version))
        (sha256
-        (base32 "16qsq5y6mryslmbp5pn35x4z8z3ndp5rpgl42h226879nrw9hmg7"))))
+        (base32 "05s88qdjdwd9d9qs13fap7nqgxs7qs5qfzzjbrc5va13k2mxdskd"))))
     (build-system python-build-system)
     (arguments
      '(#:test-target "pytest"))

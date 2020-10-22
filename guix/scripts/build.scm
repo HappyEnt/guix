@@ -26,6 +26,7 @@
   #:use-module (guix store)
   #:use-module (guix derivations)
   #:use-module (guix packages)
+  #:use-module (guix memoization)
   #:use-module (guix grafts)
 
   #:use-module (guix utils)
@@ -64,7 +65,6 @@
             %transformation-options
             options->transformation
             manifest-entry-with-transformations
-            show-transformation-options-help
 
             guix-build
             register-root
@@ -396,6 +396,117 @@ a checkout of the Git repository at the given URL."
         (rewrite obj)
         obj)))
 
+(define (package-dependents/spec top bottom)
+  "Return the list of dependents of BOTTOM, a spec string, that are also
+dependencies of TOP, a package."
+  (define-values (name version)
+    (package-name->name+version bottom))
+
+  (define dependent?
+    (mlambda (p)
+      (and (package? p)
+           (or (and (string=? name (package-name p))
+                    (or (not version)
+                        (version-prefix? version (package-version p))))
+               (match (bag-direct-inputs (package->bag p))
+                 (((labels dependencies . _) ...)
+                  (any dependent? dependencies)))))))
+
+  (filter dependent? (package-closure (list top))))
+
+(define (package-toolchain-rewriting p bottom toolchain)
+  "Return a procedure that, when passed a package that's either BOTTOM or one
+of its dependents up to P so, changes it so it is built with TOOLCHAIN.
+TOOLCHAIN must be an input list."
+  (define rewriting-property
+    (gensym " package-toolchain-rewriting"))
+
+  (match (package-dependents/spec p bottom)
+    (()                                           ;P does not depend on BOTTOM
+     identity)
+    (set
+     ;; SET is the list of packages "between" P and BOTTOM (included) whose
+     ;; toolchain needs to be changed.
+     (package-mapping (lambda (p)
+                        (if (or (assq rewriting-property
+                                      (package-properties p))
+                                (not (memq p set)))
+                            p
+                            (let ((p (package-with-c-toolchain p toolchain)))
+                              (package/inherit p
+                                (properties `((,rewriting-property . #t)
+                                              ,@(package-properties p)))))))
+                      (lambda (p)
+                        (or (assq rewriting-property (package-properties p))
+                            (not (memq p set))))
+                      #:deep? #t))))
+
+(define (transform-package-toolchain replacement-specs)
+  "Return a procedure that, when passed a package, changes its toolchain or
+that of its dependencies according to REPLACEMENT-SPECS.  REPLACEMENT-SPECS is
+a list of strings like \"fftw=gcc-toolchain@10\" meaning that the package to
+the left of the equal sign must be built with the toolchain to the right of
+the equal sign."
+  (define split-on-commas
+    (cute string-tokenize <> (char-set-complement (char-set #\,))))
+
+  (define (specification->input spec)
+    (let ((package (specification->package spec)))
+      (list (package-name package) package)))
+
+  (define replacements
+    (map (lambda (spec)
+           (match (string-tokenize spec %not-equal)
+             ((spec (= split-on-commas toolchain))
+              (cons spec (map specification->input toolchain)))
+             (_
+              (leave (G_ "~a: invalid toolchain replacement specification~%")
+                     spec))))
+         replacement-specs))
+
+  (lambda (store obj)
+    (if (package? obj)
+        (or (any (match-lambda
+                   ((bottom . toolchain)
+                    ((package-toolchain-rewriting obj bottom toolchain) obj)))
+                 replacements)
+            obj)
+        obj)))
+
+(define (transform-package-with-debug-info specs)
+  "Return a procedure that, when passed a package, set its 'replacement' field
+to the same package but with #:strip-binaries? #f in its 'arguments' field."
+  (define (non-stripped p)
+    (package
+      (inherit p)
+      (arguments
+       (substitute-keyword-arguments (package-arguments p)
+         ((#:strip-binaries? _ #f) #f)))))
+
+  (define (package-with-debug-info p)
+    (if (member "debug" (package-outputs p))
+        p
+        (let loop ((p p))
+          (match (package-replacement p)
+            (#f
+             (package
+               (inherit p)
+               (replacement (non-stripped p))))
+            (next
+             (package
+               (inherit p)
+               (replacement (loop next))))))))
+
+  (define rewrite
+    (package-input-rewriting/spec (map (lambda (spec)
+                                         (cons spec package-with-debug-info))
+                                       specs)))
+
+  (lambda (store obj)
+    (if (package? obj)
+        (rewrite obj)
+        obj)))
+
 (define (transform-package-tests specs)
   "Return a procedure that, when passed a package, sets #:tests? #f in its
 'arguments' field."
@@ -426,6 +537,8 @@ a checkout of the Git repository at the given URL."
     (with-branch . ,transform-package-source-branch)
     (with-commit . ,transform-package-source-commit)
     (with-git-url . ,transform-package-source-git-url)
+    (with-c-toolchain . ,transform-package-toolchain)
+    (with-debug-info . ,transform-package-with-debug-info)
     (without-tests . ,transform-package-tests)))
 
 (define (transformation-procedure key)
@@ -455,6 +568,10 @@ a checkout of the Git repository at the given URL."
                   (parser 'with-commit))
           (option '("with-git-url") #t #f
                   (parser 'with-git-url))
+          (option '("with-c-toolchain") #t #f
+                  (parser 'with-c-toolchain))
+          (option '("with-debug-info") #t #f
+                  (parser 'with-debug-info))
           (option '("without-tests") #t #f
                   (parser 'without-tests)))))
 
@@ -477,6 +594,12 @@ a checkout of the Git repository at the given URL."
   (display (G_ "
       --with-git-url=PACKAGE=URL
                          build PACKAGE from the repository at URL"))
+  (display (G_ "
+      --with-c-toolchain=PACKAGE=TOOLCHAIN
+                         build PACKAGE and its dependents with TOOLCHAIN"))
+  (display (G_ "
+      --with-debug-info=PACKAGE
+                         build PACKAGE and preserve its debug info"))
   (display (G_ "
       --without-tests=PACKAGE
                          build PACKAGE without running its tests")))
@@ -593,6 +716,8 @@ options handled by 'set-build-options-from-command-line', and listed in
   -c, --cores=N          allow the use of up to N CPU cores for the build"))
   (display (G_ "
   -M, --max-jobs=N       allow at most N build jobs"))
+  (display (G_ "
+      --help-transform   list package transformation options not shown here"))
   (display (G_ "
       --debug=LEVEL      produce debugging output at LEVEL")))
 
@@ -729,7 +854,14 @@ use '--no-offload' instead~%")))
                     (if c
                         (apply values (alist-cons 'max-jobs c result) rest)
                         (leave (G_ "not a number: '~a' option argument: ~a~%")
-                               name arg)))))))
+                               name arg)))))
+        (option '("help-transform") #f #f
+                (lambda _
+                  (format #t
+                          (G_ "Available package transformation options:~%"))
+                  (show-transformation-options-help)
+                  (newline)
+                  (exit 0)))))
 
 
 ;;;
@@ -785,8 +917,6 @@ Build the given PACKAGE-OR-DERIVATION and return their output paths.\n"))
       --log-file         return the log file names for the given derivations"))
   (newline)
   (show-build-options-help)
-  (newline)
-  (show-transformation-options-help)
   (newline)
   (display (G_ "
   -h, --help             display this help and exit"))

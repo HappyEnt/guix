@@ -513,13 +513,13 @@ ksh, and tcsh.")
 (define-public xonsh
   (package
     (name "xonsh")
-    (version "0.9.22")
+    (version "0.9.24")
     (source
       (origin
         (method url-fetch)
         (uri (pypi-uri "xonsh" version))
         (sha256
-          (base32 "1jnj063i2123d8yhqxwyx496b3npfyhszavg36748ysi0py5j8yd"))
+          (base32 "00nwbagsl8qrs7m40lb0yi5dhvippj387bpnjg6w7r9cvfbj2h7m"))
         (modules '((guix build utils)))
         (snippet
          `(begin
@@ -814,14 +814,14 @@ Shell (pdksh).")
 (define-public oil
   (package
     (name "oil")
-    (version "0.8.1")
+    (version "0.8.2")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "https://www.oilshell.org/download/oil-"
                            version ".tar.gz"))
        (sha256
-        (base32 "1np17gvvz6zkr2rkvdb15wax45b1mcf2946bfyy3y77ann1zxsyj"))))
+        (base32 "1m49darrs38x60zqi3sy1mh4a47qvwcyf7djrkzqwzwxsczxybgr"))))
     (build-system gnu-build-system)
     (arguments
      `(#:strip-binaries? #f             ; strip breaks the binary

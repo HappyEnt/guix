@@ -131,8 +131,8 @@
   ;; Note: the 'update-guix-package.scm' script expects this definition to
   ;; start precisely like this.
   (let ((version "1.1.0")
-        (commit "4e3ed9bad9ed5758cdee6e636805f65e9ab710eb")
-        (revision 29))
+        (commit "875c01f82dc5f2c4ca82952ea88b3240fbe8bede")
+        (revision 30))
     (package
       (name "guix")
 
@@ -144,11 +144,11 @@
       (source (origin
                 (method git-fetch)
                 (uri (git-reference
-                      (url "https://git.savannah.gnu.org/r/guix.git")
+                      (url "https://git.savannah.gnu.org/git/guix.git")
                       (commit commit)))
                 (sha256
                  (base32
-                  "1jaqpiry7y45k5vg09b4h6yfp0rcbp931yaajy2wi61kg1z27s5x"))
+                  "0mh1hnrk84h5nzqp6aflh9ab3kxr5672c8bx44minzyd26177yik"))
                 (file-name (string-append "guix-" version "-checkout"))))
       (build-system gnu-build-system)
       (arguments
@@ -990,8 +990,8 @@ environments.")
     (license (list license:gpl3+ license:agpl3+ license:silofl1.1))))
 
 (define-public guix-build-coordinator
-  (let ((commit "b1c5392ce817d467730aa4c435e63e6ed7c81524")
-        (revision "0"))
+  (let ((commit "5f11c6009fba7ad635987a839d5769c4d9ca8f29")
+        (revision "3"))
     (package
     (name "guix-build-coordinator")
     (version (git-version "0" revision commit))
@@ -1002,7 +1002,7 @@ environments.")
                     (commit commit)))
               (sha256
                (base32
-                "08aaqz50vi1hxi8929jhqv26s6bv7dz11ldmm3a2jxgjzpjvg8x3"))
+                "1r4y03blnh4vw3wgwh409wa4w3dbr20rzvfqiksm9g0ljic3r8zv"))
               (file-name (string-append name "-" version "-checkout"))))
     (build-system gnu-build-system)
     (arguments
@@ -1063,6 +1063,7 @@ environments.")
        ("guile-gcrypt" ,guile-gcrypt)
        ("guile-json" ,guile-json-3)
        ("guile-lzlib" ,guile-lzlib)
+       ("guile-zlib" ,guile-zlib)
        ("guile-sqlite3" ,guile-sqlite3)
        ("guix" ,guix)
        ("sqlite" ,sqlite)
@@ -1242,7 +1243,7 @@ for packaging and deployment of cross-compiled Windows applications.")
 (define-public libostree
   (package
     (name "libostree")
-    (version "2020.6")
+    (version "2020.7")
     (source
      (origin
        (method url-fetch)
@@ -1250,7 +1251,7 @@ for packaging and deployment of cross-compiled Windows applications.")
              "https://github.com/ostreedev/ostree/releases/download/v"
              (version-major+minor version) "/libostree-" version ".tar.xz"))
        (sha256
-        (base32 "0wk9fgj9jl25ns2hcgcb6j24k5mvfn13b02ka0p8l4hdh8c4hpc6"))))
+        (base32 "0clriq2ypz1fycd6mpjyrhzid44svzpzw0amnank593h69b216ax"))))
     (build-system gnu-build-system)
     (arguments
      '(#:phases

@@ -15,6 +15,7 @@
 ;;; Copyright © 2017 Arun Isaac <arunisaac@systemreboot.net>
 ;;; Copyright © 2017 Rutger Helling <rhelling@mykolab.com>
 ;;; Copyright © 2020 André Batista <nandre@riseup.net>
+;;; Copyright © 2020 Helio Machado <0x2b3bfa0+guix@googlemail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -49,6 +50,7 @@
             artistic2.0 clarified-artistic
             copyleft-next
             cpl1.0
+            cua-opl1.0
             edl1.0
             epl1.0
             epl2.0
@@ -76,7 +78,7 @@
             mpl1.0 mpl1.1 mpl2.0
             ms-pl
             ncsa
-            nmap
+            npsl
             ogl-psi1.0
             openldap2.8 openssl
             perl-license
@@ -116,6 +118,9 @@
 ;;; This list is based on these links:
 ;;; https://github.com/NixOS/nixpkgs/blob/master/lib/licenses.nix
 ;;; https://www.gnu.org/licenses/license-list
+;;;
+;;; Please update spdx-string->license from guix/import/utils.scm
+;;; when modifying this list to avoid mismatches.
 ;;;
 ;;; Code:
 
@@ -268,6 +273,11 @@ at URI, which may be a file:// URI pointing the package's tree."
   (license "CPL 1.0"
            "http://directory.fsf.org/wiki/License:CPLv1.0"
            "https://www.gnu.org/licenses/license-list#CommonPublicLicense10"))
+
+(define cua-opl1.0
+  (license "CUA Office Public License v1.0"
+           "https://spdx.org/licenses/CUA-OPL-1.0.html"
+           "https://opensource.org/licenses/CUA-OPL-1.0"))
 
 (define edl1.0
   (license "EDL 1.0"
@@ -521,10 +531,10 @@ at URI, which may be a file:// URI pointing the package's tree."
            "http://directory.fsf.org/wiki/License:IllinoisNCSA"
            "https://www.gnu.org/licenses/license-list#NCSA"))
 
-(define nmap
-  (license "Nmap license"
-           "https://svn.nmap.org/nmap/COPYING"
-           "https://fedoraproject.org/wiki/Licensing/Nmap"))
+(define npsl
+  (license "Nmap Public Source License"
+           "https://svn.nmap.org/nmap/LICENSE"
+           "https://nmap.org/npsl/"))
 
 (define ogl-psi1.0
   (license "Open Government Licence for Public Sector Information"

@@ -252,6 +252,8 @@ Programming Interface
 * Package Modules::             Packages from the programmer's viewpoint.
 * Defining Packages::           Defining new packages.
 * Build Systems::               Specifying how packages are built.
+* Build Phases::                Phases of the build process of a package.
+* Build Utilities::             Helpers for your package definitions and more.
 * The Store::                   Manipulating the package store.
 * Derivations::                 Low-level interface to package derivations.
 * The Store Monad::             Purely functional interface to the store.
@@ -349,6 +351,11 @@ Defining Services
 * Service Types and Services::  Types and services.
 * Service Reference::           API reference.
 * Shepherd Services::           A particular type of service.
+
+Installing Debugging Files
+
+* Separate Debug Info::         Installing 'debug' outputs.
+* Rebuilding Debug Info::       Building missing debug info.
 
 Bootstrapping
 
@@ -477,10 +484,10 @@ Packages are currently available on the following platforms:
 @table @code
 
 @item x86_64-linux
-Intel/AMD @code{x86_64} architecture, Linux-Libre kernel;
+Intel/AMD @code{x86_64} architecture, Linux-Libre kernel.
 
 @item i686-linux
-Intel 32-bit architecture (IA32), Linux-Libre kernel;
+Intel 32-bit architecture (IA32), Linux-Libre kernel.
 
 @item armhf-linux
 ARMv7-A architecture with hard float, Thumb-2 and NEON,
@@ -489,6 +496,16 @@ and Linux-Libre kernel.
 
 @item aarch64-linux
 little-endian 64-bit ARMv8-A processors, Linux-Libre kernel.
+
+@item i586-gnu
+@uref{https://hurd.gnu.org, GNU/Hurd} on the Intel 32-bit architecture
+(IA32).
+
+This configuration is experimental and under development.  The easiest
+way for you to give it a try is by setting up an instance of
+@code{hurd-vm-service-type} on your GNU/Linux machine
+(@pxref{transparent-emulation-qemu, @code{hurd-vm-service-type}}).
+@xref{Contributing}, on how to help!
 
 @item mips64el-linux (deprecated)
 little-endian 64-bit MIPS processors, specifically the Loongson series,
@@ -1077,11 +1094,33 @@ is requested, for instance via @code{guix build}, the daemon attempts to
 offload it to one of the machines that satisfy the constraints of the
 derivation, in particular its system types---e.g., @code{x86_64-linux}.
 A single machine can have multiple system types, either because its
-architecture natively supports it, via emulation (@pxref{Transparent
-Emulation with QEMU}), or both.  Missing prerequisites for the build are
+architecture natively supports it, via emulation
+(@pxref{transparent-emulation-qemu, Transparent Emulation with QEMU}),
+or both.  Missing prerequisites for the build are
 copied over SSH to the target machine, which then proceeds with the
 build; upon success the output(s) of the build are copied back to the
-initial machine.
+initial machine.  The offload facility comes with a basic scheduler that
+attempts to select the best machine.  The best machine is chosen among
+the available machines based on criteria such as:
+
+@enumerate
+@item
+The availability of a build slot.  A build machine can have as many
+build slots (connections) as the value of the @code{parallel-builds}
+field of its @code{build-machine} object.
+
+@item
+Its relative speed, as defined via the @code{speed} field of its
+@code{build-machine} object.
+
+@item
+Its load.  The normalized machine load must be lower than a threshold
+value, configurable via the @code{overload-threshold} field of its
+@code{build-machine} object.
+
+@item
+Disk space availability.  More than a 100 MiB must be available.
+@end enumerate
 
 The @file{/etc/guix/machines.scm} file typically looks like this:
 
@@ -1184,6 +1223,13 @@ when transferring files to and from build machines.
 @item @code{daemon-socket} (default: @code{"/var/guix/daemon-socket/socket"})
 File name of the Unix-domain socket @command{guix-daemon} is listening
 to on that machine.
+
+@item @code{overload-threshold} (default: @code{0.6})
+The load threshold above which a potential offload machine is
+disregarded by the offload scheduler.  The value roughly translates to
+the total processor usage of the build machine, ranging from 0.0 (0%) to
+1.0 (100%).  It can also be disabled by setting
+@code{overload-threshold} to @code{#f}.
 
 @item @code{parallel-builds} (default: @code{1})
 The number of builds that may run in parallel on the machine.
@@ -5796,7 +5842,7 @@ direct syscalls are not intercepted either, leading to erratic behavior.
 @vindex GUIX_EXECUTION_ENGINE
 When running a wrapped program, you can explicitly request one of the
 execution engines listed above by setting the
-@code{GUIX_EXECUTION_ENGINE} environment variable accordingly.
+@env{GUIX_EXECUTION_ENGINE} environment variable accordingly.
 @end quotation
 
 @cindex entry point, for Docker images
@@ -6046,6 +6092,8 @@ package definitions.
 * Package Modules::             Packages from the programmer's viewpoint.
 * Defining Packages::           Defining new packages.
 * Build Systems::               Specifying how packages are built.
+* Build Phases::                Phases of the build process of a package.
+* Build Utilities::             Helpers for your package definitions and more.
 * The Store::                   Manipulating the package store.
 * Derivations::                 Low-level interface to package derivations.
 * The Store Monad::             Purely functional interface to the store.
@@ -6164,7 +6212,7 @@ With luck, you may be able to import part or all of the definition of
 the package you are interested in from another repository, using the
 @code{guix import} command (@pxref{Invoking guix import}).
 
-In the example above, @var{hello} is defined in a module of its own,
+In the example above, @code{hello} is defined in a module of its own,
 @code{(gnu packages hello)}.  Technically, this is not strictly
 necessary, but it is convenient to do so: all the packages defined in
 modules under @code{(gnu packages @dots{})} are automatically known to
@@ -6197,15 +6245,19 @@ Scheme expression to modify the source code.
 @item
 @cindex GNU Build System
 The @code{build-system} field specifies the procedure to build the
-package (@pxref{Build Systems}).  Here, @var{gnu-build-system}
+package (@pxref{Build Systems}).  Here, @code{gnu-build-system}
 represents the familiar GNU Build System, where packages may be
 configured, built, and installed with the usual @code{./configure &&
 make && make check && make install} command sequence.
 
+When you start packaging non-trivial software, you may need tools to
+manipulate those build phases, manipulate files, and so on.  @xref{Build
+Utilities}, for more on this.
+
 @item
 The @code{arguments} field specifies options for the build system
 (@pxref{Build Systems}).  Here it is interpreted by
-@var{gnu-build-system} as a request run @file{configure} with the
+@code{gnu-build-system} as a request run @file{configure} with the
 @option{--enable-silent-rules} flag.
 
 @cindex quote
@@ -6229,8 +6281,8 @@ Reference Manual}).
 @item
 The @code{inputs} field specifies inputs to the build process---i.e.,
 build-time or run-time dependencies of the package.  Here, we define an
-input called @code{"gawk"} whose value is that of the @var{gawk}
-variable; @var{gawk} is itself bound to a @code{<package>} object.
+input called @code{"gawk"} whose value is that of the @code{gawk}
+variable; @code{gawk} is itself bound to a @code{<package>} object.
 
 @cindex backquote (quasiquote)
 @findex `
@@ -6247,7 +6299,7 @@ value in that list (@pxref{Expression Syntax, unquote,, guile, GNU Guile
 Reference Manual}).
 
 Note that GCC, Coreutils, Bash, and other essential tools do not need to
-be specified as inputs here.  Instead, @var{gnu-build-system} takes care
+be specified as inputs here.  Instead, @code{gnu-build-system} takes care
 of ensuring that they are present (@pxref{Build Systems}).
 
 However, any other dependencies need to be specified in the
@@ -6530,11 +6582,44 @@ cross-compiling:
 It is an error to refer to @code{this-package} outside a package definition.
 @end deffn
 
+Because packages are regular Scheme objects that capture a complete
+dependency graph and associated build procedures, it is often useful to
+write procedures that take a package and return a modified version
+thereof according to some parameters.  Below are a few examples.
+
+@cindex tool chain, choosing a package's tool chain
+@deffn {Scheme Procedure} package-with-c-toolchain @var{package} @var{toolchain}
+Return a variant of @var{package} that uses @var{toolchain} instead of
+the default GNU C/C++ toolchain.  @var{toolchain} must be a list of
+inputs (label/package tuples) providing equivalent functionality, such
+as the @code{gcc-toolchain} package.
+
+The example below returns a variant of the @code{hello} package built
+with GCC@tie{}10.x and the rest of the GNU tool chain (Binutils and the
+GNU C Library) instead of the default tool chain:
+
+@lisp
+(let ((toolchain (specification->package "gcc-toolchain@@10")))
+  (package-with-c-toolchain hello `(("toolchain" ,toolchain))))
+@end lisp
+
+The build tool chain is part of the @dfn{implicit inputs} of
+packages---it's usually not listed as part of the various ``inputs''
+fields and is instead pulled in by the build system.  Consequently, this
+procedure works by changing the build system of @var{package} so that it
+pulls in @var{toolchain} instead of the defaults.  @ref{Build Systems},
+for more on build systems.
+@end deffn
+
 @node origin Reference
 @subsection @code{origin} Reference
 
-This section summarizes all the options available in @code{origin}
-declarations (@pxref{Defining Packages}).
+This section documents @dfn{origins}.  An @code{origin} declaration
+specifies data that must be ``produced''---downloaded, usually---and
+whose content hash is known in advance.  Origins are primarily used to
+represent the source code of packages (@pxref{Defining Packages}).  For
+that reason, the @code{origin} form allows you to declare patches to
+apply to the original source code as well as code snippets to modify it.
 
 @deftp {Data Type} origin
 This is the data type representing a source code origin.
@@ -6546,28 +6631,18 @@ the @code{method} (see below).  For example, when using the
 @var{url-fetch} method of @code{(guix download)}, the valid @code{uri}
 values are: a URL represented as a string, or a list thereof.
 
+@cindex fixed-output derivations, for download
 @item @code{method}
-A procedure that handles the URI.
+A monadic procedure that handles the given URI.  The procedure must
+accept at least three arguments: the value of the @code{uri} field and
+the hash algorithm and hash value specified by the @code{hash} field.
+It must return a store item or a derivation in the store monad
+(@pxref{The Store Monad}); most methods return a fixed-output derivation
+(@pxref{Derivations}).
 
-Examples include:
-
-@table @asis
-@item @var{url-fetch} from @code{(guix download)}
-download a file from the HTTP, HTTPS, or FTP URL specified in the
-@code{uri} field;
-
-@vindex git-fetch
-@item @var{git-fetch} from @code{(guix git-download)}
-clone the Git version control repository, and check out the revision
-specified in the @code{uri} field as a @code{git-reference} object; a
-@code{git-reference} looks like this:
-
-@lisp
-(git-reference
-  (url "https://git.savannah.gnu.org/git/hello.git")
-  (commit "v2.10"))
-@end lisp
-@end table
+Commonly used methods include @code{url-fetch}, which fetches data from
+a URL, and @code{git-fetch}, which fetches data from a Git repository
+(see below).
 
 @item @code{sha256}
 A bytevector containing the SHA-256 hash of the source.  This is
@@ -6646,6 +6721,75 @@ It performs sanity checks at macro-expansion time, when possible, such
 as ensuring that @var{value} has the right size for @var{algorithm}.
 @end deftp
 
+As we have seen above, how exactly the data an origin refers to is
+retrieved is determined by its @code{method} field.  The @code{(guix
+download)} module provides the most common method, @code{url-fetch},
+described below.
+
+@deffn {Scheme Procedure} url-fetch @var{url} @var{hash-algo} @var{hash} @
+           [name] [#:executable? #f]
+Return a fixed-output derivation that fetches data from @var{url} (a
+string, or a list of strings denoting alternate URLs), which is expected
+to have hash @var{hash} of type @var{hash-algo} (a symbol).  By default,
+the file name is the base name of URL; optionally, @var{name} can
+specify a different file name.  When @var{executable?} is true, make the
+downloaded file executable.
+
+When one of the URL starts with @code{mirror://}, then its host part is
+interpreted as the name of a mirror scheme, taken from @file{%mirror-file}.
+
+Alternatively, when URL starts with @code{file://}, return the
+corresponding file name in the store.
+@end deffn
+
+Likewise, the @code{(guix git-download)} module defines the
+@code{git-fetch} origin method, which fetches data from a Git version
+control repository, and the @code{git-reference} data type to describe
+the repository and revision to fetch.
+
+@deffn {Scheme Procedure} git-fetch @var{ref} @var{hash-algo} @var{hash}
+Return a fixed-output derivation that fetches @var{ref}, a
+@code{<git-reference>} object.  The output is expected to have recursive
+hash @var{hash} of type @var{hash-algo} (a symbol).  Use @var{name} as
+the file name, or a generic name if @code{#f}.
+@end deffn
+
+@deftp {Data Type} git-reference
+This data type represents a Git reference for @code{git-fetch} to
+retrieve.
+
+@table @asis
+@item @code{url}
+The URL of the Git repository to clone.
+
+@item @code{commit}
+This string denotes either the commit to fetch (a hexadecimal string,
+either the full SHA1 commit or a ``short'' commit string; the latter is
+not recommended) or the tag to fetch.
+
+@item @code{recursive?} (default: @code{#f})
+This Boolean indicates whether to recursively fetch Git sub-modules.
+@end table
+
+The example below denotes the @code{v2.10} tag of the GNU@tie{}Hello
+repository:
+
+@lisp
+(git-reference
+  (url "https://git.savannah.gnu.org/git/hello.git")
+  (commit "v2.10"))
+@end lisp
+
+This is equivalent to the reference below, which explicitly names the
+commit:
+
+@lisp
+(git-reference
+  (url "https://git.savannah.gnu.org/git/hello.git")
+  (commit "dc7dc56a00e48fe6f231a58f6537139fe2908fb9"))
+@end lisp
+@end deftp
+
 @node Build Systems
 @section Build Systems
 
@@ -6666,6 +6810,9 @@ ornamentation---in other words, a bag is a lower-level representation of
 a package, which includes all the inputs of that package, including some
 that were implicitly added by the build system.  This intermediate
 representation is then compiled to a derivation (@pxref{Derivations}).
+The @code{package-with-c-toolchain} is an example of a way to change the
+implicit inputs that a package's build system pulls in (@pxref{package
+Reference, @code{package-with-c-toolchain}}).
 
 Build systems accept an optional list of @dfn{arguments}.  In package
 definitions, these are passed @i{via} the @code{arguments} field
@@ -6737,15 +6884,8 @@ The build-side module @code{(guix build gnu-build-system)} defines
 @code{%standard-phases} is a list of symbol/procedure pairs, where the
 procedure implements the actual phase.
 
-The list of phases used for a particular package can be changed with the
-@code{#:phases} parameter.  For instance, passing:
-
-@example
-#:phases (modify-phases %standard-phases (delete 'configure))
-@end example
-
-means that all the phases described above will be used, except the
-@code{configure} phase.
+@xref{Build Phases}, for more info on build phases and ways to customize
+them.
 
 In addition, this build system ensures that the ``standard'' environment
 for GNU packages is available.  This includes tools such as GCC, libc,
@@ -6883,8 +7023,8 @@ In its @code{configure} phase, this build system will make any source inputs
 specified in the @code{#:cargo-inputs} and @code{#:cargo-development-inputs}
 parameters available to cargo.  It will also remove an included
 @code{Cargo.lock} file to be recreated by @code{cargo} during the
-@code{build} phase.  The @code{install} phase installs any crate the binaries
-if they are defined by the crate.
+@code{build} phase.  The @code{install} phase installs the binaries
+defined by the crate.
 @end defvr
 
 
@@ -7130,7 +7270,7 @@ implements the build procedure used by @uref{https://julialang.org/,
 julia} packages, which essentially is similar to running @samp{julia -e
 'using Pkg; Pkg.add(package)'} in an environment where
 @env{JULIA_LOAD_PATH} contains the paths to all Julia package inputs.
-Tests are run not run.
+Tests are run with @code{Pkg.test}.
 
 Julia packages require the source @code{file-name} to be the real name of the
 package, correctly capitalized.
@@ -7574,6 +7714,449 @@ must be a Scheme expression that builds the package output(s)---as
 with @code{build-expression->derivation} (@pxref{Derivations,
 @code{build-expression->derivation}}).
 @end defvr
+
+@node Build Phases
+@section Build Phases
+
+@cindex build phases, for packages
+Almost all package build systems implement a notion @dfn{build phases}:
+a sequence of actions that the build system executes, when you build the
+package, leading to the installed byproducts in the store.  A notable
+exception is the ``bare-bones'' @code{trivial-build-system}
+(@pxref{Build Systems}).
+
+As discussed in the previous section, those build systems provide a
+standard list of phases.  For @code{gnu-build-system}, the standard
+phases include an @code{unpack} phase to unpack the source code tarball,
+a @command{configure} phase to run @code{./configure}, a @code{build}
+phase to run @command{make}, and (among others) an @code{install} phase
+to run @command{make install}; @pxref{Build Systems}, for a more
+detailed view of these phases.  Likewise, @code{cmake-build-system}
+inherits these phases, but its @code{configure} phase runs
+@command{cmake} instead of @command{./configure}.  Other build systems,
+such as @code{python-build-system}, have a wholly different list of
+standard phases.  All this code runs on the @dfn{build side}: it is
+evaluated when you actually build the package, in a dedicated build
+process spawned by the build daemon (@pxref{Invoking guix-daemon}).
+
+Build phases are represented as association lists or ``alists''
+(@pxref{Association Lists,,, guile, GNU Guile Reference Manual}) where
+each key is a symbol for the name of the phase and the associated value
+is a procedure that accepts an arbitrary number of arguments.  By
+convention, those procedures receive information about the build in the
+form of @dfn{keyword parameters}, which they can use or ignore.
+
+For example, here is how @code{(guix build gnu-build-system)} defines
+@code{%standard-phases}, the variable holding its alist of build
+phases@footnote{We present a simplified view of those build phases, but
+do take a look at @code{(guix build gnu-build-system)} to see all the
+details!}:
+
+@lisp
+;; The build phases of 'gnu-build-system'.
+
+(define* (unpack #:key source #:allow-other-keys)
+  ;; Extract the source tarball.
+  (invoke "tar" "xvf" source))
+
+(define* (configure #:key outputs #:allow-other-keys)
+  ;; Run the 'configure' script.  Install to output "out".
+  (let ((out (assoc-ref outputs "out")))
+    (invoke "./configure"
+            (string-append "--prefix=" out))))
+
+(define* (build #:allow-other-keys)
+  ;; Compile.
+  (invoke "make"))
+
+(define* (check #:key (test-target "check") (tests? #true)
+                #:allow-other-keys)
+  ;; Run the test suite.
+  (if tests?
+      (invoke "make" test-target)
+      (display "test suite not run\n")))
+
+(define* (install #:allow-other-keys)
+  ;; Install files to the prefix 'configure' specified.
+  (invoke "make" "install"))
+
+(define %standard-phases
+  ;; The list of standard phases (quite a few are omitted
+  ;; for brevity).  Each element is a symbol/procedure pair.
+  (list (cons 'unpack unpack)
+        (cons 'configure configure)
+        (cons 'build build)
+        (cons 'check check)
+        (cons 'install install)))
+@end lisp
+
+This shows how @code{%standard-phases} is defined as a list of
+symbol/procedure pairs (@pxref{Pairs,,, guile, GNU Guile Reference
+Manual}).  The first pair associates the @code{unpack} procedure with
+the @code{unpack} symbol---a name; the second pair defines the
+@code{configure} phase similarly, and so on.  When building a package
+that uses @code{gnu-build-system} with its default list of phases, those
+phases are executed sequentially.  You can see the name of each phase
+started and completed in the build log of packages that you build.
+
+Let's now look at the procedures themselves.  Each one is defined with
+@code{define*}: @code{#:key} lists keyword parameters the procedure
+accepts, possibly with a default value, and @code{#:allow-other-keys}
+specifies that other keyword parameters are ignored (@pxref{Optional
+Arguments,,, guile, GNU Guile Reference Manual}).
+
+The @code{unpack} procedure honors the @code{source} parameter, which
+the build system uses to pass the file name of the source tarball (or
+version control checkout), and it ignores other parameters.  The
+@code{configure} phase only cares about the @code{outputs} parameter, an
+alist mapping package output names to their store file name
+(@pxref{Packages with Multiple Outputs}).  It extracts the file name of
+for @code{out}, the default output, and passes it to
+@command{./configure} as the installation prefix, meaning that
+@command{make install} will eventually copy all the files in that
+directory (@pxref{Configuration, configuration and makefile
+conventions,, standards, GNU Coding Standards}).  @code{build} and
+@code{install} ignore all their arguments.  @code{check} honors the
+@code{test-target} argument, which specifies the name of the Makefile
+target to run tests; it prints a message and skips tests when
+@code{tests?} is false.
+
+@cindex build phases, customizing
+The list of phases used for a particular package can be changed with the
+@code{#:phases} parameter of the build system.  Changing the set of
+build phases boils down to building a new alist of phases based on the
+@code{%standard-phases} alist described above.  This can be done with
+standard alist procedures such as @code{alist-delete} (@pxref{SRFI-1
+Association Lists,,, guile, GNU Guile Reference Manual}); however, it is
+more convenient to do so with @code{modify-phases} (@pxref{Build
+Utilities, @code{modify-phases}}).
+
+Here is an example of a package definition that removes the
+@code{configure} phase of @code{%standard-phases} and inserts a new
+phase before the @code{build} phase, called
+@code{set-prefix-in-makefile}:
+
+@lisp
+(define-public example
+  (package
+    (name "example")
+    ;; other fields omitted
+    (build-system gnu-build-system)
+    (arguments
+     '(#:phases (modify-phases %standard-phases
+                  (delete 'configure)
+                  (add-before 'build 'set-prefix-in-makefile
+                    (lambda* (#:key outputs #:allow-other-keys)
+                      ;; Modify the makefile so that its
+                      ;; 'PREFIX' variable points to "out".
+                      (let ((out (assoc-ref outputs "out")))
+                        (substitute* "Makefile"
+                          (("PREFIX =.*")
+                           (string-append "PREFIX = "
+                                          out "\n")))
+                        #true))))))))
+@end lisp
+
+The new phase that is inserted is written as an anonymous procedure,
+introduced with @code{lambda*}; it honors the @code{outputs} parameter
+we have seen before.  @xref{Build Utilities}, for more about the helpers
+used by this phase, and for more examples of @code{modify-phases}.
+
+@cindex code staging
+@cindex staging, of code
+Keep in mind that build phases are code evaluated at the time the
+package is actually built.  This explains why the whole
+@code{modify-phases} expression above is quoted (it comes after the
+@code{'} or apostrophe): it is @dfn{staged} for later execution.
+@xref{G-Expressions}, for an explanation of code staging and the
+@dfn{code strata} involved.
+
+@node Build Utilities
+@section Build Utilities
+
+As soon as you start writing non-trivial package definitions
+(@pxref{Defining Packages}) or other build actions
+(@pxref{G-Expressions}), you will likely start looking for helpers for
+``shell-like'' actions---creating directories, copying and deleting
+files recursively, manipulating build phases, and so on.  The
+@code{(guix build utils)} module provides such utility procedures.
+
+Most build systems load @code{(guix build utils)} (@pxref{Build
+Systems}).  Thus, when writing custom build phases for your package
+definitions, you can usually assume those procedures are in scope.
+
+When writing G-expressions, you can import @code{(guix build utils)} on
+the ``build side'' using @code{with-imported-modules} and then put it in
+scope with the @code{use-modules} form (@pxref{Using Guile Modules,,,
+guile, GNU Guile Reference Manual}):
+
+@lisp
+(with-imported-modules '((guix build utils))  ;import it
+  (computed-file "empty-tree"
+                 #~(begin
+                     ;; Put it in scope.
+                     (use-modules (guix build utils))
+
+                     ;; Happily use its 'mkdir-p' procedure.
+                     (mkdir-p (string-append #$output "/a/b/c")))))
+@end lisp
+
+The remainder of this section is the reference for most of the utility
+procedures provided by @code{(guix build utils)}.
+
+@c TODO Document what's missing.
+
+@subsection Dealing with Store File Names
+
+This section documents procedures that deal with store file names.
+
+@deffn {Scheme Procedure} %store-directory
+Return the directory name of the store.
+@end deffn
+
+@deffn {Scheme Procedure} store-file-name? @var{file}
+Return true if @var{file} is in the store.
+@end deffn
+
+@deffn {Scheme Procedure} strip-store-file-name @var{file}
+Strip the @file{/gnu/store} and hash from @var{file}, a store file name.
+The result is typically a @code{"@var{package}-@var{version}"} string.
+@end deffn
+
+@deffn {Scheme Procedure} package-name->name+version @var{name}
+Given @var{name}, a package name like @code{"foo-0.9.1b"}, return two
+values: @code{"foo"} and @code{"0.9.1b"}.  When the version part is
+unavailable, @var{name} and @code{#f} are returned.  The first hyphen
+followed by a digit is considered to introduce the version part.
+@end deffn
+
+@subsection File Types
+
+The procedures below deal with files and file types.
+
+@deffn {Scheme Procedure} directory-exists? @var{dir}
+Return @code{#t} if @var{dir} exists and is a directory.
+@end deffn
+
+@deffn {Scheme Procedure} executable-file? @var{file}
+Return @code{#t} if @var{file} exists and is executable.
+@end deffn
+
+@deffn {Scheme Procedure} symbolic-link? @var{file}
+Return @code{#t} if @var{file} is a symbolic link (aka. a ``symlink'').
+@end deffn
+
+@deffn {Scheme Procedure} elf-file? @var{file}
+@deffnx {Scheme Procedure} ar-file? @var{file}
+@deffnx {Scheme Procedure} gzip-file? @var{file}
+Return @code{#t} if @var{file} is, respectively, an ELF file, an
+@code{ar} archive (such as a @file{.a} static library), or a gzip file.
+@end deffn
+
+@deffn {Scheme Procedure} reset-gzip-timestamp @var{file} [#:keep-mtime? #t]
+If @var{file} is a gzip file, reset its embedded timestamp (as with
+@command{gzip --no-name}) and return true.  Otherwise return @code{#f}.
+When @var{keep-mtime?} is true, preserve @var{file}'s modification time.
+@end deffn
+
+@subsection File Manipulation
+
+The following procedures and macros help create, modify, and delete
+files.  They provide functionality comparable to common shell utilities
+such as @command{mkdir -p}, @command{cp -r}, @command{rm -r}, and
+@command{sed}.  They complement Guile's extensive, but low-level, file
+system interface (@pxref{POSIX,,, guile, GNU Guile Reference Manual}).
+
+@deffn {Scheme Syntax} with-directory-excursion @var{directory} @var{body}@dots{}
+Run @var{body} with @var{directory} as the process's current directory.
+
+Essentially, this macro changes the current directory to @var{directory}
+before evaluating @var{body}, using @code{chdir} (@pxref{Processes,,,
+guile, GNU Guile Reference Manual}).  It changes back to the initial
+directory when the dynamic extent of @var{body} is left, be it @i{via}
+normal procedure return or @i{via} a non-local exit such as an
+exception.
+@end deffn
+
+@deffn {Scheme Procedure} mkdir-p @var{dir}
+Create directory @var{dir} and all its ancestors.
+@end deffn
+
+@deffn {Scheme Procedure} install-file @var{file} @var{directory}
+Create @var{directory} if it does not exist and copy @var{file} in there
+under the same name.
+@end deffn
+
+@deffn {Scheme Procedure} make-file-writable @var{file}
+Make @var{file} writable for its owner.
+@end deffn
+
+@deffn {Scheme Procedure} copy-recursively @var{source} @var{destination} @
+  [#:log (current-output-port)] [#:follow-symlinks? #f] [#:keep-mtime? #f]
+Copy @var{source} directory to @var{destination}.  Follow symlinks if
+@var{follow-symlinks?}  is true; otherwise, just preserve them.  When
+@var{keep-mtime?} is true, keep the modification time of the files in
+@var{source} on those of @var{destination}.  Write verbose output to the
+@var{log} port.
+@end deffn
+
+@deffn {Scheme Procedure} delete-file-recursively @var{dir} @
+  [#:follow-mounts? #f]
+Delete @var{dir} recursively, like @command{rm -rf}, without following
+symlinks.  Don't follow mount points either, unless @var{follow-mounts?}
+is true.  Report but ignore errors.
+@end deffn
+
+@deffn {Scheme Syntax} substitute* @var{file} @
+  ((@var{regexp} @var{match-var}@dots{}) @var{body}@dots{}) @dots{}
+Substitute @var{regexp} in @var{file} by the string returned by
+@var{body}.  @var{body} is evaluated with each @var{match-var} bound to
+the corresponding positional regexp sub-expression.  For example:
+
+@lisp
+(substitute* file
+  (("hello")
+   "good morning\n")
+  (("foo([a-z]+)bar(.*)$" all letters end)
+   (string-append "baz" letter end)))
+@end lisp
+
+Here, anytime a line of @var{file} contains @code{hello}, it is replaced
+by @code{good morning}.  Anytime a line of @var{file} matches the second
+regexp, @code{all} is bound to the complete match, @code{letters} is bound
+to the first sub-expression, and @code{end} is bound to the last one.
+
+When one of the @var{match-var} is @code{_}, no variable is bound to the
+corresponding match substring.
+
+Alternatively, @var{file} may be a list of file names, in which case
+they are all subject to the substitutions.
+
+Be careful about using @code{$} to match the end of a line; by itself it
+won't match the terminating newline of a line.
+@end deffn
+
+@subsection File Search
+
+@cindex file, searching
+This section documents procedures to search and filter files.
+
+@deffn {Scheme Procedure} file-name-predicate @var{regexp}
+Return a predicate that returns true when passed a file name whose base
+name matches @var{regexp}.
+@end deffn
+
+@deffn {Scheme Procedure} find-files @var{dir} [@var{pred}] @
+  [#:stat lstat] [#:directories? #f] [#:fail-on-error? #f]
+Return the lexicographically sorted list of files under @var{dir} for
+which @var{pred} returns true.  @var{pred} is passed two arguments: the
+absolute file name, and its stat buffer; the default predicate always
+returns true.  @var{pred} can also be a regular expression, in which
+case it is equivalent to @code{(file-name-predicate @var{pred})}.
+@var{stat} is used to obtain file information; using @code{lstat} means
+that symlinks are not followed.  If @var{directories?} is true, then
+directories will also be included.  If @var{fail-on-error?} is true,
+raise an exception upon error.
+@end deffn
+
+Here are a few examples where we assume that the current directory is
+the root of the Guix source tree:
+
+@lisp
+;; List all the regular files in the current directory.
+(find-files ".")
+@result{} ("./.dir-locals.el" "./.gitignore" @dots{})
+
+;; List all the .scm files under gnu/services.
+(find-files "gnu/services" "\\.scm$")
+@result{} ("gnu/services/admin.scm" "gnu/services/audio.scm" @dots{})
+
+;; List ar files in the current directory.
+(find-files "." (lambda (file stat) (ar-file? file)))
+@result{} ("./libformat.a" "./libstore.a" @dots{})
+@end lisp
+
+@deffn {Scheme Procedure} which @var{program}
+Return the complete file name for @var{program} as found in
+@code{$PATH}, or @code{#f} if @var{program} could not be found.
+@end deffn
+
+@subsection Build Phases
+
+@cindex build phases
+The @code{(guix build utils)} also contains tools to manipulate build
+phases as used by build systems (@pxref{Build Systems}).  Build phases
+are represented as association lists or ``alists'' (@pxref{Association
+Lists,,, guile, GNU Guile Reference Manual}) where each key is a symbol
+naming the phase and the associated value is a procedure (@pxref{Build
+Phases}).
+
+Guile core and the @code{(srfi srfi-1)} module both provide tools to
+manipulate alists.  The @code{(guix build utils)} module complements
+those with tools written with build phases in mind.
+
+@cindex build phases, modifying
+@deffn {Scheme Syntax} modify-phases @var{phases} @var{clause}@dots{}
+Modify @var{phases} sequentially as per each @var{clause}, which may
+have one of the following forms:
+
+@lisp
+(delete @var{old-phase-name})
+(replace @var{old-phase-name} @var{new-phase})
+(add-before @var{old-phase-name} @var{new-phase-name} @var{new-phase})
+(add-after @var{old-phase-name} @var{new-phase-name} @var{new-phase})
+@end lisp
+
+Where every @var{phase-name} above is an expression evaluating to a
+symbol, and @var{new-phase} an expression evaluating to a procedure.
+@end deffn
+
+The example below is taken from the definition of the @code{grep}
+package.  It adds a phase to run after the @code{install} phase, called
+@code{fix-egrep-and-fgrep}.  That phase is a procedure (@code{lambda*}
+is for anonymous procedures) that takes a @code{#:outputs} keyword
+argument and ignores extra keyword arguments (@pxref{Optional
+Arguments,,, guile, GNU Guile Reference Manual}, for more on
+@code{lambda*} and optional and keyword arguments.)  The phase uses
+@code{substitute*} to modify the installed @file{egrep} and @file{fgrep}
+scripts so that they refer to @code{grep} by its absolute file name:
+
+@lisp
+(modify-phases %standard-phases
+  (add-after 'install 'fix-egrep-and-fgrep
+    ;; Patch 'egrep' and 'fgrep' to execute 'grep' via its
+    ;; absolute file name instead of searching for it in $PATH.
+    (lambda* (#:key outputs #:allow-other-keys)
+      (let* ((out (assoc-ref outputs "out"))
+             (bin (string-append out "/bin")))
+        (substitute* (list (string-append bin "/egrep")
+                           (string-append bin "/fgrep"))
+          (("^exec grep")
+           (string-append "exec " bin "/grep")))
+        #t))))
+@end lisp
+
+In the example below, phases are modified in two ways: the standard
+@code{configure} phase is deleted, presumably because the package does
+not have a @file{configure} script or anything similar, and the default
+@code{install} phase is replaced by one that manually copies the
+executable files to be installed:
+
+@lisp
+(modify-phases %standard-phases
+  (delete 'configure)      ;no 'configure' script
+  (replace 'install
+    (lambda* (#:key outputs #:allow-other-keys)
+      ;; The package's Makefile doesn't provide an "install"
+      ;; rule so do it by ourselves.
+      (let ((bin (string-append (assoc-ref outputs "out")
+                                "/bin")))
+        (install-file "footswitch" bin)
+        (install-file "scythe" bin)
+        #t))))
+@end lisp
+
+@c TODO: Add more examples.
 
 @node The Store
 @section The Store
@@ -8252,6 +8835,8 @@ These build actions are performed when asking the daemon to actually
 build the derivations; they are run by the daemon in a container
 (@pxref{Invoking guix-daemon}).
 
+@cindex code staging
+@cindex staging, of code
 @cindex strata of code
 It should come as no surprise that we like to write these build actions
 in Scheme.  When we do that, we end up with two @dfn{strata} of Scheme
@@ -8263,7 +8848,7 @@ on this topic}, refers to this kind of code generation as
 @dfn{staging}.}: the ``host code''---code that defines packages, talks
 to the daemon, etc.---and the ``build code''---code that actually
 performs build actions, such as making directories, invoking
-@command{make}, etc.
+@command{make}, and so on (@pxref{Build Phases}).
 
 To describe a derivation and its build actions, one typically needs to
 embed build code inside host code.  It boils down to manipulating build
@@ -8816,7 +9401,7 @@ cross-compiling.
 @code{let-system} is useful in the occasional case where the object
 spliced into the gexp depends on the target system, as in this example:
 
-@example
+@lisp
 #~(system*
    #+(let-system system
        (cond ((string-prefix? "armhf-" system)
@@ -8826,7 +9411,7 @@ spliced into the gexp depends on the target system, as in this example:
              (else
               (error "dunno!"))))
    "-net" "user" #$image)
-@end example
+@end lisp
 @end deffn
 
 @deffn {Scheme Syntax} with-parameters ((@var{parameter} @var{value}) @dots{}) @var{exp}
@@ -9127,11 +9712,9 @@ Non-deterministic build processes are a problem because they make it
 practically impossible for users to @emph{verify} whether third-party
 binaries are genuine.  @xref{Invoking guix challenge}, for more.
 
-Note that, currently, the differing build results are not kept around,
-so you will have to manually investigate in case of an error---e.g., by
-stashing one of the build results with @code{guix archive --export}
-(@pxref{Invoking guix archive}), then rebuilding, and finally comparing
-the two results.
+When used in conjunction with @option{--keep-failed}, the differing
+output is kept in the store, under @file{/gnu/store/@dots{}-check}.
+This makes it easy to look for differences between the two results.
 
 @item --no-offload
 Do not use offload builds to other machines (@pxref{Daemon Offload
@@ -9220,6 +9803,11 @@ Package transformation options are preserved across upgrades:
 @command{guix upgrade} attempts to apply transformation options
 initially used when creating the profile to the upgraded packages.
 
+The available options are listed below.  Most commands support them and
+also support a @option{--help-transform} option that lists all the
+available options and a synopsis (these options are not shown in the
+@option{--help} output for brevity).
+
 @table @code
 
 @item --with-source=@var{source}
@@ -9305,6 +9893,75 @@ a library, the application binary interface (ABI) of those libraries
 must be compatible.  If @var{replacement} is somehow incompatible with
 @var{package}, then the resulting package may be unusable.  Use with
 care!
+
+@cindex debugging info, rebuilding
+@item --with-debug-info=@var{package}
+Build @var{package} in a way that preserves its debugging info and graft
+it onto packages that depend on it.  This is useful if @var{package}
+does not already provide debugging info as a @code{debug} output
+(@pxref{Installing Debugging Files}).
+
+For example, suppose you're experiencing a crash in Inkscape and would
+like to see what's up in GLib, a library deep down in Inkscape's
+dependency graph.  GLib lacks a @code{debug} output, so debugging is
+tough.  Fortunately, you rebuild GLib with debugging info and tack it on
+Inkscape:
+
+@example
+guix install inkscape --with-debug-info=glib
+@end example
+
+Only GLib needs to be recompiled so this takes a reasonable amount of
+time.  @xref{Installing Debugging Files}, for more info.
+
+@quotation Note
+Under the hood, this option works by passing the @samp{#:strip-binaries?
+#f} to the build system of the package of interest (@pxref{Build
+Systems}).  Most build systems support that option but some do not.  In
+that case, an error is raised.
+
+Likewise, if a C/C++ package is built without @code{-g} (which is rarely
+the case), debugging info will remain unavailable even when
+@code{#:strip-binaries?} is false.
+@end quotation
+
+@cindex tool chain, changing the build tool chain of a package
+@item --with-c-toolchain=@var{package}=@var{toolchain}
+This option changes the compilation of @var{package} and everything that
+depends on it so that they get built with @var{toolchain} instead of the
+default GNU tool chain for C/C++.
+
+Consider this example:
+
+@example
+guix build octave-cli \
+  --with-c-toolchain=fftw=gcc-toolchain@@10 \
+  --with-c-toolchain=fftwf=gcc-toolchain@@10
+@end example
+
+The command above builds a variant of the @code{fftw} and @code{fftwf}
+packages using version 10 of @code{gcc-toolchain} instead of the default
+tool chain, and then builds a variant of the GNU@tie{}Octave
+command-line interface using them.  GNU@tie{}Octave itself is also built
+with @code{gcc-toolchain@@10}.
+
+This other example builds the Hardware Locality (@code{hwloc}) library
+and its dependents up to @code{intel-mpi-benchmarks} with the Clang C
+compiler:
+
+@example
+guix build --with-c-toolchain=hwloc=clang-toolchain \
+           intel-mpi-benchmarks
+@end example
+
+@quotation Note
+There can be application binary interface (ABI) incompatibilities among
+tool chains.  This is particularly true of the C++ standard library and
+run-time support libraries such as that of OpenMP.  By rebuilding all
+dependents with the same tool chain, @option{--with-c-toolchain} minimizes
+the risks of incompatibility but cannot entirely eliminate them.  Choose
+@var{package} wisely.
+@end quotation
 
 @item --with-git-url=@var{package}=@var{url}
 @cindex Git, using the latest commit
@@ -9998,7 +10655,7 @@ package expressions for all those packages that are not yet in Guix.
 
 When @option{--archive=bioconductor} is added, metadata is imported from
 @uref{https://www.bioconductor.org/, Bioconductor}, a repository of R
-packages for for the analysis and comprehension of high-throughput
+packages for the analysis and comprehension of high-throughput
 genomic data in bioinformatics.
 
 Information is extracted from the @file{DESCRIPTION} file contained in the
@@ -12062,11 +12719,15 @@ following in your operating system declaration:
     (guix-service-type config =>
                        (guix-configuration
                         (inherit config)
-                        (use-substitutes? #f)
-                        (extra-options '("--gc-keep-derivations"))))
+                        ;; Fetch substitutes from example.org.
+                        (substitute-urls
+                          (list "https://example.org/guix"
+                                "https://ci.guix.gnu.org"))))
     (mingetty-service-type config =>
                            (mingetty-configuration
-                            (inherit config)))))
+                            (inherit config)
+                            ;; Automatially log in as "guest".
+                            (auto-login "guest")))))
 
 (operating-system
   ;; @dots{}
@@ -12196,7 +12857,7 @@ available when building a virtual machine disk image.}.
 
 @cindex hurd
 @item @code{hurd} (default: @code{#f})
-The package object of the hurd to be started by the kernel.  When this
+The package object of the Hurd to be started by the kernel.  When this
 field is set, produce a GNU/Hurd operating system.  In that case,
 @code{kernel} must also be set to the @code{gnumach} package---the
 microkernel the Hurd runs on.
@@ -13065,7 +13726,18 @@ the X Keyboard extension (XKB), each layout has four attributes: a name (often
 a language code such as ``fi'' for Finnish or ``jp'' for Japanese), an
 optional variant name, an optional keyboard model name, and a possibly empty
 list of additional options.  In most cases the layout name is all you care
-about.  Here are a few example:
+about.
+
+@deffn {Scheme Procedure} keyboard-layout @var{name} [@var{variant}] @
+                [#:model] [#:options '()]
+Return a new keyboard layout with the given @var{name} and @var{variant}.
+
+@var{name} must be a string such as @code{"fr"}; @var{variant} must be a
+string such as @code{"bepo"} or @code{"nodeadkeys"}.  See the
+@code{xkeyboard-config} package for valid options.
+@end deffn
+
+Here are a few examples:
 
 @lisp
 ;; The German QWERTZ layout.  Here we assume a standard
@@ -15319,6 +15991,9 @@ example:
 This is the configuration record for OpenSSH's @command{sshd}.
 
 @table @asis
+@item @code{openssh} (default @var{openssh})
+The Openssh package to use.
+
 @item @code{pid-file} (default: @code{"/var/run/sshd.pid"})
 Name of the file where @command{sshd} writes its PID.
 
@@ -15690,7 +16365,7 @@ The @code{(gnu services avahi)} provides the following definition.
 This is the service that runs @command{avahi-daemon}, a system-wide
 mDNS/DNS-SD responder that allows for service discovery and
 ``zero-configuration'' host name lookups (see @uref{https://avahi.org/}).
-Its value must be a @code{zero-configuration} record---see below.
+Its value must be an @code{avahi-configuration} record---see below.
 
 This service extends the name service cache daemon (nscd) so that it can
 resolve @code{.local} host names using
@@ -17197,27 +17872,27 @@ field of an @code{operating-system} declaration (@pxref{operating-system
 Reference, @code{services}}).
 
 Additionally, the @code{gnome-desktop-service-type},
-@code{xfce-desktop-service}, @code{mate-desktop-service-type} and
-@code{enlightenment-desktop-service-type} procedures can add GNOME, Xfce, MATE
-and/or Enlightenment to a system.  To ``add GNOME'' means that system-level
-services like the backlight adjustment helpers and the power management
-utilities are added to the system, extending @code{polkit} and @code{dbus}
-appropriately, allowing GNOME to operate with elevated privileges on a
-limited number of special-purpose system interfaces.  Additionally,
-adding a service made by @code{gnome-desktop-service-type} adds the GNOME
-metapackage to the system profile.  Likewise, adding the Xfce service
-not only adds the @code{xfce} metapackage to the system profile, but it
-also gives the Thunar file manager the ability to open a ``root-mode''
-file management window, if the user authenticates using the
-administrator's password via the standard polkit graphical interface.
-To ``add MATE'' means that @code{polkit} and @code{dbus} are extended
-appropriately, allowing MATE to operate with elevated privileges on a
-limited number of special-purpose system interfaces.  Additionally,
-adding a service of type @code{mate-desktop-service-type} adds the MATE
-metapackage to the system profile.  ``Adding Enlightenment'' means that
-@code{dbus} is extended appropriately, and several of Enlightenment's binaries
-are set as setuid, allowing Enlightenment's screen locker and other
-functionality to work as expected.
+@code{xfce-desktop-service}, @code{mate-desktop-service-type},
+@code{lxqt-desktop-service-type} and @code{enlightenment-desktop-service-type}
+procedures can add GNOME, Xfce, MATE and/or Enlightenment to a system.  To
+``add GNOME'' means that system-level services like the backlight adjustment
+helpers and the power management utilities are added to the system, extending
+@code{polkit} and @code{dbus} appropriately, allowing GNOME to operate with
+elevated privileges on a limited number of special-purpose system interfaces.
+Additionally, adding a service made by @code{gnome-desktop-service-type} adds
+the GNOME metapackage to the system profile.  Likewise, adding the Xfce
+service not only adds the @code{xfce} metapackage to the system profile, but
+it also gives the Thunar file manager the ability to open a ``root-mode'' file
+management window, if the user authenticates using the administrator's
+password via the standard polkit graphical interface.  To ``add MATE'' means
+that @code{polkit} and @code{dbus} are extended appropriately, allowing MATE
+to operate with elevated privileges on a limited number of special-purpose
+system interfaces.  Additionally, adding a service of type
+@code{mate-desktop-service-type} adds the MATE metapackage to the system
+profile.  ``Adding Enlightenment'' means that @code{dbus} is extended
+appropriately, and several of Enlightenment's binaries are set as setuid,
+allowing Enlightenment's screen locker and other functionality to work as
+expected.
 
 The desktop environments in Guix use the Xorg display server by
 default.  If you'd like to use the newer display server protocol
@@ -17282,6 +17957,24 @@ Configuration record for the MATE desktop environment.
 @table @asis
 @item @code{mate} (default: @code{mate})
 The MATE package to use.
+@end table
+@end deftp
+
+@deffn {Scheme Variable} lxqt-desktop-service-type
+This is the type of the service that runs the @uref{https://lxqt.github.io,
+LXQt desktop environment}.  Its value is a @code{lxqt-desktop-configuration}
+object (see below).
+
+This service adds the @code{lxqt} package to the system
+profile.
+@end deffn
+
+@deftp {Data Type} lxqt-desktop-configuration
+Configuration record for the LXQt desktop environment.
+
+@table @asis
+@item @code{lxqt} (default: @code{lxqt})
+The LXQT package to use.
 @end table
 @end deftp
 
@@ -17738,10 +18431,10 @@ List of settings to set in @file{daemon.conf}, formatted just like
 @var{client-conf}.
 
 @item @var{script-file} (default: @code{(file-append pulseaudio "/etc/pulse/default.pa")})
-Script file to use as as @file{default.pa}.
+Script file to use as @file{default.pa}.
 
 @item @var{system-script-file} (default: @code{(file-append pulseaudio "/etc/pulse/system.pa")})
-Script file to use as as @file{system.pa}.
+Script file to use as @file{system.pa}.
 @end table
 @end deftp
 
@@ -17769,15 +18462,16 @@ details.
 @cindex SQL
 The @code{(gnu services databases)} module provides the following services.
 
-@deffn {Scheme Procedure} postgresql-service [#:postgresql postgresql] @
-       [#:config-file] [#:data-directory ``/var/lib/postgresql/data''] @
-       [#:port 5432] [#:locale ``en_US.utf8''] [#:extension-packages '()]
-Return a service that runs @var{postgresql}, the PostgreSQL database
-server.
+@subsubheading PostgreSQL
 
-The PostgreSQL daemon loads its runtime configuration from @var{config-file},
-creates a database cluster with @var{locale} as the default
-locale, stored in @var{data-directory}.  It then listens on @var{port}.
+The following example describes a PostgreSQL service with the default
+configuration.
+
+@lisp
+(service postgresql-service-type
+         (postgresql-configuration
+          (postgresql postgresql-10)))
+@end lisp
 
 If the services fails to start, it may be due to an incompatible
 cluster already present in @var{data-directory}.  Adjust it (or, if you
@@ -17797,6 +18491,29 @@ createuser --interactive
 createdb $MY_USER_LOGIN      # Replace appropriately.
 @end example
 
+@deftp {Data Type} postgresql-configuration
+Data type representing the configuration for the
+@code{postgresql-service-type}.
+
+@table @asis
+@item @var{postgresql}
+PostgreSQL package to use for the service.
+
+@item @var{port} (default: @code{5432})
+Port on which PostgreSQL should listen.
+
+@item @var{locale} (default: @code{"en_US.utf8"})
+Locale to use as the default when creating the database cluster.
+
+@item @var{config-file} (default: @code{(postgresql-config-file)})
+The configuration file to use when running PostgreSQL.  The default
+behaviour uses the postgresql-config-file record with the default values
+for the fields.
+
+@item @var{data-directory} (default: @code{"/var/lib/postgresql/data"})
+Directory in which to store the data.
+
+@item @var{extension-packages} (default: @code{'()})
 @cindex postgresql extension-packages
 Additional extensions are loaded from packages listed in
 @var{extension-packages}.  Extensions are available at runtime.  For instance,
@@ -17832,7 +18549,11 @@ psql -U postgres
 There is no need to add this field for contrib extensions such as hstore or
 dblink as they are already loadable by postgresql.  This field is only
 required to add extensions provided by other packages.
-@end deffn
+
+@end table
+@end deftp
+
+@subsubheading MariaDB/MySQL
 
 @deffn {Scheme Procedure} mysql-service [#:config (mysql-configuration)]
 Return a service that runs @command{mysqld}, the MySQL or MariaDB
@@ -17857,6 +18578,8 @@ For MariaDB, the root password is empty.
 TCP port on which the database server listens for incoming connections.
 @end table
 @end deftp
+
+@subsubheading Memcached
 
 @defvr {Scheme Variable} memcached-service-type
 This is the service type for the @uref{https://memcached.org/,
@@ -17890,6 +18613,8 @@ Additional command line options to pass to @code{memcached}.
 @end table
 @end deftp
 
+@subsubheading MongoDB
+
 @defvr {Scheme Variable} mongodb-service-type
 This is the service type for @uref{https://www.mongodb.com/, MongoDB}.
 The value for the service type is a @code{mongodb-configuration} object.
@@ -17915,6 +18640,8 @@ owned by the mongodb user.  It should match the data-directory which
 MongoDB is configured to use through the configuration file.
 @end table
 @end deftp
+
+@subsubheading Redis
 
 @defvr {Scheme Variable} redis-service-type
 This is the service type for the @uref{https://redis.io/, Redis}
@@ -21870,7 +22597,29 @@ names of loadable modules, as in this example:
 (modules
  (list
   (file-append nginx-accept-language-module "\
-/etc/nginx/modules/ngx_http_accept_language_module.so")))
+/etc/nginx/modules/ngx_http_accept_language_module.so")
+  (file-append nginx-lua-module "\
+/etc/nginx/modules/ngx_http_lua_module.so")))
+@end lisp
+
+@item @code{lua-package-path} (default: @code{'()})
+List of nginx lua packages to load.  This should be a list of package
+names of loadable lua modules, as in this example:
+
+@lisp
+(lua-package-path (list lua-resty-core
+                        lua-resty-lrucache
+                        lua-resty-signal
+                        lua-tablepool
+                        lua-resty-shell))
+@end lisp
+
+@item @code{lua-package-cpath} (default: @code{'()})
+List of nginx lua C packages to load.  This should be a list of package
+names of loadable lua C modules, as in this example:
+
+@lisp
+(lua-package-cpath (list lua-resty-signal))
 @end lisp
 
 @item @code{global-directives} (default: @code{'((events . ()))})
@@ -22873,7 +23622,7 @@ This type has the following parameters:
 
 @table @asis
 @item @code{id} (default: @code{""})
-An identifier for ether configuration fields to refer to this key. IDs must be
+An identifier for other configuration fields to refer to this key. IDs must be
 unique and must not be empty.
 
 @item @code{address} (default: @code{'()})
@@ -24864,7 +25613,7 @@ mixer, the @code{null} mixer (allows setting the volume, but with no
 effect; this can be used as a trick to implement an external mixer
 External Mixer) or no mixer (@code{none}).
 
-@item @code{extra-options} (default: @code{'()"})
+@item @code{extra-options} (default: @code{'()})
 An association list of option symbols to string values to be appended to
 the audio output configuration.
 
@@ -24889,13 +25638,14 @@ an HTTP audio streaming output.
 
 
 @node Virtualization Services
-@subsection Virtualization services
+@subsection Virtualization Services
 
 The @code{(gnu services virtualization)} module provides services for
 the libvirt and virtlog daemons, as well as other virtualization-related
 services.
 
 @subsubheading Libvirt daemon
+
 @code{libvirtd} is the server side daemon component of the libvirt
 virtualization management system. This daemon runs on host servers
 and performs required management tasks for virtualized guests.
@@ -24922,7 +25672,7 @@ Libvirt package.
 
 @deftypevr {@code{libvirt-configuration} parameter} boolean listen-tls?
 Flag listening for secure TLS connections on the public TCP/IP port.
-must set @code{listen} for this to have any effect.
+You must set @code{listen} for this to have any effect.
 
 It is necessary to setup a CA and issue server certificates before using
 this capability.
@@ -24932,28 +25682,28 @@ Defaults to @samp{#t}.
 @end deftypevr
 
 @deftypevr {@code{libvirt-configuration} parameter} boolean listen-tcp?
-Listen for unencrypted TCP connections on the public TCP/IP port.  must
+Listen for unencrypted TCP connections on the public TCP/IP port.  You must
 set @code{listen} for this to have any effect.
 
 Using the TCP socket requires SASL authentication by default.  Only SASL
 mechanisms which support data encryption are allowed.  This is
-DIGEST_MD5 and GSSAPI (Kerberos5)
+DIGEST_MD5 and GSSAPI (Kerberos5).
 
 Defaults to @samp{#f}.
 
 @end deftypevr
 
 @deftypevr {@code{libvirt-configuration} parameter} string tls-port
-Port for accepting secure TLS connections This can be a port number, or
-service name
+Port for accepting secure TLS connections.   This can be a port number,
+or service name.
 
 Defaults to @samp{"16514"}.
 
 @end deftypevr
 
 @deftypevr {@code{libvirt-configuration} parameter} string tcp-port
-Port for accepting insecure TCP connections This can be a port number,
-or service name
+Port for accepting insecure TCP connections.  This can be a port number,
+or service name.
 
 Defaults to @samp{"16509"}.
 
@@ -25265,7 +26015,7 @@ Defaults to @samp{3}.
 Logging filters.
 
 A filter allows to select a different logging level for a given category
-of logs The format for a filter is one of:
+of logs.  The format for a filter is one of:
 
 @itemize @bullet
 @item
@@ -25596,7 +26346,8 @@ Maximum number of backup files to keep.
 Defaults to @samp{3}
 
 @end deftypevr
-@node Transparent Emulation with QEMU
+
+@anchor{transparent-emulation-qemu}
 @subsubheading Transparent Emulation with QEMU
 
 @cindex emulation
@@ -25795,7 +26546,7 @@ By default, it produces
 with forwarded ports:
 
 @example
-@var{ssh-port}: @code{(+ 11004 (* 1000 @var{ID}))}
+@var{secrets-port}: @code{(+ 11004 (* 1000 @var{ID}))}
 @var{ssh-port}: @code{(+ 10022 (* 1000 @var{ID}))}
 @var{vnc-port}: @code{(+ 15900 (* 1000 @var{ID}))}
 @end example
@@ -26440,7 +27191,7 @@ When true, the daemon performs additional logging for debugging purposes.
 @defvr {Scheme Variable} ganeti-watcher-service-type
 @command{ganeti-watcher} is a script designed to run periodically and ensure
 the health of a cluster.  It will automatically restart instances that have
-stopped without Ganetis consent, and repairs DRBD links in case a node has
+stopped without Ganeti's consent, and repairs DRBD links in case a node has
 rebooted.  It also archives old cluster jobs and restarts Ganeti daemons
 that are not running.  If the cluster parameter @code{ensure_node_health}
 is set, the watcher will also shutdown instances and DRBD devices if the
@@ -27877,7 +28628,7 @@ allocation plan in the database.
 
 @item @code{hooks} (default: @var{'()})
 An association list of hooks.  These provide a way to execute arbitrary
-code upon certian events, like a build result being processed.
+code upon certain events, like a build result being processed.
 
 @item @code{guile} (default: @code{guile-3.0-latest})
 The Guile package with which to run the Guix Build Coordinator.
@@ -28154,22 +28905,22 @@ This is the data type representing the configuration for the zram-device
 service.
 
 @table @asis
-@item @code{size} (default @var{"1G"})
+@item @code{size} (default @code{"1G"})
 This is the amount of space you wish to provide for the zram device.  It
 accepts a string and can be a number of bytes or use a suffix, eg.:
-@var{"512M"} or @var{1024000}.
-@item @code{compression-algorithm} (default @var{'lzo})
+@code{"512M"} or @code{1024000}.
+@item @code{compression-algorithm} (default @code{'lzo})
 This is the compression algorithm you wish to use.  It is difficult to
 list all the possible compression options, but common ones supported by
-Guix's Linux Libre Kernel include @var{'lzo}, @var{'lz4} and @var{'zstd}.
-@item @code{memory-limit} (default @var{0})
+Guix's Linux Libre Kernel include @code{'lzo}, @code{'lz4} and @code{'zstd}.
+@item @code{memory-limit} (default @code{0})
 This is the maximum amount of memory which the zram device can use.
 Setting it to '0' disables the limit.  While it is generally expected
 that compression will be 2:1, it is possible that uncompressable data
 can be written to swap and this is a method to limit how much memory can
 be used.  It accepts a string and can be a number of bytes or use a
-suffix, eg.: @var{"2G"}.
-@item @code{priority} (default @var{-1})
+suffix, eg.: @code{"2G"}.
+@item @code{priority} (default @code{-1})
 This is the priority of the swap device created from the zram device.
 @code{swapon} accepts values between -1 and 32767, with higher values
 indicating higher priority.  Higher priority swap will generally be used
@@ -28507,6 +29258,18 @@ Enable or disable the addition of iptables rules.
 @end table
 @end deftp
 
+@cindex Singularity, container service
+@defvr {Scheme Variable} singularity-service-type
+This is the type of the service that allows you to run
+@url{https://www.sylabs.io/singularity/, Singularity}, a Docker-style tool to
+create and run application bundles (aka. ``containers'').  The value for this
+service is the Singularity package to use.
+
+The service does not install a daemon; instead, it installs helper programs as
+setuid-root (@pxref{Setuid Programs}) such that unprivileged users can invoke
+@command{singularity run} and similar commands.
+@end defvr
+
 @cindex Audit
 @subsubheading Auditd Service
 
@@ -28563,17 +29326,6 @@ instantiate on startup.
 @end table
 @end deftp
 
-@defvr {Scheme Variable} singularity-service-type
-This is the type of the service that allows you to run
-@url{https://www.sylabs.io/singularity/, Singularity}, a Docker-style tool to
-create and run application bundles (aka. ``containers'').  The value for this
-service is the Singularity package to use.
-
-The service does not install a daemon; instead, it installs helper programs as
-setuid-root (@pxref{Setuid Programs}) such that unprivileged users can invoke
-@command{singularity run} and similar commands.
-@end defvr
-
 @cindex rshiny
 @subsubheading R-Shiny service
 
@@ -28582,7 +29334,7 @@ The @code{(gnu services science)} module provides the following service.
 @defvr {Scheme Variable} rshiny-service-type
 
 This is a type of service which is used to run a webapp created with
-@code{r-shiny}.  This service sets the @code{R_LIBS_USER} environment
+@code{r-shiny}.  This service sets the @env{R_LIBS_USER} environment
 variable and runs the provided script to call @code{runApp}.
 
 @deftp {Data Type} rshiny-configuration
@@ -29377,7 +30129,7 @@ Data type representing the configuration of the GRUB theme.
 
 @table @asis
 @item @code{gfxmode} (default: @code{'("auto")})
-The GRUB @code{gfxmode} to set (a list of screen resolution strings, see
+The GRUB @code{gfxmode} to set (a list of screen resolution strings,
 @pxref{gfxmode,,, grub, GNU GRUB manual}).
 @end table
 @end deftp
@@ -30431,7 +31183,7 @@ A service of this type is instantiated like this:
 (service guix-service-type
          (guix-configuration
            (build-accounts 5)
-           (use-substitutes? #f)))
+           (extra-options '("--gc-keep-derivations"))))
 @end lisp
 
 The second argument to the @code{service} form is a value representing
@@ -31023,6 +31775,18 @@ typically written in the ELF format, with a section containing
 debugger, GDB, to map binary code to source code; it is required to
 debug a compiled program in good conditions.
 
+This chapter explains how to use separate debug info when packages
+provide it, and how to rebuild packages with debug info when it's
+missing.
+
+@menu
+* Separate Debug Info::         Installing 'debug' outputs.
+* Rebuilding Debug Info::       Building missing debug info.
+@end menu
+
+@node Separate Debug Info
+@section Separate Debug Info
+
 The problem with debugging information is that is takes up a fair amount
 of disk space.  For example, debugging information for the GNU C Library
 weighs in at more than 60 MiB.  Thus, as a user, keeping all the
@@ -31072,12 +31836,75 @@ directory using the @code{directory} command (@pxref{Source Path,
 @c XXX: keep me up-to-date
 The @code{debug} output mechanism in Guix is implemented by the
 @code{gnu-build-system} (@pxref{Build Systems}).  Currently, it is
-opt-in---debugging information is available only for the packages
-with definitions explicitly declaring a @code{debug} output.  This may be
-changed to opt-out in the future if our build farm servers can handle
-the load.  To check whether a package has a @code{debug} output, use
-@command{guix package --list-available} (@pxref{Invoking guix package}).
+opt-in---debugging information is available only for the packages with
+definitions explicitly declaring a @code{debug} output.  To check
+whether a package has a @code{debug} output, use @command{guix package
+--list-available} (@pxref{Invoking guix package}).
 
+Read on for how to deal with packages lacking a @code{debug} output.
+
+@node Rebuilding Debug Info
+@section Rebuilding Debug Info
+
+@cindex debugging info, rebuilding
+As we saw above, some packages, but not all, provide debugging info in a
+@code{debug} output.  What can you do when debugging info is missing?
+The @option{--with-debug-info} option provides a solution to that: it
+allows you to rebuild the package(s) for which debugging info is
+missing---and only those---and to graft those onto the application
+you're debugging.  Thus, while it's not as fast as installing a
+@code{debug} output, it is relatively inexpensive.
+
+Let's illustrate that.  Suppose you're experiencing a bug in Inkscape
+and would like to see what's going on in GLib, a library that's deep
+down in its dependency graph.  As it turns out, GLib does not have a
+@code{debug} output and the backtrace GDB shows is all sadness:
+
+@example
+(gdb) bt
+#0  0x00007ffff5f92190 in g_getenv ()
+   from /gnu/store/@dots{}-glib-2.62.6/lib/libglib-2.0.so.0
+#1  0x00007ffff608a7d6 in gobject_init_ctor ()
+   from /gnu/store/@dots{}-glib-2.62.6/lib/libgobject-2.0.so.0
+#2  0x00007ffff7fe275a in call_init (l=<optimized out>, argc=argc@@entry=1, argv=argv@@entry=0x7fffffffcfd8, 
+    env=env@@entry=0x7fffffffcfe8) at dl-init.c:72
+#3  0x00007ffff7fe2866 in call_init (env=0x7fffffffcfe8, argv=0x7fffffffcfd8, argc=1, l=<optimized out>)
+    at dl-init.c:118
+@end example
+
+To address that, you install Inkscape linked against a variant GLib that
+contains debug info:
+
+@example
+guix install inkscape --with-debug-info=glib
+@end example
+
+This time, debugging will be a whole lot nicer:
+
+@example
+$ gdb --args sh -c 'exec inkscape'
+@dots{}
+(gdb) b g_getenv
+Function "g_getenv" not defined.
+Make breakpoint pending on future shared library load? (y or [n]) y
+Breakpoint 1 (g_getenv) pending.
+(gdb) r
+Starting program: /gnu/store/@dots{}-profile/bin/sh -c exec\ inkscape
+@dots{}
+(gdb) bt
+#0  g_getenv (variable=variable@@entry=0x7ffff60c7a2e "GOBJECT_DEBUG") at ../glib-2.62.6/glib/genviron.c:252
+#1  0x00007ffff608a7d6 in gobject_init () at ../glib-2.62.6/gobject/gtype.c:4380
+#2  gobject_init_ctor () at ../glib-2.62.6/gobject/gtype.c:4493
+#3  0x00007ffff7fe275a in call_init (l=<optimized out>, argc=argc@@entry=3, argv=argv@@entry=0x7fffffffd088, 
+    env=env@@entry=0x7fffffffd0a8) at dl-init.c:72
+@dots{}
+@end example
+
+Much better!
+
+Note that there can be packages for which @option{--with-debug-info}
+will not have the desired effect.  @xref{Package Transformation Options,
+@option{--with-debug-info}}, for more information.
 
 @node Security Updates
 @chapter Security Updates

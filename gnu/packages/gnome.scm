@@ -55,6 +55,7 @@
 ;;; Copyright © 2020 Brice Waegeneire <brice@waegenei.re>
 ;;; Copyright © 2020 Arun Isaac <arunisaac@systemreboot.net>
 ;;; Copyright © 2020 Michael Rohleder <mike@rohleder.de>
+;;; Copyright © 2020 Tim Gesthuizen <tim.gesthuizen@yahoo.de>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -74,6 +75,7 @@
 (define-module (gnu packages gnome)
   #:use-module (gnu packages)
   #:use-module (gnu packages admin)
+  #:use-module (gnu packages aidc)
   #:use-module (gnu packages aspell)
   #:use-module (gnu packages autotools)
   #:use-module (gnu packages avahi)
@@ -213,6 +215,62 @@
   #:use-module (guix store)
   #:use-module (ice-9 match)
   #:use-module (srfi srfi-1))
+
+(define-public gupnp-igd
+  (package
+    (name "gupnp-igd")
+    (version "1.2.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri
+        (string-append "mirror://gnome/sources/" name "/"
+                       (version-major+minor version) "/"
+                       name "-" version ".tar.xz"))
+       (sha256
+        (base32 "1q9bw12ibih3yxpha3gm1dabyqg9gx6yxacbh4kxsgm1i84j0lab"))))
+    (build-system meson-build-system)
+    (outputs '("out" "doc"))
+    (arguments
+     `(#:glib-or-gtk? #t     ; To wrap binaries and compile schemas
+       #:configure-flags (list "-Dgtk_doc=true")
+       #:phases
+       (modify-phases %standard-phases
+         (add-after 'unpack 'patch-docbook-xml
+           (lambda* (#:key inputs #:allow-other-keys)
+             (with-directory-excursion "doc"
+               (substitute* "gupnp-igd-docs.xml"
+                 (("http://www.oasis-open.org/docbook/xml/4.1.2/")
+                  (string-append (assoc-ref inputs "docbook-xml-4.1.2")
+                                 "/xml/dtd/docbook/"))))
+             #t))
+         (add-after 'install 'move-doc
+           (lambda* (#:key outputs #:allow-other-keys)
+             (let* ((out (assoc-ref outputs "out"))
+                    (doc (assoc-ref outputs "doc")))
+               (mkdir-p (string-append doc "/share"))
+               (rename-file
+                (string-append out "/share/gtk-doc")
+                (string-append doc "/share/gtk-doc"))
+               #t))))))
+    (native-inputs
+     `(("docbook-xml-4.1.2" ,docbook-xml-4.1.2)
+       ("docbook-xsl" ,docbook-xsl)
+       ("glib:bin" ,glib "bin")
+       ("gobject-introspection" ,gobject-introspection)
+       ("gsettings-desktop-schemas" ,gsettings-desktop-schemas)
+       ("gtk-doc" ,gtk-doc)
+       ("pkg-config" ,pkg-config)))
+    (propagated-inputs
+     `(("glib" ,glib)
+       ("glib-networking" ,glib-networking)
+       ("gssdp" ,gssdp)
+       ("gupnp" ,gupnp)
+       ("libsoup" ,libsoup)))
+    (synopsis "UPnP IGD for GNOME")
+    (description "GUPnP-IGD is a library to handle UPnP IGD port mapping.")
+    (home-page "https://gitlab.gnome.org/GNOME/gupnp-igd")
+    (license license:lgpl2.1+)))
 
 (define-public brasero
   (package
@@ -3261,7 +3319,7 @@ library.")
         ("rust-selectors" ,rust-selectors-0.22)
         ("rust-string-cache" ,rust-string-cache-0.8)
         ("rust-tinyvec" ,rust-tinyvec-0.3)
-        ("rust-url" ,rust-url-2.1)
+        ("rust-url" ,rust-url-2)
         ("rust-xml5ever" ,rust-xml5ever-0.16))
        #:cargo-development-inputs
        (("rust-assert-cmd" ,rust-assert-cmd-1)
@@ -4033,7 +4091,7 @@ Hints specification (EWMH).")
 (define-public gnumeric
   (package
     (name "gnumeric")
-    (version "1.12.46")
+    (version "1.12.48")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://gnome/sources/gnumeric/"
@@ -4041,7 +4099,7 @@ Hints specification (EWMH).")
                                   "gnumeric-" version ".tar.xz"))
               (sha256
                (base32
-                "1qdmw2dp7rmq8fmjapgwaks7ajh270wm6kyvlxlzwbgmg8vngp4z"))))
+                "14556b0vyxdvdwjlin0rv7jk0vq4nplbmvp9j89bhkfk84xf7k2p"))))
     (build-system glib-or-gtk-build-system)
     (arguments
      `(;; The gnumeric developers don't worry much about failing tests.
@@ -4069,8 +4127,8 @@ Hints specification (EWMH).")
        ("librsvg" ,librsvg)
        ("libxml2" ,libxml2)
        ("libxslt" ,libxslt)
-       ("python" ,python-2)
-       ("python2-pygobject" ,python2-pygobject)
+       ("python" ,python)
+       ("python-pygobject" ,python-pygobject)
        ("zlib" ,zlib)))
     (native-inputs
      `(("bison" ,bison)
@@ -4735,7 +4793,7 @@ and the GLib main loop, to integrate well with GNOME applications.")
 (define-public libsecret
   (package
     (name "libsecret")
-    (version "0.20.3")
+    (version "0.20.4")
     (source (origin
               (method url-fetch)
               (uri (string-append
@@ -4744,7 +4802,7 @@ and the GLib main loop, to integrate well with GNOME applications.")
                     "libsecret-" version ".tar.xz"))
               (sha256
                (base32
-                "1r4habxdzmn02id324m0m4mg5isf22q1z436bg3vjjmcz1b3rjsg"))))
+                "0a4xnfmraxchd9cq5ai66j12jv2vrgjmaaxz25kl031jvda4qnij"))))
     (build-system gnu-build-system)
     (outputs '("out" "doc"))
     (arguments
@@ -4770,6 +4828,8 @@ and the GLib main loop, to integrate well with GNOME applications.")
     (propagated-inputs
      `(("glib" ,glib))) ; required by libsecret-1.pc
     (inputs
+     ;; The ‘build’ phase complains about missing docbook-xml-4.2 but adding it
+     ;; doesn't seem to affect the build result.
      `(("docbook-xsl" ,docbook-xsl)
        ("libgcrypt" ,libgcrypt)
        ("libxml2" ,libxml2))) ; for XML_CATALOG_FILES
@@ -6374,7 +6434,7 @@ USB transfers with your high-level application or system daemon.")
 (define-public simple-scan
   (package
     (name "simple-scan")
-    (version "3.36.6")
+    (version "3.38.1")
     (source
      (origin
        (method url-fetch)
@@ -6382,7 +6442,7 @@ USB transfers with your high-level application or system daemon.")
                            (version-major+minor version) "/"
                            "simple-scan-" version ".tar.xz"))
        (sha256
-        (base32 "0x9hzqnji5l966yy2k5gppl8hqasn3sd5an4sr8srjmncxcs80ys"))))
+        (base32 "0grscz96bwj79ka4qvxh8h75avdx6824k8k38ylmaj6xbl6gi0hy"))))
     (build-system meson-build-system)
     ;; TODO: Fix icons in home screen, About dialogue, and scan menu.
     (arguments
@@ -6414,14 +6474,14 @@ almost all of them.")
 (define-public eolie
   (package
     (name "eolie")
-    (version "0.9.98.1")
+    (version "0.9.99")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://adishatz.org/eolie/eolie-"
                                   version ".tar.xz"))
               (sha256
                (base32
-                "1d844zva5w4p9pnp9c2g7zyb4vayr2g2drf78spxsdlc5lbd7lqr"))))
+                "0zj5v7wxqj7c20bmil127ah0vnjfzvvf6kzz82b9ip3846h43j02"))))
     (build-system meson-build-system)
     (arguments
      `(#:glib-or-gtk? #t
@@ -9082,6 +9142,75 @@ specified duration and save it as a GIF encoded animated image file.")
       (home-page "https://git.gnome.org/browse/byzanz")
       (license license:gpl2+))))
 
+(define-public authenticator
+  (package
+    (name "authenticator")
+    (version "3.32.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://gitlab.gnome.org/World/Authenticator")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1c4r9rnrz5gazrfg0z2rcwax4nscs7z391bcjcl74k6ln3blwzpr"))))
+    (build-system meson-build-system)
+    (arguments
+     `(#:glib-or-gtk? #t
+       #:phases
+       (modify-phases %standard-phases
+         (add-after 'glib-or-gtk-wrap 'python-and-gi-wrap
+           (lambda* (#:key inputs outputs #:allow-other-keys)
+             (let ((prog (string-append (assoc-ref outputs "out")
+                                        "/bin/authenticator"))
+                   (pylib (string-append (assoc-ref outputs "out")
+                                         "/lib/python"
+                                         ,(version-major+minor
+                                           (package-version python))
+                                         "/site-packages")))
+               (wrap-program prog
+                 `("PYTHONPATH" = (,(getenv "PYTHONPATH") ,pylib))
+                 `("GI_TYPELIB_PATH" = (,(getenv "GI_TYPELIB_PATH"))))
+               #t))))))
+    (native-inputs
+     `(("desktop-file-utils" ,desktop-file-utils)
+       ("gettext" ,gettext-minimal)
+       ("glib:bin" ,glib "bin")
+       ("gobject-introspection" ,gobject-introspection)
+       ("gtk+:bin" ,gtk+ "bin")
+       ("pkg-config" ,pkg-config)))
+    (inputs
+     `(("gsettings-desktop-schemas" ,gsettings-desktop-schemas)
+       ("gtk+" ,gtk+)
+       ("libhandy" ,libhandy-0.0)
+       ("libsecret" ,libsecret)
+       ("python-beautifulsoup4" ,python-beautifulsoup4)
+       ("python-pillow" ,python-pillow)
+       ("python-pyfavicon" ,python-pyfavicon)
+       ("python-pygobject" ,python-pygobject)
+       ("python-pyotp" ,python-pyotp)
+       ("python-pyzbar" ,python-pyzbar)
+       ("yoyo-migrations" ,yoyo-migrations)
+       ("zbar" ,zbar)))
+    (home-page "https://gitlab.gnome.org/World/Authenticator/")
+    (synopsis "Two-factor authentication application built for GNOME")
+    (description
+     "Authenticator is a two-factor authentication (2FA) application built for
+the GNOME desktop environment.
+
+Features:
+
+@itemize
+@item QR code scanner
+@item Beautiful UI
+@item Huge database of more than 560 supported services
+@item Keep your PIN tokens secure by locking the application with a password
+@item Automatically fetch an image for services using their favicon
+@item The possibility to add new services
+@end itemize")
+    (license license:gpl3+)))
+
 (define-public gsound
   (package
     (name "gsound")
@@ -10132,14 +10261,14 @@ views can be printed as PDF or PostScript files, or exported to HTML.")
 (define-public lollypop
   (package
     (name "lollypop")
-    (version "1.2.32")
+    (version "1.4.2")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "https://adishatz.org/lollypop/"
                            "lollypop-" version ".tar.xz"))
        (sha256
-        (base32 "1ng9492k8754vlqggbfsyzbmfdx4w17fzc4ad21fr92710na0w5a"))))
+        (base32 "1hfl68gkvqy5kxlmrsalz78mw1bs1yvqvy2rhg7pzgwiazsdvwzz"))))
     (build-system meson-build-system)
     (arguments
      `(#:imported-modules
@@ -10174,6 +10303,7 @@ views can be printed as PDF or PostScript files, or exported to HTML.")
        ("gst-plugins-base" ,gst-plugins-base)
        ("libnotify" ,libnotify)
        ("libsecret" ,libsecret)
+       ("libhandy" ,libhandy)
        ("libsoup" ,libsoup)
        ("python" ,python)
        ("python-beautifulsoup4" ,python-beautifulsoup4)
@@ -10296,6 +10426,60 @@ photo-booth-like software, such as Cheese.")
      "Cheese uses your webcam to take photos and videos.  Cheese can also
 apply fancy special effects and lets you share the fun with others.")
     (license license:gpl2+)))
+
+(define-public passwordsafe
+  (package
+    (name "passwordsafe")
+    (version "3.99.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://gitlab.gnome.org/World/PasswordSafe")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0pi2l4gwf8paxm858mxrcsk5nr0c0zw5ycax40mghndb6b1qmmhf"))))
+    (build-system meson-build-system)
+    (arguments
+     `(#:glib-or-gtk? #t
+       #:phases
+       (modify-phases %standard-phases
+         (add-after 'glib-or-gtk-wrap 'python-and-gi-wrap
+           (lambda* (#:key outputs #:allow-other-keys)
+             (let ((prog (string-append (assoc-ref outputs "out")
+                                        "/bin/gnome-passwordsafe"))
+                   (pylib (string-append (assoc-ref outputs "out")
+                                         "/lib/python"
+                                         ,(version-major+minor
+                                           (package-version python))
+                                         "/site-packages")))
+               (wrap-program prog
+                 `("PYTHONPATH" = (,(getenv "PYTHONPATH") ,pylib))
+                 `("GI_TYPELIB_PATH" = (,(getenv "GI_TYPELIB_PATH"))))
+               #t))))))
+    (native-inputs
+     `(("desktop-file-utils" ,desktop-file-utils)
+       ("gettext" ,gettext-minimal)
+       ("glib:bin" ,glib "bin")
+       ("gobject-introspection" ,gobject-introspection)
+       ("gtk+:bin" ,gtk+ "bin")
+       ("pkg-config" ,pkg-config)))
+    (inputs
+     `(("glib" ,glib)
+       ("gsettings-desktop-schemas" ,gsettings-desktop-schemas)
+       ("gtk+" ,gtk+)
+       ("libhandy" ,libhandy-0.0)
+       ("libpwquality" ,libpwquality)
+       ("python-pygobject" ,python-pygobject)
+       ("python-pykeepass" ,python-pykeepass)))
+    (home-page "https://gitlab.gnome.org/World/PasswordSafe")
+    (synopsis "Password manager for the GNOME desktop")
+    (description
+     "Password Safe is a password manager which makes use of the KeePass v4
+format.  It integrates perfectly with the GNOME desktop and provides an easy
+and uncluttered interface for the management of password databases.")
+    (license license:gpl3+)))
 
 (define-public sound-juicer
   (package

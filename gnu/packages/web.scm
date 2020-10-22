@@ -45,6 +45,7 @@
 ;;; Copyright © 2018, 2019, 2020 Björn Höfling <bjoern.hoefling@bjoernhoefling.de>
 ;;; Copyright © 2020 Paul Garlick <pgarlick@tourbillion-technology.com>
 ;;; Copyright © 2020 Michael Rohleder <mike@rohleder.de>
+;;; Copyright © 2020 Ryan Prior <rprior@protonmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -67,39 +68,39 @@
   #:use-module (guix packages)
   #:use-module (guix download)
   #:use-module (guix gexp)
-  #:use-module (guix git-download)
   #:use-module (guix cvs-download)
   #:use-module (guix hg-download)
+  #:use-module (guix git-download)
   #:use-module (guix utils)
-  #:use-module (guix build-system gnu)
-  #:use-module (guix build-system glib-or-gtk)
-  #:use-module (guix build-system perl)
-  #:use-module (guix build-system cmake)
-  #:use-module (guix build-system trivial)
-  #:use-module (guix build-system python)
   #:use-module (guix build-system ant)
-  #:use-module (guix build-system scons)
+  #:use-module (guix build-system cmake)
+  #:use-module (guix build-system glib-or-gtk)
+  #:use-module (guix build-system gnu)
   #:use-module (guix build-system go)
+  #:use-module (guix build-system perl)
+  #:use-module (guix build-system python)
+  #:use-module (guix build-system scons)
+  #:use-module (guix build-system trivial)
   #:use-module (gnu packages)
   #:use-module (gnu packages admin)
   #:use-module (gnu packages adns)
   #:use-module (gnu packages apr)
+  #:use-module (gnu packages autotools)
+  #:use-module (gnu packages base)
+  #:use-module (gnu packages bison)
   #:use-module (gnu packages boost)
   #:use-module (gnu packages check)
-  #:use-module (gnu packages documentation)
-  #:use-module (gnu packages docbook)
-  #:use-module (gnu packages emacs)
-  #:use-module (gnu packages emacs-xyz)
-  #:use-module (gnu packages autotools)
   #:use-module (gnu packages compression)
   #:use-module (gnu packages curl)
   #:use-module (gnu packages cyrus-sasl)
   #:use-module (gnu packages databases)
-  #:use-module (gnu packages bison)
+  #:use-module (gnu packages docbook)
+  #:use-module (gnu packages documentation)
+  #:use-module (gnu packages emacs)
+  #:use-module (gnu packages emacs-xyz)
   #:use-module (gnu packages flex)
   #:use-module (gnu packages fontutils)
   #:use-module (gnu packages freedesktop)
-  #:use-module (gnu packages kerberos)
   #:use-module (gnu packages gcc)
   #:use-module (gnu packages gd)
   #:use-module (gnu packages gettext)
@@ -113,11 +114,12 @@
   #:use-module (gnu packages guile)
   #:use-module (gnu packages guile-xyz)
   #:use-module (gnu packages hurd)
+  #:use-module (gnu packages image)
   #:use-module (gnu packages java)
   #:use-module (gnu packages jemalloc)
-  #:use-module (gnu packages image)
   #:use-module (gnu packages imagemagick)
   #:use-module (gnu packages kde)
+  #:use-module (gnu packages kerberos)
   #:use-module (gnu packages libevent)
   #:use-module (gnu packages libidn)
   #:use-module (gnu packages libunistring)
@@ -132,19 +134,18 @@
   #:use-module (gnu packages nss)
   #:use-module (gnu packages openldap)
   #:use-module (gnu packages openstack)
-  #:use-module (gnu packages base)
   #:use-module (gnu packages package-management)
+  #:use-module (gnu packages pcre)
   #:use-module (gnu packages perl)
   #:use-module (gnu packages perl-check)
   #:use-module (gnu packages python)
   #:use-module (gnu packages python-crypto)
   #:use-module (gnu packages python-web)
   #:use-module (gnu packages python-xyz)
-  #:use-module (gnu packages pcre)
   #:use-module (gnu packages pkg-config)
   #:use-module (gnu packages qt)
-  #:use-module (gnu packages readline)
   #:use-module (gnu packages re2c)
+  #:use-module (gnu packages readline)
   #:use-module (gnu packages sphinx)
   #:use-module (gnu packages texinfo)
   #:use-module (gnu packages textutils)
@@ -254,31 +255,32 @@ Interface} specification.")
              #t))
          (replace 'configure
            ;; The configure script is hand-written, not from GNU autotools.
-           (lambda* (#:key outputs #:allow-other-keys)
+           (lambda* (#:key configure-flags outputs #:allow-other-keys)
              (let ((flags
-                    (list (string-append "--prefix=" (assoc-ref outputs "out"))
-                          "--with-http_ssl_module"
-                          "--with-http_v2_module"
-                          "--with-pcre-jit"
-                          "--with-debug"
-                          ;; Even when not cross-building, we pass the
-                          ;; --crossbuild option to avoid customizing for the
-                          ;; kernel version on the build machine.
-                          ,(let ((system "Linux")    ; uname -s
-                                 (release "3.2.0")   ; uname -r
-                                 ;; uname -m
-                                 (machine (match (or (%current-target-system)
-                                                     (%current-system))
-                                            ("x86_64-linux"   "x86_64")
-                                            ("i686-linux"     "i686")
-                                            ("mips64el-linux" "mips64")
-                                            ;; Prevent errors when querying
-                                            ;; this package on unsupported
-                                            ;; platforms, e.g. when running
-                                            ;; "guix package --search="
-                                            (_                "UNSUPPORTED"))))
-                             (string-append "--crossbuild="
-                                            system ":" release ":" machine)))))
+                    (append (list (string-append "--prefix=" (assoc-ref outputs "out"))
+                                  "--with-http_ssl_module"
+                                  "--with-http_v2_module"
+                                  "--with-pcre-jit"
+                                  "--with-debug"
+                                  ;; Even when not cross-building, we pass the
+                                  ;; --crossbuild option to avoid customizing for the
+                                  ;; kernel version on the build machine.
+                                  ,(let ((system "Linux")    ; uname -s
+                                         (release "3.2.0")   ; uname -r
+                                         ;; uname -m
+                                         (machine (match (or (%current-target-system)
+                                                             (%current-system))
+                                                    ("x86_64-linux"   "x86_64")
+                                                    ("i686-linux"     "i686")
+                                                    ("mips64el-linux" "mips64")
+                                                    ;; Prevent errors when querying
+                                                    ;; this package on unsupported
+                                                    ;; platforms, e.g. when running
+                                                    ;; "guix package --search="
+                                                    (_                "UNSUPPORTED"))))
+                                     (string-append "--crossbuild="
+                                                    system ":" release ":" machine)))
+                            configure-flags)))
                (setenv "CC" "gcc")
                (format #t "configure flags: ~s~%" flags)
                (apply invoke "./configure" flags)
@@ -548,6 +550,78 @@ supported at your website.")
 This is modified version, specifically intended for use with the NGinx
 documentation.")
       (license license:bsd-2))))
+
+(define nginx-socket-cloexec
+  (package
+    (inherit nginx)
+    (name "nginx-socket-cloexec") ;required for lua-resty-shell
+    (source
+     (origin
+       (inherit (package-source nginx))
+       (patches (append (search-patches "nginx-socket-cloexec.patch")
+                        (origin-patches (package-source nginx))))))))
+
+(define-public nginx-lua-module
+  (package
+    (inherit nginx)
+    (name "nginx-lua-module")
+    (version "0.10.15")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/openresty/lua-nginx-module")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name "lua-nginx-module" version))
+       (sha256
+        (base32
+         "1j216isp0546hycklbr5wi8mlga5hq170hk7f2sm16sfavlkh5gz"))))
+    (build-system gnu-build-system)
+    (inputs
+     `(("nginx-sources" ,(package-source nginx-socket-cloexec))
+       ("luajit" ,luajit)
+       ,@(package-inputs nginx)))
+    (arguments
+     (substitute-keyword-arguments
+         `(#:configure-flags '("--add-dynamic-module=.")
+           #:make-flags '("modules")
+           #:modules ((guix build utils)
+                      (guix build gnu-build-system)
+                      (ice-9 popen)
+                      (ice-9 regex)
+                      (ice-9 textual-ports))
+           ,@(package-arguments nginx))
+       ((#:phases phases)
+        `(modify-phases ,phases
+           (add-after 'unpack 'unpack-nginx-sources
+             (lambda* (#:key inputs native-inputs #:allow-other-keys)
+               (begin
+                 ;; The nginx source code is part of the module’s source.
+                 (format #t "decompressing nginx source code~%")
+                 (let ((tar (assoc-ref inputs "tar"))
+                       (nginx-srcs (assoc-ref inputs "nginx-sources")))
+                   (invoke (string-append tar "/bin/tar")
+                           "xvf" nginx-srcs "--strip-components=1"))
+                 #t)))
+           (add-before 'configure 'set-luajit-env
+             (lambda* (#:key inputs #:allow-other-keys)
+               (let ((luajit (assoc-ref inputs "luajit")))
+                 (setenv "LUAJIT_LIB"
+                         (string-append luajit "/lib"))
+                 (setenv "LUAJIT_INC"
+                         (string-append luajit "/include/luajit-2.1"))
+                 #t)))
+           (replace 'install
+             (lambda* (#:key outputs #:allow-other-keys)
+               (let ((modules-dir (string-append (assoc-ref outputs "out")
+                                                 "/etc/nginx/modules")))
+                 (install-file "objs/ngx_http_lua_module.so" modules-dir)
+                 #t)))
+           (delete 'fix-root-dirs)
+           (delete 'install-man-page)))))
+    (synopsis "NGINX module for Lua programming language support")
+    (description "This NGINX module provides a scripting support with Lua
+programming language.")))
 
 (define-public lighttpd
   (package
@@ -1344,6 +1418,50 @@ UTS#46.")
 used to validate and fix HTML data.")
     (home-page "http://tidy.sourceforge.net/")
     (license (license:x11-style "file:///include/tidy.h"))))
+
+(define-public esbuild
+  (package
+    (name "esbuild")
+    (version "0.7.16")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/evanw/esbuild")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "0lmq7yqssnc1cgd63m5zl734ahf8c0q0k1p2zdcn3qm15wfz7sh7"))
+       (modules '((guix build utils)))
+       (snippet
+        '(begin
+           ;; Remove prebuilt binaries
+           (delete-file-recursively "npm")
+           #t))))
+    (build-system go-build-system)
+    (arguments
+     '(#:import-path "github.com/evanw/esbuild/cmd/esbuild"
+       #:unpack-path "github.com/evanw/esbuild"
+       #:phases
+       (modify-phases %standard-phases
+         (replace 'check
+           (lambda* (#:key tests? unpack-path #:allow-other-keys)
+             (if tests?
+               (with-directory-excursion (string-append "src/" unpack-path)
+                 (invoke "make" "test-go")))
+             #t)))))
+    (inputs
+     `(("go-golang-org-x-sys" ,go-golang-org-x-sys)))
+    (native-inputs
+     `(("go-github-com-kylelemons-godebug" ,go-github-com-kylelemons-godebug)))
+    (home-page "https://github.com/evanw/esbuild")
+    (synopsis "Bundler and minifier tool for JavaScript and TypeScript")
+    (description
+     "The esbuild tool provides a unified bundler, transpiler and
+minifier.  It packages up JavaScript and TypeScript code, along with JSON
+and other data, for distribution on the web.")
+    (license license:expat)))
 
 (define-public tinyproxy
   (package
@@ -2854,15 +2972,15 @@ RSS 0.91, RSS 1.0, RSS 2.0, Atom.")
 (define-public perl-file-listing
   (package
     (name "perl-file-listing")
-    (version "6.04")
+    (version "6.11")
     (source (origin
              (method url-fetch)
              (uri (string-append
-                   "mirror://cpan/authors/id/G/GA/GAAS/File-Listing-"
+                   "mirror://cpan/authors/id/P/PL/PLICEASE/File-Listing-"
                    version ".tar.gz"))
              (sha256
               (base32
-               "1xcwjlnxaiwwpn41a5yi6nz95ywh3szq5chdxiwj36kqsvy5000y"))))
+               "0vmzw1mhv580flzkla80gvwfpficnhlbqr1dnlf9x50bw7n18k62"))))
     (build-system perl-build-system)
     (propagated-inputs
      `(("perl-http-date" ,perl-http-date)))
@@ -5602,14 +5720,14 @@ tools like SSH (Secure Shell) to reach the outside world.")
 (define-public stunnel
   (package
   (name "stunnel")
-  (version "5.56")
+  (version "5.57")
   (source
     (origin
       (method url-fetch)
       (uri (string-append "https://www.stunnel.org/downloads/stunnel-"
                           version ".tar.gz"))
       (sha256
-       (base32 "08kb4gi9fzqngrczykvba6xhaxhq9m4wmdbhxvgrva5rasrvz13k"))))
+       (base32 "1q8gc05fiz7w55ws0whwzb94ffjnhzfppf1mhz1hf671vmrvjnmg"))))
   (build-system gnu-build-system)
   (native-inputs
    ;; For tests.
@@ -7419,6 +7537,37 @@ site from link to link, as if you were viewing it online.  HTTrack can also
 update an existing mirrored site, and resume interrupted downloads.
 
 HTTrack is fully configurable, and has an integrated help system.")
+    (license license:gpl3+)))
+
+(define-public buku
+  (package
+    (name "buku")
+    (version "4.4")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "buku" version))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "1g1xhdskfn72xaraqzz2v8dl2iza7bzfpn17z2wdrzkq3ih7yvgg"))))
+    (build-system python-build-system)
+    (arguments
+     `(#:tests? #f))                    ;FIXME: many tests need network access
+    (inputs
+     `(("python-beautifulsoup4" ,python-beautifulsoup4)
+       ("python-certifi" ,python-certifi)
+       ("python-cryptography" ,python-cryptography)
+       ("python-html5lib" ,python-html5lib)
+       ("python-urllib3" ,python-urllib3)))
+    (home-page "https://github.com/jarun/buku")
+    (synopsis "Bookmark manager")
+    (description
+     "buku is a powerful bookmark manager written in Python3 and SQLite3.
+@command{buku} can auto-import bookmarks from your browser and present them
+in an interactive command-line interface that lets you compose and update
+bookmarks directly.  It can also present them in a web interface with
+@command{bukuserver}.")
     (license license:gpl3+)))
 
 (define-public anonip
