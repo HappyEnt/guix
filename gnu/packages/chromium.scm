@@ -301,7 +301,7 @@
                         "/svntogit-packages/" revision "/trunk/" name))
     (sha256 (base32 hash))))
 
-(define %chromium-version "86.0.4240.75")
+(define %chromium-version "86.0.4240.111")
 (define %ungoogled-revision "c34a56db4c121238fface560e21531b6199ce5dd")
 (define %debian-revision "debian/84.0.4147.105-1")
 (define %arch-revision "2cbe439471932d30ff2c8ded6b3dfd51b312bbc9")
@@ -446,10 +446,10 @@
               (method url-fetch)
               (uri (string-append "https://commondatastorage.googleapis.com"
                                   "/chromium-browser-official/chromium-"
-                                  (car (string-split version #\-)) ".tar.xz"))
+                                  %chromium-version ".tar.xz"))
               (sha256
                (base32
-                "1ddw4p9zfdzhi5hrd8x14k4w326znljzprnpfi2f917rlpnl2ynx"))
+                "05y7lwr89awkhvgmwkx3br9j4ap2aypg2wsc0nz8mi7kxc1dnyzj"))
               (modules '((guix build utils)))
               (snippet (force ungoogled-chromium-snippet))))
     (build-system gnu-build-system)
@@ -617,6 +617,16 @@
                (substitute* "device/udev_linux/udev1_loader.cc"
                  (("libudev\\.so\\.1")
                   (string-append udev "/lib/libudev.so.1")))
+
+               (substitute* '("ui/ozone/platform/x11/gl_ozone_glx.cc"
+                              "ui/ozone/common/egl_util.cc"
+                              "ui/gl/init/gl_initializer_linux_x11.cc")
+                 (("libGL\\.so\\.1")
+                  (string-append mesa "/lib/libGL.so.1"))
+                 (("libEGL\\.so\\.1")
+                  (string-append mesa "/lib/libEGL.so.1"))
+                 (("libGLESv2\\.so\\.2")
+                  (string-append mesa "/lib/libGLESv2.so.2")))
                #t)))
          (add-before 'configure 'prepare-build-environment
            (lambda* (#:key inputs #:allow-other-keys)

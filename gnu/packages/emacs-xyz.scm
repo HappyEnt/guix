@@ -738,6 +738,30 @@ then only the color of the mode line changes when a window becomes in-/active.")
 clojure.walk and clojure.zip respectively.")
     (license license:gpl3+)))
 
+(define-public emacs-typing
+  (let ((commit "a2ef25dde2d8eb91bd9c0c6164cb5208208647fa")
+        (revision "0"))
+    (package
+      (name "emacs-typing")
+      (version (git-version "1.1.4" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/kensanata/typing")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32
+           "1dbh0srbf54lgd60ia79y9cfnq3kxlgw01qzdjs9mk3nfazzpgnv"))))
+      (build-system emacs-build-system)
+      (home-page "https://github.com/kensanata/typing/")
+      (synopsis "Emacs game where you have to type fast")
+      (description "The Typing of Emacs is a game for Emacs that
+forces you to type words correctly as fast as possible, otherwise
+you will die.  The game builds the list of words from the active buffer.")
+      (license license:gpl2+))))
+
 (define-public emacs-graphql
   (package
     (name "emacs-graphql")
@@ -1984,14 +2008,14 @@ as a library for other Emacs packages.")
 (define-public emacs-auctex
   (package
     (name "emacs-auctex")
-    (version "12.2.5")
+    (version "12.3.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "https://elpa.gnu.org/packages/"
                            "auctex-" version ".tar"))
        (sha256
-        (base32 "1288n0yna36g2h15gk34gvllifx4qms48355j8l2cafabvkffiph"))))
+        (base32 "0kn48mmsvp1yp8fjcl4lriymhyskv5s70wscmf596xf56s7mqas4"))))
     (build-system emacs-build-system)
     ;; We use 'emacs' because AUCTeX requires dbus at compile time
     ;; ('emacs-minimal' does not provide dbus).
@@ -7206,33 +7230,29 @@ use it, call @code{M-x ivy-yasnippet} (but make sure you have enabled
       (license license:gpl3+))))
 
 (define-public emacs-ivy-rich
-  ;; The latest release version has a small mistake that has since been fixed,
-  ;; so we use a more recent commit.
-  (let ((commit "7a667b135983a1f3ad33d6db8514638e2a3bdfb3")
-        (revision "2"))
-    (package
-      (name "emacs-ivy-rich")
-      (version (git-version "0.1.4" revision commit))
-      (source
-       (origin
-         (method git-fetch)
-         (uri (git-reference
-               (url "https://github.com/Yevgnen/ivy-rich")
-               (commit commit)))
-         (file-name (git-file-name name version))
-         (sha256
-          (base32 "1v5j6pak2j1wjw19y7rx9rhxif0bj2h47xyl2knfcl6fi4qiqm9y"))))
-      (build-system emacs-build-system)
-      (propagated-inputs
-       `(("emacs-ivy" ,emacs-ivy)))
-      (home-page "https://github.com/Yevgnen/ivy-rich")
-      (synopsis "More friendly interface for @code{ivy}")
-      (description
-       "This package extends @code{ivy} by showing more information in the
-minibuffer for each candidate.  It adds columns showing buffer modes, file
-sizes, docstrings, etc.  If @code{emacs-all-the-icons} is installed, it can
-show icons as well.")
-      (license license:gpl3+))))
+  (package
+    (name "emacs-ivy-rich")
+    (version "0.1.6")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/Yevgnen/ivy-rich")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1ra18v6lgz3m6asm6d5b92zn1x22yiz4cwxd9b54dnvwi11121m7"))))
+    (build-system emacs-build-system)
+    (propagated-inputs
+     `(("emacs-ivy" ,emacs-ivy)))
+    (home-page "https://github.com/Yevgnen/ivy-rich")
+    (synopsis "More friendly interface for @code{ivy}")
+    (description
+     "This package extends Ivy by showing more information in the minibuffer
+for each candidate.  It adds columns showing buffer modes, file sizes,
+docstrings, etc.  If @code{emacs-all-the-icons} is installed, it can show
+icons as well.")
+    (license license:gpl3+)))
 
 (define-public emacs-avy
   (package
@@ -9409,8 +9429,8 @@ extensions.")
     (license license:gpl3+)))
 
 (define-public emacs-evil-collection
-  (let ((commit "1357bb03e93c38185ea9aa7dd5ca14ec4511c3c4")
-        (revision "16"))
+  (let ((commit "910c1f4507d91a4790e26ddccf73ad1e5a12f68d")
+        (revision "17"))
     (package
       (name "emacs-evil-collection")
       (version (git-version "0.0.3" revision commit))
@@ -9422,7 +9442,7 @@ extensions.")
                 (file-name (git-file-name name version))
                 (sha256
                  (base32
-                  "0fm5pl25wmsj920f55v6qyhicrsa67nfs1k3d1kid2rd8005bpa5"))))
+                  "0bkx1bwgw1n3fbd95z8i32i1yvv8w8bgzsxsybm1lcgv1v23qn8l"))))
       (build-system emacs-build-system)
       (propagated-inputs
        `(("emacs-evil" ,emacs-evil)
@@ -14030,31 +14050,6 @@ match and total match information in the mode-line in various search modes.")
        "This package provides an Emacs Lisp interface for PostgreSQL.")
       (license license:gpl3+))))
 
-(define-public emacs-cl-generic
-  (package
-    (name "emacs-cl-generic")
-    (version "0.3")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (string-append "https://elpa.gnu.org/packages/cl-generic-"
-                           version ".el"))
-       (sha256
-        (base32
-         "0vb338bhjpsnrf60qgxny4z5rjrnifahnrv9axd4shay89d894zq"))))
-    (build-system emacs-build-system)
-    ;; Byte compilation of the autoload file fails.
-    (arguments
-     `(#:phases (modify-phases %standard-phases
-                  (delete 'enable-autoloads-compilation))))
-    (home-page "https://elpa.gnu.org/packages/seq.html")
-    (synopsis
-     "Forward @code{cl-generic} compatibility for Emacs before version 25")
-    (description "This package provides a subset of the features of the
-@code{cl-generic} package introduced in Emacs-25, for use on previous
-@code{emacsen}.")
-    (license license:gpl3+)))
-
 (define-public emacs-finalize
   (package
   (name "emacs-finalize")
@@ -14069,8 +14064,6 @@ match and total match information in the mode-line in various search modes.")
       (sha256
         (base32 "1gvlm4i62af5jscwz0jccc8ra0grprxpg2rlq91d5nn8dn5lpy79"))))
   (build-system emacs-build-system)
-  (propagated-inputs
-    `(("emacs-cl-generic" ,emacs-cl-generic)))
   (home-page "https://github.com/skeeto/elisp-finalize")
   (synopsis "Finalizers for Emacs Lisp")
   (description
@@ -14876,7 +14869,7 @@ and @code{erc-send-modify-hook} to download and show images.")
 (define-public emacs-list-utils
   (package
     (name "emacs-list-utils")
-    (version "0.4.4")
+    (version "0.4.6")
     (source
      (origin
        (method git-fetch)
@@ -14885,7 +14878,7 @@ and @code{erc-send-modify-hook} to download and show images.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0ql159v7sxs33yh2l080kchrj52vk34knz50cvqi3ykpb7djg3sz"))))
+        (base32 "07hbz2md52ccy95gv4d5n6szrfmpfqf3w4kwqdg2cf54c7kgf7hw"))))
     (build-system emacs-build-system)
     (home-page "https://github.com/rolandwalker/list-utils")
     (synopsis "List-manipulation utility functions")
@@ -18132,7 +18125,8 @@ server with @code{M-x pinentry-start}.")
       (home-page "https://www.emacswiki.org/emacs/SoLong")
       (synopsis "Improve performance in files with long lines")
       (description "This package improves the performance of Emacs when
-viewing files with long lines.")
+viewing files with long lines.  It is included as standard with Emacs 27 or
+later.")
       (license license:gpl3+))))
 
 (define-public emacs-github-review
@@ -21622,7 +21616,7 @@ through Dash docsets.")
 (define-public emacs-calibredb
   (package
     (name "emacs-calibredb")
-    (version "2.6.0")
+    (version "2.7.0")
     (source
      (origin
        (method git-fetch)
@@ -21631,7 +21625,7 @@ through Dash docsets.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "132afbbh4km2cbll46i6bpksvin0ncgfy782g4nkfjmwjaqh3d5l"))))
+        (base32 "1w3kz9iny72gk54jdafz8sy5sv6hnpm3rw4fn1r8aznx4p00f9dy"))))
     (build-system emacs-build-system)
     (propagated-inputs
      `(("emacs-dash" ,emacs-dash)
@@ -24945,7 +24939,7 @@ picked up when copy-pasting text from buffer to buffer.")
 (define-public emacs-org-webring
   (package
     (name "emacs-org-webring")
-    (version "1.9.5-rc1")
+    (version "1.9.7-rc3")
     (source
      (origin
        (method git-fetch)
@@ -24955,7 +24949,7 @@ picked up when copy-pasting text from buffer to buffer.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "0pzzsb32ww1h8zyrw0ckpvzarlhqjcz9a7fh05dvm17s9225yg34"))))
+         "0p6s7cjq8mgbxjp002hv3gaallv2k4ssnfxkqggaqpqnzpc08hxj"))))
     (build-system emacs-build-system)
     (arguments
      `(#:phases

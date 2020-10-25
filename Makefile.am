@@ -344,10 +344,10 @@ dist_noinst_DATA =				\
 AUX_FILES =						\
   gnu/packages/aux-files/chromium/master-preferences.json		\
   gnu/packages/aux-files/emacs/guix-emacs.el		\
-  gnu/packages/aux-files/linux-libre/5.8-arm.conf       \
-  gnu/packages/aux-files/linux-libre/5.8-arm64.conf     \
-  gnu/packages/aux-files/linux-libre/5.8-i686.conf      \
-  gnu/packages/aux-files/linux-libre/5.8-x86_64.conf    \
+  gnu/packages/aux-files/linux-libre/5.9-arm.conf       \
+  gnu/packages/aux-files/linux-libre/5.9-arm64.conf     \
+  gnu/packages/aux-files/linux-libre/5.9-i686.conf      \
+  gnu/packages/aux-files/linux-libre/5.9-x86_64.conf    \
   gnu/packages/aux-files/linux-libre/5.4-arm.conf	\
   gnu/packages/aux-files/linux-libre/5.4-arm64.conf	\
   gnu/packages/aux-files/linux-libre/5.4-i686.conf	\
@@ -666,9 +666,11 @@ channel_intro_commit = 9edb3f66fd807b096b48283debdcddccfea34bad
 channel_intro_signer = BBB0 2DDF 2CEA F6A8 0D1D  E643 A2A0 6DF2 A33A 54FA
 
 # Authenticate the current Git checkout by checking signatures on every commit.
+GUIX_GIT_KEYRING = origin/keyring
 authenticate:
 	$(AM_V_at)echo "Authenticating Git checkout..." ;	\
 	guix git authenticate					\
+	    --keyring=$(GUIX_GIT_KEYRING)			\
 	    --cache-key=channels/guix --stats			\
 	    "$(channel_intro_commit)" "$(channel_intro_signer)"
 
