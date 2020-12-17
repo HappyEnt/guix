@@ -62,6 +62,7 @@
   #:use-module (gnu packages openldap)
   #:use-module (gnu packages kde)
   #:use-module (gnu packages kde-frameworks)
+  #:use-module (gnu packages password-utils)
   #:use-module (gnu packages pcre)
   #:use-module (gnu packages perl)
   #:use-module (gnu packages pkg-config)
@@ -185,14 +186,14 @@ SILC and ICB protocols via plugins.")
 (define-public weechat
   (package
     (name "weechat")
-    (version "2.9")
+    (version "3.0")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://weechat.org/files/src/weechat-"
                                   version ".tar.xz"))
               (sha256
                (base32
-                "03psmp4hxsb9sz35i4cyz6dcbs3ab73amhyx0w0hv8f3hp1hdd7a"))))
+                "1yziv4cbcy61c9mb81c5sg3rmw6nh0srzwmry4svhriv6rdd5dvc"))))
     (build-system cmake-build-system)
     (native-inputs
      `(("gettext" ,gettext-minimal)
@@ -499,7 +500,7 @@ interface for those who are accustomed to the ircII way of doing things.")
 (define-public inspircd
   (package
     (name "inspircd")
-    (version "3.7.0")
+    (version "3.8.1")
     (source
      (origin
        (method git-fetch)
@@ -508,13 +509,13 @@ interface for those who are accustomed to the ircII way of doing things.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32
-         "1npzp23c3ac7m1grkm39i1asj04rs4i0jwf5w0c0j0hmnwslnz7a"))))
+        (base32 "1i30649dw84iscxa5as81g96f393mn1i883aq4za5ypdinr5x65g"))))
     (build-system gnu-build-system)
     (arguments
      `(#:configure-flags (map (lambda (module)
                                 (string-append "--enable-extras=" module))
-                              '("m_geo_maxmind.cpp"
+                              '("m_argon2.cpp"
+                                "m_geo_maxmind.cpp"
                                 "m_ldap.cpp"
                                 "m_mysql.cpp"
                                 "m_pgsql.cpp"
@@ -550,16 +551,17 @@ interface for those who are accustomed to the ircII way of doing things.")
                        (string-append "--config-dir=" out-etc name)))
              #t)))))
     (native-inputs
-     `(("gnutls" ,gnutls)
-       ("libgcrypt" ,libgcrypt)
+     `(("pkg-config" ,pkg-config)))
+    (inputs
+     `(("argon2" ,argon2)
+       ("gnutls" ,gnutls)
        ("libmaxminddb" ,libmaxminddb)
-       ("mysql" ,mysql)
        ("mbedtls-apache" ,mbedtls-apache)
+       ("mysql" ,mysql)
        ("openldap" ,openldap)
        ("openssl" ,openssl)
        ("pcre" ,pcre "bin")
        ("perl" ,perl)
-       ("pkg-config" ,pkg-config)
        ("postgresql" ,postgresql)
        ("re2" ,re2)
        ("sqlite" ,sqlite)

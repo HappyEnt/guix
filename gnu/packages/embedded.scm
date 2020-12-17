@@ -3,7 +3,7 @@
 ;;; Copyright © 2016, 2017 Theodoros Foradis <theodoros@foradis.org>
 ;;; Copyright © 2016 David Craven <david@craven.ch>
 ;;; Copyright © 2017, 2020 Efraim Flashner <efraim@flashner.co.il>
-;;; Copyright © 2018 Tobias Geerinckx-Rice <me@tobias.gr>
+;;; Copyright © 2018, 2020 Tobias Geerinckx-Rice <me@tobias.gr>
 ;;; Copyright © 2018, 2019 Clément Lassieur <clement@lassieur.org>
 ;;; Copyright © 2020 Marius Bakke <mbakke@fastmail.com>
 ;;; Copyright © 2020 Björn Höfling <bjoern.hoefling@bjoernhoefling.de>
@@ -36,6 +36,7 @@
   #:use-module (guix build-system trivial)
   #:use-module ((guix build utils) #:select (alist-replace))
   #:use-module (gnu packages)
+  #:use-module (gnu packages admin)
   #:use-module (gnu packages autotools)
   #:use-module ((gnu packages base) #:prefix base:)
   #:use-module (gnu packages bison)
@@ -487,7 +488,7 @@ SEGGER J-Link and compatible devices.")
 (define-public jimtcl
   (package
     (name "jimtcl")
-    (version "0.79")
+    (version "0.80")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -496,17 +497,26 @@ SEGGER J-Link and compatible devices.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1k88hz0v3bi19xdvlp0i9nsx38imzwpjh632w7326zwbv2wldf0h"))))
+                "06rn60cx9sapc175vxvan87b8j5rkhh5gvvz7343xznzwlr0wcgk"))))
     (build-system gnu-build-system)
     (arguments
      `(#:phases
        (modify-phases %standard-phases
-         ;; Doesn't use autoconf.
          (replace 'configure
+         ;; This package doesn't use autoconf.
            (lambda* (#:key outputs #:allow-other-keys)
              (let ((out (assoc-ref outputs "out")))
                (invoke "./configure"
-                       (string-append "--prefix=" out))))))))
+                       (string-append "--prefix=" out)))))
+         (add-before 'check 'delete-failing-tests
+           (lambda _
+             ;; XXX All but 1 TTY tests fail (Inappropriate ioctl for device).
+             (delete-file "tests/tty.test")
+             #t))
+         )))
+    (native-inputs
+     ;; For tests.
+     `(("inetutils" ,inetutils)))       ; for hostname
     (home-page "http://jim.tcl.tk/index.html")
     (synopsis "Small footprint Tcl implementation")
     (description "Jim is a small footprint implementation of the Tcl programming
@@ -544,7 +554,8 @@ language.")
          ("libusb-compat" ,libusb-compat)))
       (arguments
        '(#:configure-flags
-         (append (list "--disable-werror"
+         (append (list "LIBS=-lutil"
+                       "--disable-werror"
                        "--enable-sysfsgpio"
                        "--disable-internal-jimtcl"
                        "--disable-internal-libjaylink")
@@ -1014,8 +1025,8 @@ the Raspberry Pi chip.")
       (home-page "https://github.com/puppeh/vc4-toolchain/"))))
 
 (define-public gcc-vc4
-  (let ((commit "165f6d0e11d2e76ee799533bb45bd5c92bf60dc2")
-        (xgcc (cross-gcc "vc4-elf" #:xbinutils binutils-vc4)))
+  (let ((commit "0fe4b83897341742f9df65797474cb0feab4b377")
+        (xgcc (cross-gcc "vc4-elf" #:xgcc gcc-6 #:xbinutils binutils-vc4)))
     (package (inherit xgcc)
       (name "gcc-vc4")
       (source (origin
@@ -1029,7 +1040,10 @@ the Raspberry Pi chip.")
                                           "-checkout"))
                 (sha256
                  (base32
-                  "13h30qjcwnlz6lfma1d82nnvfmjnhh7abkagip4vly6vm5fpnvf2"))))
+                  "0kvaq4s0assvinmmicwqp07d0wwldcw0fv6f4k13whp3q5909jnr"))
+                (patches
+                 (search-patches "gcc-6-fix-buffer-size.patch"
+                                 "gcc-6-fix-isl-includes.patch"))))
       (native-inputs
         `(("flex" ,flex)
           ,@(package-native-inputs xgcc)))
@@ -1366,7 +1380,7 @@ debugging them, and more.")
     (source (origin
               (method git-fetch)
               (uri (git-reference
-                     (url "https://github.com/john30/ebusd.git")
+                     (url "https://github.com/john30/ebusd")
                      (commit (string-append "v" version))))
               (file-name (string-append name "-" version "-checkout"))
               (sha256
@@ -1394,7 +1408,7 @@ debugging them, and more.")
         ,(origin
               (method git-fetch)
               (uri (git-reference
-                     (url "https://github.com/john30/ebusd-configuration.git")
+                     (url "https://github.com/john30/ebusd-configuration")
                      (commit "666c0f6b9c4d7545eff7f43ab28a1c7baeab7913")))
               (file-name "config-checkout")
               (sha256

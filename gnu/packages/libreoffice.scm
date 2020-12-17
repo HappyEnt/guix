@@ -713,19 +713,19 @@ text documents, vector drawings, presentations and spreadsheets.")
 (define-public libmwaw
   (package
     (name "libmwaw")
-    (version "0.3.16")
+    (version "0.3.17")
     (source
      (origin
       (method url-fetch)
       (uri (string-append "mirror://sourceforge/libmwaw/libmwaw/libmwaw-"
                           version "/libmwaw-" version ".tar.xz"))
       (sha256
-       (base32 "0s0qvrmxzs8wv4304p7zx9mrasglyaszafqrfmaxwyr9lpdrwqqc"))))
+       (base32 "074ipcq9w7jbd5x316dzclddgia2ydw098ph9d7p3d713pmkf5cf"))))
     (build-system gnu-build-system)
     (native-inputs
      `(("doxygen" ,doxygen)
        ("pkg-config" ,pkg-config)))
-    (propagated-inputs                  ; in Requires field of .pkg
+    (propagated-inputs                  ; in Requires field of .pc file
      `(("librevenge" ,librevenge)))
     (inputs
      `(("boost" ,boost)
@@ -1102,13 +1102,15 @@ converting QuarkXPress file format.  It supports versions 3.1 to 4.1.")
        ("flex" ,flex)
        ("pkg-config" ,pkg-config)
        ("python" ,python-wrapper)
-       ("which" ,which)))
+       ("which" ,which)
+       ("ziptime" ,ziptime)))
     (inputs
      `(("bluez" ,bluez)
        ("boost" ,boost)
        ("clucene" ,clucene)
        ("cups" ,cups)
        ("dbus-glib" ,dbus-glib)
+       ("firebird" ,firebird)
        ("fontconfig" ,fontconfig)
        ("fontforge" ,fontforge)
        ("gconf" ,gconf)
@@ -1215,6 +1217,13 @@ converting QuarkXPress file format.  It supports versions 3.1 to 4.1.")
                                "/bin/xdg-open")))
 
              #t))
+         (add-after 'install 'reset-zip-timestamps
+           (lambda* (#:key outputs #:allow-other-keys)
+             (let ((out (assoc-ref outputs "out")))
+               (for-each (lambda (file)
+                           (invoke "ziptime" file))
+                         ;; So many different extensions for .zip files.
+                         (find-files out "\\.(bau|dat|otp|ott|zip)$")))))
          (add-after 'install 'bin-and-desktop-install
            ;; Create 'soffice' and 'libreoffice' symlinks to the executable
            ;; script.
@@ -1285,7 +1294,9 @@ converting QuarkXPress file format.  It supports versions 3.1 to 4.1.")
         "--without-java"
         ;; FIXME: Enable once the corresponding inputs are packaged.
         "--disable-coinmp"
-        "--disable-firebird-sdbc"       ; embedded firebird
+        ;; This could (Debian does this) be a separate output containing only
+        ;; program/libfirebird_sdbclo.so, if there's a way to point to it.
+        "--enable-firebird-sdbc"
         ;; XXX: PDFium support requires fetching an external tarball and
         ;; patching the build scripts to work with GCC5.  Try enabling this
         ;; when our default compiler is >=GCC 6.

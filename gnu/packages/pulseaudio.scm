@@ -71,45 +71,6 @@
 (define-public libsndfile
   (package
     (name "libsndfile")
-    (version "1.0.28")
-    (replacement libsndfile-1.0.30)
-    (source (origin
-             (method url-fetch)
-             (uri (string-append "http://www.mega-nerd.com/libsndfile/files/libsndfile-"
-                                 version ".tar.gz"))
-             (patches (search-patches "libsndfile-armhf-type-checks.patch"
-                                      "libsndfile-CVE-2017-8361-8363-8365.patch"
-                                      "libsndfile-CVE-2017-8362.patch"
-                                      "libsndfile-CVE-2017-12562.patch"))
-             (sha256
-              (base32
-               "1afzm7jx34jhqn32clc5xghyjglccam2728yxlx37yj2y0lkkwqz"))))
-    (build-system gnu-build-system)
-    (inputs
-     `(("libvorbis" ,libvorbis)
-       ("libogg" ,libogg)
-       ("flac" ,flac)))
-    (native-inputs
-     `(("pkg-config" ,pkg-config)))
-    (home-page "http://www.mega-nerd.com/libsndfile/")
-    (synopsis "Reading and writing files containing sampled sound")
-    (description
-     "Libsndfile is a C library for reading and writing files containing
-sampled sound (such as MS Windows WAV and the Apple/SGI AIFF format) through
-one standard library interface.
-
-It was designed to handle both little-endian (such as WAV) and
-big-endian (such as AIFF) data, and to compile and run correctly on
-little-endian (such as Intel and DEC/Compaq Alpha) processor systems as well
-as big-endian processor systems such as Motorola 68k, Power PC, MIPS and
-SPARC.  Hopefully the design of the library will also make it easy to extend
-for reading and writing new sound file formats.")
-    (license l:gpl2+)))
-
-;; Replacement package to fix multiple security vulnerabilities.
-(define libsndfile-1.0.30
-  (package
-    (inherit libsndfile)
     (version "1.0.30")
     (source (origin
              (method url-fetch)
@@ -137,9 +98,28 @@ for reading and writing new sound file formats.")
                  (substitute* "tests/test_wrapper.sh.in"
                    (("^/usr/bin/env") "env"))
                  #t))))
+    (build-system gnu-build-system)
+    (inputs
+     `(("libvorbis" ,libvorbis)
+       ("libogg" ,libogg)
+       ("flac" ,flac)))
     (native-inputs
-     `(("python" ,python)
-       ,@(package-native-inputs libsndfile)))))
+     `(("pkg-config" ,pkg-config)
+       ("python" ,python)))
+    (home-page "http://www.mega-nerd.com/libsndfile/")
+    (synopsis "Reading and writing files containing sampled sound")
+    (description
+     "Libsndfile is a C library for reading and writing files containing
+sampled sound (such as MS Windows WAV and the Apple/SGI AIFF format) through
+one standard library interface.
+
+It was designed to handle both little-endian (such as WAV) and
+big-endian (such as AIFF) data, and to compile and run correctly on
+little-endian (such as Intel and DEC/Compaq Alpha) processor systems as well
+as big-endian processor systems such as Motorola 68k, Power PC, MIPS and
+SPARC.  Hopefully the design of the library will also make it easy to extend
+for reading and writing new sound file formats.")
+    (license l:gpl2+)))
 
 (define-public libsamplerate
   (package
@@ -261,7 +241,7 @@ rates.")
 
        ("eudev" ,eudev)))         ;for the detection of hardware audio devices
     (native-inputs
-     `(("check" ,check)
+     `(("check" ,check-0.14)
        ("gettext" ,gettext-minimal)
        ("glib:bin" ,glib "bin")
        ("m4" ,m4)
@@ -542,7 +522,7 @@ module-gsettings is loaded in the sound server.")
 (define-public rnnoise
   (package
     (name "rnnoise")
-    (version "0.9")
+    (version "0.91")
     (source
      (origin
        (method git-fetch)
@@ -551,7 +531,7 @@ module-gsettings is loaded in the sound server.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "18bq5b50xw3d4r1ildinafpg3isb9y216430h4mm9wr3ir7h76a7"))))
+        (base32 "11pwisbcks7g0mdgcrrv49v3ci1l6m26bbb7f67xz4pr1hai5dwc"))))
     (build-system cmake-build-system)
     (arguments
      ;; No tests.
@@ -575,7 +555,7 @@ The plugin is made to work with 1 or 2 channels (ladspa plugin),
 (define-public noisetorch
   (package
     (name "noisetorch")
-    (version "0.7.2-beta")
+    (version "0.8.3")
     (source
      (origin
        (method git-fetch)
@@ -584,7 +564,7 @@ The plugin is made to work with 1 or 2 channels (ladspa plugin),
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "06xlqjma8h7lcnqgc9226blps6m9dp487hk71lslfxj0jkay548k"))))
+        (base32 "115sq4waq048bv82lnq5sblf62m50yvyakx7x06qq359v7qf5ji1"))))
     (build-system go-build-system)
     (arguments
      `(#:import-path "github.com/lawl/NoiseTorch"

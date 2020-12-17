@@ -54,14 +54,14 @@
 (define-public tor
   (package
     (name "tor")
-    (version "0.4.4.5")
+    (version "0.4.4.6")
     (source (origin
              (method url-fetch)
              (uri (string-append "https://dist.torproject.org/tor-"
                                  version ".tar.gz"))
              (sha256
               (base32
-               "09lr6l98qmc69pzsi8r02z86v969dbfwjrwphfm3npknzq5a0p54"))))
+               "1p0zpqmbskygx0wmiijhprg8r45n2wqbbjl7kv4gbb83b0alq5az"))))
     (build-system gnu-build-system)
     (arguments
      `(#:configure-flags
@@ -155,7 +155,7 @@ rejects UDP traffic from the application you're using.")
 (define-public privoxy
   (package
     (name "privoxy")
-    (version "3.0.28")
+    (version "3.0.29")
     (source (origin
              (method url-fetch)
              (uri (string-append "mirror://sourceforge/ijbswa/Sources/"
@@ -163,7 +163,7 @@ rejects UDP traffic from the application you're using.")
                                  version "-stable-src.tar.gz"))
              (sha256
               (base32
-               "0jl2yav1qzqnaqnnx8i6i53ayckkimcrs3l6ryvv7bda6v08rmxm"))))
+               "17a8fbdyb0ixc0wwq68fg7xn7l6n7jq67njpq93psmxgzng0dii5"))))
     (build-system gnu-build-system)
     (arguments
      '(;; The default 'sysconfdir' is $out/etc; change that to
@@ -171,7 +171,9 @@ rejects UDP traffic from the application you're using.")
        #:configure-flags (list (string-append "--sysconfdir="
                                               (assoc-ref %outputs "out")
                                               "/etc/privoxy")
-                               "--localstatedir=/var")
+                               "--localstatedir=/var"
+                               "--with-brotli"
+                               "--with-openssl")
        #:tests? #f                      ; no test suite
        #:phases
        (modify-phases %standard-phases
@@ -193,8 +195,10 @@ rejects UDP traffic from the application you're using.")
                  (("^logfile") "#logfile")))
              #t)))))
     (inputs
-     `(("w3m" ,w3m)
+     `(("brotli" ,brotli)
+       ("openssl" ,openssl)
        ("pcre" ,pcre)
+       ("w3m" ,w3m)
        ("zlib" ,zlib)))
     (native-inputs
      `(("autoconf" ,autoconf)

@@ -17,9 +17,87 @@
 
 (channel-news
  (version 0)
+ (entry (commit "79f9dee3c4c0e6d21066f142116a537207ae7ba4")
+        (title (en "Local substitute servers discovery is now supported")
+               (de "Substitutserver können jetzt im lokalen Netz erkannt werden")
+               (es "Los servidores de sustituciones se pueden descubrir localmente")
+               (fr "La découverte des serveurs de substituts locaux est désormais supportée"))
+        (body
+         (en "The @command{guix-daemon} can now discover local substitute
+servers when the @option{--discover} option is passed.  Only the substitute
+servers started with the @option{--advertise} option will be discovered.  The
+network discovery is based on mDNS and DNS-SD protocols, using Guile-Avahi
+library for now.")
+         (de "Mit dem @command{guix-daemon} können jetzt lokal laufende
+Substitutserver erkannt werden, wenn die Befehlszeilenoption
+@option{--discover} übergeben wurde.  Nur solche Substitutserver werden
+gefunden, die mit der Befehlszeilenoption @option{--advertise} gestartet
+wurden.  Die Ermittlung im Netzwerk verfügbarer Substitutserver baut auf den
+Protokollen mDNS und DNS-SD auf.  Derzeit wird dazu die Bibliothek Guile-Avahi
+benutzt.")
+         (es "El daemon @command{guix-daemon} ahora puede descubrir servidores
+de sustituciones locales cuando se le proporciona la opción
+@option{--discover}.  Únicamente se descubrirán los servidores de
+sustituciones que se hayan arrancado con la opción @option{--advertise}. La
+búsqueda en la red se basa en los protocolos mDNS y DNS-SD, actualmente
+mediante el uso de la biblioteca Guile-Avahi.")
+         (fr "Le @command{guix-daemon} peut désormais découvrir les serveurs
+de substituts locaux lorsque l'option @option{--discover} est passée.  Seuls
+les serveurs de substituts démarrés avec l'option @option{--advertise} seront
+découverts.  La découverte réseau utilise les protocoles mDNS et DNS-SD, pour
+l'instant grâce à la librairie Guile-Avahi.")))
+
+ (entry (commit "a9a2fdaabcc78e7a54d9a6bcfa4ee3de308e9a90")
+        (title (en "Logical Volume Manager (LVM) now supported on Guix System")
+               (de "Logical Volume Manager (LVM) wird jetzt auf Guix System unterstützt")
+               (es "El sistema Guix ahora implementa también volúmenes lógicos LVM"))
+        (body
+         (en "On Guix System, the new @code{lvm-device-mapping} variable
+allows you to declare ``mapped devices'' for LVM, the Linux Logical Volume
+Manager.  For example, LVM logical volumes ``alpha'' and ``beta'' from volume
+group ``vg0'' can be declared as follows:
+
+@lisp
+(mapped-device
+  (source \"vg0\")
+  (target (list \"vg0-alpha\" \"vg0-beta\"))
+  (type lvm-device-mapping))
+@end lisp
+
+See @command{info \"(guix) Mapped Devices\"} for more information.")
+         (de "Auf Guix System erlaubt Ihnen die neue Variable
+@code{lvm-device-mapping}, „zugeordnete Geräte“ (Mapped Devices) für LVM, den
+Linux Logical Volume Manager, zu deklarieren. Zum Beispiel können logische
+Datenträger von LVM namens „alpha“ und „beta“ aus der
+Datenträgergruppe (Volume Group) „vg0“ wie folgt deklariert werden:
+
+@lisp
+(mapped-device
+  (source \"vg0\")
+  (target (list \"vg0-alpha\" \"vg0-beta\"))
+  (type lvm-device-mapping))
+@end lisp
+
+Siehe @command{info \"(guix.de) Zugeordnete Geräte\"} für nähere Informationen.")
+         (es "En el sistema Guix, la nueva variable @code{lvm-device-mapping}
+le permite declarar «dispositivos traducidos» para LVM, el gestor de volúmenes
+lógicos de Linux. A continuación se muestra un ejemplo con la declaración de
+los volúmenes lógicos «alfa» y «beta» del grupo de volúmenes «vg0»:
+
+@lisp
+(mapped-device
+  (source \"vg0\")
+  (target (list \"vg0-alfa\" \"vg0-beta\"))
+  (type lvm-device-mapping))
+@end lisp
+
+Véase @command{info \"(guix.es) Dispositivos traducidos\"} para obtener más
+información.")))
 
  (entry (commit "3b6e4e5fd05e72b8a32ff1a2d5e21464260e21e6")
         (title (en "List of substitute keys is now declarative on Guix System")
+               (de "Liste der Substitutschlüssel auf Guix System ist jetzt deklarativ")
+               (es "Claves para sustituciones del sistema Guix en formato declarativo")
                (fr "Liste des clefs de substituts désormais déclarative sur Guix System"))
         (body
          (en "The list of authorized substitute keys, available in
@@ -36,6 +114,40 @@ Services\"}, for more info about @code{guix-configuration} and
 
 Alternatively, you can set the @code{authorize-key?} field of
 @code{guix-configuration} to @code{#f} to restore previous behavior.")
+         (de "Die Liste von autorisierten Substitutschlüsseln, die in
+@file{/etc/guix/acl} steht, wird auf Guix System nach Vorgabe jetzt auf rein
+deklarative Weise erstellt, je nach Inhalt des @code{authorized-keys}-Feldes
+der Konfiguration des @code{guix-service-type}. Das hat zur Folge, dass
+manuelle Änderungen an @file{/etc/guix/acl} von jetzt an nach jedem
+Rekonfigurieren oder Neustarten @emph{verworfen} werden (in diesem Fall wird
+eine Sicherheitskopie namens @file{/etc/guix/acl.bak} angelegt).
+
+Wir empfehlen, dass Sie Ihre Betriebssystemkonfiguration aktualisieren, damit
+dort alle autorisierten Substitutschlüssel ausdrücklich aufgeführt
+werden. Siehe @command{info \"(guix.de) Basisdienste\"} für mehr Informationen
+zur @code{guix-configuration} und @code{authorized-keys}.
+
+Alternativ können Sie das @code{authorize-key?}-Feld der
+@code{guix-configuration} auf @code{#f} setzen, um zum alten Verhalten
+zurückzugehen.")
+         (es "El listado de claves autorizadas para la obtención de
+sustituciones, disponible en @file{/etc/guix/acl}, ahora se genera de manera
+predeterminada en el sistema Guix de forma completamente declarativa en base
+al campo @code{authorized-keys} del la configuración para el servicio
+@code{guix-service-type}. Esto significa que los cambios que se hayan
+realizado de manera manual en @file{/etc/guix/acl} @emph{se descartan} tras
+una reconfiguración del sistema o tras un reinicio (se realiza una copia de
+seguridad en la ruta @file{/etc/guix/acl.bak} en este caso).
+
+Le recomendamos que actualice su configuración del sistema operativo para que
+enumere explícitamente todas las claves que desea autorizar para la obtención
+de sustituciones.  Véase @command{info \"(guix.es) Servicios base\"}, para
+obtener más información sobre @code{guix-configuration} y
+@code{authorized-keys}.
+
+También puede proporcionar el valor @code{#f} en el campo
+@code{authorize-key?} de @code{guix-configuration} para volver al
+comportamiento que se obtenía con versiones previas.")
          (fr "La liste des clefs de substituts autorisées, stockée dans
 @file{/guix/guix/acl}, est dorénavant construite par défaut de manière
 déclarative sur Guix System, en se basant sur le champs @code{authorized-keys}

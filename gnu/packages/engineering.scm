@@ -9,7 +9,7 @@
 ;;; Copyright © 2018, 2019, 2020 Tobias Geerinckx-Rice <me@tobias.gr>
 ;;; Copyright © 2018 Clément Lassieur <clement@lassieur.org>
 ;;; Copyright © 2018, 2019 Jonathan Brielmaier <jonathan.brielmaier@web.de>
-;;; Copyright © 2018, 2019 Arun Isaac <arunisaac@systemreboot.net>
+;;; Copyright © 2018, 2019, 2020 Arun Isaac <arunisaac@systemreboot.net>
 ;;; Copyright © 2019 Tim Stahel <swedneck@swedneck.xyz>
 ;;; Copyright © 2019 Jovany Leandro G.C <bit4bit@riseup.net>
 ;;; Copyright © 2019 Steve Sprang <scs@stevesprang.com>
@@ -74,6 +74,7 @@
   #:use-module (gnu packages freedesktop)
   #:use-module (gnu packages gcc)
   #:use-module (gnu packages gd)
+  #:use-module (gnu packages geo)
   #:use-module (gnu packages gettext)
   #:use-module (gnu packages ghostscript)
   #:use-module (gnu packages gl)
@@ -754,8 +755,8 @@ fonts to gEDA.")
       (license license:gpl2+))))
 
 (define-public libfive
-  (let ((commit "6e39254e57c179459bb929df49ae96a6017a0ed6")
-        (revision "3"))
+  (let ((commit "8ca1b8685ef3fac7b64e66b10459b8421a3020c6")
+        (revision "4"))
     (package
       (name "libfive")
       (version (git-version "0" revision commit))
@@ -766,7 +767,7 @@ fonts to gEDA.")
                       (commit commit)))
                 (sha256
                  (base32
-                  "0ryv2hcbrwqc087w7rrs4a2irkcpmqync00g4dh8n7jn10w2jkim"))
+                  "1c762cd70iv2b9av0l9lq0py9138y98wk3dirhdmil7jncdhvq98"))
                 (file-name (git-file-name name version))))
       (build-system cmake-build-system)
       (arguments
@@ -784,7 +785,7 @@ fonts to gEDA.")
          ("libpng" ,libpng)
          ("qtbase" ,qtbase)
          ("eigen" ,eigen)
-         ("guile" ,guile-2.2)))
+         ("guile" ,guile-3.0)))
       (home-page "https://libfive.com")
       (synopsis "Tool for programmatic computer-aided design")
       (description
@@ -810,7 +811,14 @@ language.")
                 (file-name (git-file-name name version))
                 (sha256
                  (base32
-                  "0lan6930g5a9z4ack9jj0zdd0mb2s6q2xzpiwcjdc3pvl9b1nbw4"))))
+                  "0lan6930g5a9z4ack9jj0zdd0mb2s6q2xzpiwcjdc3pvl9b1nbw4"))
+                (modules '((guix build utils)))
+                (snippet
+                 '(begin
+                    ;; Allow builds with Guile 3.0.
+                    (substitute* "configure.ac"
+                      (("2\\.2") "3.0 2.2"))
+                    #t))))
       (build-system gnu-build-system)
       (arguments
        `(#:phases
@@ -829,10 +837,10 @@ language.")
          ("pkg-config" ,pkg-config)))
       (inputs
        `(("mesa" ,mesa)
-         ("guile" ,guile-2.2)))
+         ("guile" ,guile-3.0)))
       (propagated-inputs
        `(("libfive" ,libfive)
-         ("guile-opengl" ,guile-opengl)))
+         ("guile-opengl" ,guile3.0-opengl)))
       (home-page "https://gitlab.com/kavalogic-inc/inspekt3d/")
       (synopsis "Lightweight 3D viewer for Libfive written in Guile Scheme")
       (description
@@ -1069,18 +1077,29 @@ the 'showing the effect of'-style of operation.")
 (define-public volk
   (package
     (name "volk")
-    (version "2.3.0")
+    (version "2.4.0")
     (source
      (origin
-       (method url-fetch)
-       (uri (string-append "https://www.libvolk.org/releases/volk-"
-                           version ".tar.gz"))
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/gnuradio/volk")
+             (commit (string-append "v" version))
+             (recursive? #t)))          ; for cpu_features git submodule
+       (file-name (git-file-name name version))
        (sha256
-        (base32 "1pjxz3piwy49njj5y2zk437prwkv9lfs5g48577jj3kcsg766vi3"))))
+        (base32 "14y0988r5qi1h3yvkivx5ihccn8r15910lq30r8iy71ih190r5m9"))))
     (build-system cmake-build-system)
     (arguments
      `(#:phases
        (modify-phases %standard-phases
+         (add-after 'install 'remove-static-libraries
+           ;; Remove libcpu_features.a (and any others that might appear).
+           (lambda* (#:key outputs #:allow-other-keys)
+             (let* ((out (assoc-ref outputs "out"))
+                    (lib (string-append out "/lib")))
+               (for-each delete-file (find-files lib "\\.a$"
+                                                 #:fail-on-error? #t))
+               #t)))
          (add-after 'install 'wrap-pythonpath
            (lambda* (#:key inputs outputs #:allow-other-keys)
              (let* ((out (assoc-ref outputs "out"))
@@ -1114,22 +1133,23 @@ use on a given system.")
 (define-public libredwg
   (package
     (name "libredwg")
-    (version "0.11")
+    (version "0.11.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://gnu/libredwg/libredwg-"
              version ".tar.xz"))
        (sha256
-        (base32 "1vd7ii32k5447z7k4w9s005hv1ffpj6dyf1w40x6c53qksrblny2"))))
+        (base32 "1xx6y6ckm4mzqln8y8lqf5frcn2b32ypc0d0h9dzpz6363zh7pdn"))))
     (build-system gnu-build-system)
     (arguments
      `(#:configure-flags '("--disable-bindings")))
     (native-inputs
      `(("libxml2" ,libxml2)
        ("parallel" ,parallel)
+       ("perl" ,perl)
        ("pkg-config" ,pkg-config)
-       ("python" ,python)
+       ("python" ,python-wrapper)
        ("python-libxml2" ,python-libxml2)))
     (inputs
      `(("pcre2" ,pcre2)))
@@ -1537,8 +1557,12 @@ high-performance parallel differential evolution (DE) optimization algorithm.")
     (version "28")
     (source (origin
               (method url-fetch)
-              (uri (string-append "mirror://sourceforge/ngspice/ng-spice-rework/"
-                                  version "/ngspice-" version ".tar.gz"))
+              (uri (list
+                     (string-append "mirror://sourceforge/ngspice/ng-spice-rework/"
+                                    version "/ngspice-" version ".tar.gz")
+                     (string-append "mirror://sourceforge/ngspice/ng-spice-rework/"
+                                    "old-releases/" version
+                                    "/ngspice-" version ".tar.gz")))
               (sha256
                (base32
                 "0rnz2rdgyav16w7wfn3sfrk2lwvvgz1fh0l9107zkcldijklz04l"))
@@ -2411,7 +2435,7 @@ full programmatic control over your models.")
 (define-public freecad
   (package
     (name "freecad")
-    (version "0.18.4")
+    (version "0.18.5")
     (source
      (origin
        (method git-fetch)
@@ -2430,7 +2454,7 @@ full programmatic control over your models.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "170hk1kgrvsddrwykp24wyj0cha78zzmzbf50gn98x7ngqqs395s"))))
+         "0r31jzzkamf76l19fb175hhv48irk06fpi8ldxdlr31w8c1ix4aa"))))
     (build-system qt-build-system)
     (native-inputs
      `(("doxygen" ,doxygen)
@@ -2473,8 +2497,28 @@ full programmatic control over your models.")
        #:configure-flags
        (list
         "-DBUILD_QT5=ON"
-        (string-append "-DCMAKE_INSTALL_LIBDIR="
-                       (assoc-ref %outputs "out") "/lib"))
+        (string-append "-DCMAKE_INSTALL_LIBDIR=" (assoc-ref %outputs "out") "/lib")
+
+        (string-append "-DPYSIDE2UICBINARY="
+                       (assoc-ref %build-inputs "python-pyside-2-tools")
+                       "/bin/uic")
+        (string-append "-DPYSIDE2RCCBINARY="
+                       (assoc-ref %build-inputs "python-pyside-2-tools")
+                       "/bin/rcc")
+
+        "-DPYSIDE_LIBRARY=PySide2::pyside2"
+        (string-append
+         "-DPYSIDE_INCLUDE_DIR="
+         (assoc-ref %build-inputs "python-pyside-2") "/include;"
+         (assoc-ref %build-inputs "python-pyside-2") "/include/PySide2;"
+         (assoc-ref %build-inputs "python-pyside-2") "/include/PySide2/QtCore;"
+         (assoc-ref %build-inputs "python-pyside-2") "/include/PySide2/QtWidgets;"
+         (assoc-ref %build-inputs "python-pyside-2") "/include/PySide2/QtGui;")
+
+        "-DSHIBOKEN_LIBRARY=Shiboken2::libshiboken"
+        (string-append "-DSHIBOKEN_INCLUDE_DIR="
+                       (assoc-ref %build-inputs "python-shiboken-2")
+                       "/include/shiboken2"))
        #:phases
        (modify-phases %standard-phases
          (add-before 'configure 'restore-pythonpath
@@ -2825,3 +2869,39 @@ GUI.")
   provides a full-fledged procedural, interactive programming language designed
   to describe data structures and to operate on them.")
       (license license:gpl3+))))
+
+(define-public pcb2gcode
+    (package
+     (name "pcb2gcode")
+     (version "2.1.0")
+     (source
+      (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/pcb2gcode/pcb2gcode")
+             (commit (string-append "v" version))
+             (recursive? #t)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "0nzglcyh6ban27cc73j4l7w7r9k38qivq0jz8iwnci02pfalw4ry"))))
+     (build-system gnu-build-system)
+     (inputs
+      `(("boost" ,boost)
+        ("geos" ,geos)
+        ("gerbv" ,gerbv)
+        ("glibmm" ,glibmm)
+        ("gtkmm" ,gtkmm-2)
+        ("librsvg" ,librsvg)))
+     (native-inputs
+      `(("autoconf" ,autoconf)
+        ("automake" ,automake)
+        ("libtool" ,libtool)
+        ("pkg-config" ,pkg-config)))
+     (home-page "https://github.com/pcb2gcode/pcb2gcode")
+     (synopsis "Generate G-code for milling PCBs")
+     (description "pcb2gcode is a command-line program for isolation routing
+and drilling of PCBs.  It takes Gerber files as input and outputs G-code files
+for the milling of PCBs.  It also includes an autoleveller for the automatic
+dynamic calibration of the milling depth.")
+     (license license:gpl3+)))

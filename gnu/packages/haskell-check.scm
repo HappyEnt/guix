@@ -12,6 +12,7 @@
 ;;; Copyright © 2018 Arun Isaac <arunisaac@systemreboot.net>
 ;;; Copyright © 2019 Timothy Sample <samplet@ngyro.com>
 ;;; Copyright © 2020 John Soo <jsoo1@asu.edu>
+;;; Copyright © 2020 Carlo Holl <carloholl@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -501,12 +502,9 @@ use HUnit assertions as QuickCheck properties.")
         (base32
          "0426j43af8v3qmdjjqxivazsvr3a2brac8yw09vpgpjkb2m0nmkv"))))
     (build-system haskell-build-system)
-    (arguments
-     `(#:tests? #f))  ; FIXME: currently missing libraries used for tests.
     (inputs
      `(("ghc-random" ,ghc-random)
-       ("ghc-splitmix" ,ghc-splitmix-bootstrap)
-       ("ghc-tf-random" ,ghc-tf-random)))
+       ("ghc-splitmix" ,ghc-splitmix-bootstrap)))
     (home-page "https://github.com/nick8325/quickcheck")
     (synopsis "Automatic testing of Haskell programs")
     (description
@@ -1037,4 +1035,30 @@ regular development cycle and regressions caught early.
 
 See the documentation in \"Test.Inspection\" or the project webpage for more
 examples and more information.")
+    (license license:expat)))
+
+(define-public ghc-easytest
+  (package
+    (name "ghc-easytest")
+    (version "0.2.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append
+             "https://hackage.haskell.org/package/easytest/easytest-"
+             version ".tar.gz"))
+       (sha256
+        (base32
+         "0gdyawzlw6d15yz7ji599xjgfr0g7l1iq11ffr4aw3j6g3dc6m8i"))))
+    (build-system haskell-build-system)
+    (inputs
+     `(("ghc-async" ,ghc-async)
+       ("ghc-random" ,ghc-random)
+       ("ghc-call-stack" ,ghc-call-stack)))
+    (home-page "https://github.com/joelburget/easytest")
+    (synopsis "Testing library for Haskell")
+    (description "EasyTest is a testing toolkit, meant to replace most uses of
+QuickCheck, SmallCheck, HUnit, and frameworks like Tasty, etc.  Tests can be
+written with ordinary Haskell code, with control flow explicit and under
+programmer control.")
     (license license:expat)))

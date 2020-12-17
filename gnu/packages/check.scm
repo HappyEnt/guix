@@ -35,6 +35,7 @@
 ;;; Copyright © 2020 Josh Marshall <joshua.r.marshall.1991@gmail.com>
 ;;; Copyright © 2020 Vinicius Monego <monego@posteo.net>
 ;;; Copyright © 2020 Tanguy Le Carrour <tanguy@bioneland.org>
+;;; Copyright © 2020 Maxim Cournoyer <maxim.cournoyer@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -81,7 +82,8 @@
   #:use-module (guix build-system go)
   #:use-module (guix build-system meson)
   #:use-module (guix build-system python)
-  #:use-module (guix build-system trivial))
+  #:use-module (guix build-system trivial)
+  #:use-module (srfi srfi-1))
 
 (define-public pedansee
   (package
@@ -119,7 +121,7 @@ modify some aspects of this style through the use of regular expressions.")
        (method git-fetch)
        (uri
         (git-reference
-         (url "https://github.com/ebassi/mutest.git")
+         (url "https://github.com/ebassi/mutest")
          (commit "e6246c9")))
        (file-name (git-file-name name version))
        (sha256
@@ -135,7 +137,7 @@ like Jasmine or Mocha.")
 (define-public check
   (package
     (name "check")
-    (version "0.14.0")
+    (version "0.15.2")
     (source
      (origin
       (method url-fetch)
@@ -143,7 +145,7 @@ like Jasmine or Mocha.")
                           version "/check-" version ".tar.gz"))
       (sha256
        (base32
-        "02zkfiyklckmivrfvdsrlzvzphkdsgjrz3igncw05dv5pshhq3xx"))))
+        "02m25y9m46pb6n46s51av62kpd936lkfv3b13kfpckgvmh5lxpm8"))))
     (build-system gnu-build-system)
     (home-page "https://libcheck.github.io/check/")
     (synopsis "Unit test framework for C")
@@ -156,7 +158,19 @@ faults or other signals.  The output from unit tests can be used within
 source code editors and IDEs.")
     (license license:lgpl2.1+)))
 
-;; Some packages require this older version.  Removed once no longer needed.
+;; Some packages require older versions.  Removed once no longer needed.
+(define-public check-0.14
+  (package
+    (inherit check)
+    (version "0.14.0")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append "https://github.com/libcheck/check/releases"
+                                  "/download/" version "/check-" version ".tar.gz"))
+              (sha256
+               (base32
+                "02zkfiyklckmivrfvdsrlzvzphkdsgjrz3igncw05dv5pshhq3xx"))))))
+
 (define-public check-0.12
   (package
    (inherit check)
@@ -497,7 +511,7 @@ and it supports a very flexible form of test discovery.")
 (define-public doctest
   (package
     (name "doctest")
-    (version "2.4.0")
+    (version "2.4.1")
     (home-page "https://github.com/onqtam/doctest")
     (source (origin
               (method git-fetch)
@@ -505,7 +519,7 @@ and it supports a very flexible form of test discovery.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1yi95saqv8qb3ix6w8d7ffvs7qbwvqmq6wblckhxhicxxdxk85cd"))))
+                "17g7n6rjs90i0b231x5s934qnr8m80ga2yg1z344bnsdiqcjd63w"))))
     (build-system cmake-build-system)
     (synopsis "C++ test framework")
     (description
@@ -919,18 +933,57 @@ and many external plugins.")
     (license license:expat)
     (properties `((python2-variant . ,(delay python2-pytest))))))
 
+(define-public python-pytest-6
+  (package
+    (inherit (strip-python2-variant python-pytest))
+    (version "6.1.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "pytest" version))
+       (sha256
+        (base32
+         "0gl2sdm322vzmsh5k4f8kj9raiq2y7kdinnca4m45ifvii5fk9y0"))))
+    (arguments
+     `(#:phases
+       (modify-phases %standard-phases
+         (replace 'check
+           (lambda* (#:key (tests? #t) #:allow-other-keys)
+             (setenv "TERM" "dumb")     ;attempt disabling markup tests
+             (if tests?
+                 (invoke "pytest" "-vv" "-k"
+                         (string-append
+                          ;; This test involve the /usr directory, and fails.
+                          " not test_argcomplete"
+                          ;; These test do not honor the isatty detection and
+                          ;; fail.
+                          " and not test_code_highlight"
+                          " and not test_color_yes"))
+                 (format #t "test suite not run~%"))
+             #t)))))
+    (propagated-inputs
+     (append (alist-delete "python-py"
+                           (package-propagated-inputs python-pytest))
+             `(("python-py" ,python-py-next))))
+    (native-inputs
+     (append (alist-delete "python-pytest"
+                           (package-native-inputs python-pytest))
+             `(("python-pytest" ,python-pytest-6-bootstrap)
+               ("python-toml" ,python-toml)
+               ("python-iniconfig" ,python-iniconfig))))))
+
 ;; Pytest 4.x are the last versions that support Python 2.
 (define-public python2-pytest
   (package
     (inherit (strip-python2-variant python-pytest))
     (name "python2-pytest")
-    (version "4.6.9")
+    (version "4.6.11")
     (source (origin
               (method url-fetch)
               (uri (pypi-uri "pytest" version))
               (sha256
                (base32
-                "0fgkmpc31nzy97fxfrkqbzycigdwxwwmninx3qhkzp81migggs0r"))))
+                "0ls3pqr86xgif6bphsb6wrww9r2vc7p7a2naq8zcq8115wwq5yjh"))))
     (build-system python-build-system)
     (arguments
      `(#:python ,python-2
@@ -962,6 +1015,15 @@ and many external plugins.")
     (native-inputs `(("python-setuptools-scm" ,python-setuptools-scm)))
     (arguments `(#:tests? #f))
     (properties `((python2-variant . ,(delay python2-pytest-bootstrap))))))
+
+(define-public python-pytest-6-bootstrap
+  (package
+    (inherit (strip-python2-variant python-pytest-6))
+    (name "python-pytest-bootstrap")
+    (arguments `(#:tests? #f))
+    (native-inputs
+     `(("python-setuptools-scm" ,python-setuptools-scm)
+       ("python-toml" ,python-toml)))))
 
 (define-public python2-pytest-bootstrap
   (hidden-package
@@ -1136,14 +1198,14 @@ same arguments.")
 (define-public python-pytest-xdist
   (package
     (name "python-pytest-xdist")
-    (version "1.25.0")
+    (version "2.1.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "pytest-xdist" version))
        (sha256
         (base32
-         "1d812apvcmshh2l8f38spqwb3bpp0x43yy7lyfpxxzc99h4r7y4n"))
+         "0wh6pn66nncfs6ay0n863bgyriwsgppn8flx5l7551j1lbqkinc2"))
        (modules '((guix build utils)))
        (snippet
         '(begin
@@ -1415,14 +1477,14 @@ use of resources by test cases.")))
 (define-public python-subunit-bootstrap
   (package
     (name "python-subunit-bootstrap")
-    (version "1.3.0")
+    (version "1.4.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "python-subunit" version))
        (sha256
         (base32
-         "1fsw8rsn1s3nklx06mayrg5rn2zbky6wwjc5z07s7rf1wjzfs1wn"))))
+         "0j0ymmnc5nfxi1qzvy59j27viqca7l7xd0y9x29g7yr0h693j804"))))
     (build-system python-build-system)
     (propagated-inputs
      `(("python-extras" ,python-extras)
@@ -1562,14 +1624,14 @@ have failed since the last commit or what tests are currently failing.")))
 (define-public python-coverage
   (package
     (name "python-coverage")
-    (version "5.0.3")
+    (version "5.2.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "coverage" version))
        (sha256
         (base32
-         "1vrg8panqw79pswg52ygbrff3wdnxarrd9qz6c64ah0c4h2cmbvp"))))
+         "16z8i18msgs8k74n73dj9x49wzkl0vk4vq8k5pl1bsj70y7b4k53"))))
     (build-system python-build-system)
     (arguments
      ;; FIXME: 95 tests failed, 539 passed, 6 skipped, 2 errors.
@@ -2681,7 +2743,7 @@ provides a simple way to achieve this.")
 (define-public umockdev
   (package
     (name "umockdev")
-    (version "0.14.3")
+    (version "0.14.4")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://github.com/martinpitt/umockdev/"
@@ -2689,7 +2751,7 @@ provides a simple way to achieve this.")
                                   "umockdev-" version ".tar.xz"))
               (sha256
                (base32
-                "15smnxwplk48nas2c8ji6a5fqcsh770f1yl5nc2j5iprjspbm4mg"))))
+                "0xmi24ckpps32k7hc139psgbsnsf4g106sv4l9m445m46amkxggd"))))
     (build-system gnu-build-system)
     (arguments
      `(#:phases

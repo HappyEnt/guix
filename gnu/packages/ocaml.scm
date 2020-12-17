@@ -16,6 +16,7 @@
 ;;; Copyright © 2020 Brett Gilio <brettg@gnu.org>
 ;;; Copyright © 2020 Marius Bakke <marius@gnu.org>
 ;;; Copyright © 2020 Simon Tournier <zimon.toutoune@gmail.com>
+;;; Copyright © 2020 divoplade <d@divoplade.fr>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -133,10 +134,10 @@
                          "/lib/ocaml/site-lib"))
     #:phases (modify-phases %standard-phases (delete 'configure))))
 
-(define-public ocaml-4.09
+(define-public ocaml-4.11
   (package
     (name "ocaml")
-    (version "4.09.0")
+    (version "4.11.1")
     (source (origin
               (method url-fetch)
               (uri (string-append
@@ -145,7 +146,7 @@
                     "/ocaml-" version ".tar.xz"))
               (sha256
                (base32
-                "1v3z5ar326f3hzvpfljg4xj8b9lmbrl53fn57yih1bkbx3gr3yzj"))))
+                "0k4521c0p10c5ams6vjv5qkkjhmpkb0bfn04llcz46ah0f3r2jpa"))))
     (build-system gnu-build-system)
     (native-search-paths
      (list (search-path-specification
@@ -203,6 +204,20 @@ functional, imperative and object-oriented styles of programming.")
     ;; distributed under lgpl2.0.
     (license (list license:qpl license:lgpl2.0))))
 
+(define-public ocaml-4.09
+  (package
+    (inherit ocaml-4.11)
+    (version "4.09.0")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append
+                    "http://caml.inria.fr/pub/distrib/ocaml-"
+                    (version-major+minor version)
+                    "/ocaml-" version ".tar.xz"))
+              (sha256
+               (base32
+                "1v3z5ar326f3hzvpfljg4xj8b9lmbrl53fn57yih1bkbx3gr3yzj"))))))
+
 (define-public ocaml-4.07
   (package
     (inherit ocaml-4.09)
@@ -230,7 +245,7 @@ functional, imperative and object-oriented styles of programming.")
                           "--prefix" out
                           "--mandir" mandir))))))))))
 
-(define-public ocaml ocaml-4.09)
+(define-public ocaml ocaml-4.11)
 
 (define-public ocamlbuild
   (package
@@ -725,8 +740,7 @@ Emacs.")
 (define-public ocaml-menhir
   (package
     (name "ocaml-menhir")
-    ;; More recent versions can be built after we have dune >= 2.0
-    (version "20190626")
+    (version "20200211")
     (source
      (origin
        (method git-fetch)
@@ -735,19 +749,12 @@ Emacs.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0v8av4pw6rykzb7wx54xhbsx0jhh8xyb4x0k4yrxi0w5ylkck6mb"))))
-    (build-system ocaml-build-system)
+        (base32 "019izf51kdc7pzkw68zg8a2alc8lxw1gwdp7in970mr90n16b5zj"))))
+    (build-system dune-build-system)
     (inputs
      `(("ocaml" ,ocaml)))
-    (native-inputs
-     `(("ocamlbuild" ,ocamlbuild)))
     (arguments
-     `(#:make-flags `("USE_OCAMLFIND=true"
-                      ,(string-append "PREFIX=" (assoc-ref %outputs "out")))
-       #:tests? #f ; No check target
-       #:phases
-       (modify-phases %standard-phases
-         (delete 'configure))))
+     `(#:tests? #f)) ; No check target
     (home-page "http://gallium.inria.fr/~fpottier/menhir/")
     (synopsis "Parser generator")
     (description "Menhir is a parser generator.  It turns high-level grammar
@@ -998,6 +1005,14 @@ compilers that can directly deal with packages.")
     (native-inputs
      `(("m4" ,m4)
        ("ocaml" ,ocaml-4.07)))))
+
+(define-public ocaml4.09-findlib
+  (package
+    (inherit ocaml-findlib)
+    (name "ocaml4.09-findlib")
+    (native-inputs
+     `(("m4" ,m4)
+       ("ocaml" ,ocaml-4.09)))))
 
 ;; note that some tests may hang for no obvious reason.
 (define-public ocaml-ounit
@@ -1293,6 +1308,9 @@ release of Jane Street packages.  It reads metadata from @file{dune} files
 following a very simple s-expression syntax.")
     (license license:expat)))
 
+(define ocaml4.09-dune-bootstrap
+  (package-with-ocaml4.09 dune-bootstrap))
+
 (define-public dune-configurator
   (package
     (inherit dune-bootstrap)
@@ -1305,15 +1323,45 @@ following a very simple s-expression syntax.")
        #:tests? #f))
     (propagated-inputs
      `(("ocaml-csexp" ,ocaml-csexp)))
-    (synopsis "")
-    (description "")))
+    (properties `((ocaml4.09-variant . ,(delay ocaml4.09-dune-configurator))))
+    (synopsis "Dune helper library for gathering system configuration")
+    (description "Dune-configurator is a small library that helps writing
+OCaml scripts that test features available on the system, in order to generate
+config.h files for instance.  Among other things, dune-configurator allows one to:
+
+@itemize
+@item test if a C program compiles
+@item query pkg-config
+@item import #define from OCaml header files
+@item generate config.h file
+@end itemize")))
+
+(define-public ocaml4.09-dune-configurator
+  (package
+    (inherit dune-configurator)
+    (name "ocaml4.09-dune-configurator")
+    (arguments
+     `(#:package "dune-configurator"
+       #:tests? #f
+       #:dune ,ocaml4.09-dune-bootstrap
+       #:ocaml ,ocaml-4.09
+       #:findlib ,ocaml4.09-findlib))
+    (propagated-inputs
+     `(("ocaml-csexp" ,ocaml4.09-csexp)))))
 
 (define-public dune
   (package
     (inherit dune-bootstrap)
     (propagated-inputs
      `(("dune-configurator" ,dune-configurator)))
-    (properties `((ocaml4.07-variant . ,(delay ocaml4.07-dune))))))
+    (properties `((ocaml4.07-variant . ,(delay ocaml4.07-dune))
+                  (ocaml4.09-variant . ,(delay ocaml4.09-dune))))))
+
+(define-public ocaml4.09-dune
+  (package
+    (inherit ocaml4.09-dune-bootstrap)
+    (propagated-inputs
+     `(("dune-configurator" ,dune-configurator)))))
 
 (define-public ocaml4.07-dune
   (package
@@ -1354,6 +1402,7 @@ following a very simple s-expression syntax.")
              #t)))))
     (propagated-inputs
      `(("ocaml-result" ,ocaml-result)))
+    (properties `((ocaml4.09-variant . ,(delay ocaml4.09-csexp))))
     (home-page "https://github.com/ocaml-dune/csexp")
     (synopsis "Parsing and printing of S-expressions in Canonical form")
     (description "This library provides minimal support for Canonical
@@ -1369,6 +1418,18 @@ how simple parsing S-expressions in canonical form is.
 To avoid a dependency on a particular S-expression library, the only
 module of this library is parameterised by the type of S-expressions.")
     (license license:expat)))
+
+(define-public ocaml4.09-csexp
+  (package
+    (inherit ocaml-csexp)
+    (name "ocaml4.09-csexp")
+    (arguments
+     `(#:ocaml ,ocaml-4.09
+       #:findlib ,ocaml4.09-findlib
+       ,@(substitute-keyword-arguments (package-arguments ocaml-csexp)
+           ((#:dune _) ocaml4.09-dune-bootstrap))))
+    (propagated-inputs
+     `(("ocaml-result" ,ocaml4.09-result)))))
 
 (define-public ocaml-migrate-parsetree
   (package
@@ -1414,7 +1475,8 @@ functions to the next and/or previous version.")
                 "07lnj4yzwvwyh5fhpp1dxrys4ddih15jhgqjn59pmgxinbnddi66"))))
     (build-system dune-build-system)
     (arguments
-     `(#:test-target "."))
+     `(#:test-target "."
+       #:package "ppx_tools_versioned"))
     (propagated-inputs
      `(("ocaml-migrate-parsetree" ,ocaml-migrate-parsetree)))
     (properties `((upstream-name . "ppx_tools_versioned")))
@@ -1478,12 +1540,23 @@ powerful.")
     (arguments
      `(#:test-target "."
        #:dune ,dune-bootstrap))
+    (properties `((ocaml4.09-variant . ,(delay ocaml4.09-result))))
     (home-page "https://github.com/janestreet/result")
     (synopsis "Compatibility Result module")
     (description "Uses the new result type defined in OCaml >= 4.03 while
 staying compatible with older version of OCaml should use the Result module
 defined in this library.")
     (license license:bsd-3)))
+
+(define-public ocaml4.09-result
+  (package
+    (inherit ocaml-result)
+    (name "ocaml4.09-result")
+    (arguments
+     `(#:test-target "."
+       #:dune ,ocaml4.09-dune-bootstrap
+       #:ocaml ,ocaml-4.09
+       #:findlib ,ocaml4.09-findlib))))
  
 (define-public ocaml-topkg
   (package
@@ -2372,21 +2445,28 @@ radix-64 representation.  It is specified in RFC 4648.")
         (base32 "1f0fghvlbfryf5h3j4as7vcqrgfjb4c8abl5y0y5h069vs4kp5ii"))))
     (build-system ocaml-build-system)
     (arguments
-     `(#:phases
+     `(#:tests? #f; no tests
+       #:phases
        (modify-phases %standard-phases
-         (add-after 'unpack 'disable-safe-string
-           ;; Work around ‘Error: This expression has type string but an
-           ;; expression was expected of type bytes’ since OCaml 4.06.
+         (delete 'configure)
+         (replace 'build
+           ;; This package uses pre-generated setup.ml by oasis, but is
+           ;; a dependency of oasis.  the pre-generated setup.ml is broken
+           ;; with recent versions of OCaml, so we perform a bootstrap instead.
            (lambda _
-             (setenv "OCAMLPARAM" "safe-string=0,_")
+             (substitute* "src/OCamlifyConfig.ml.ab"
+               (("$pkg_version") ,version))
+             (rename-file "src/OCamlifyConfig.ml.ab" "src/OCamlifyConfig.ml")
+             (with-directory-excursion "src"
+               (invoke "ocamlc" "OCamlifyConfig.ml" "ocamlify.ml" "-o"
+                       "ocamlify"))
              #t))
-         (delete 'check)                ; tests are run during the build
-         (replace 'configure
+         (replace 'install
            (lambda* (#:key outputs #:allow-other-keys)
-             (invoke "ocaml" "setup.ml" "-configure" "--prefix"
-                     (assoc-ref outputs "out")))))))
-    (native-inputs
-     `(("ocamlbuild" ,ocamlbuild)))
+             (let ((bin (string-append (assoc-ref outputs "out") "/bin")))
+               (mkdir-p bin)
+               (install-file "src/ocamlify" bin)
+               #t))))))
     (home-page "https://forge.ocamlcore.org/projects/ocamlify")
     (synopsis "Include files in OCaml code")
     (description "OCamlify creates OCaml source code by including
@@ -5710,6 +5790,12 @@ convenience functions for vectors and matrices.")
                     (url "https://github.com/Chris00/ocaml-cairo")
                     (commit version)))
               (file-name (git-file-name name version))
+              (patches
+               (search-patches
+                ;; NOTE: This patch will be obsolete on the
+                ;; next tagged release. Remove it at that
+                ;; point.
+                "ocaml-cairo2-caml_ba_array-fix.patch"))
               (sha256
                (base32
                 "0wzysis9fa850s68qh8vrvqc6svgllhwra3kzll2ibv0wmdqrich"))))
@@ -5733,7 +5819,7 @@ and SVG file output.")
 (define-public lablgtk3
   (package
     (name "lablgtk")
-    (version "3.0.beta8")
+    (version "3.1.1")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -5742,7 +5828,7 @@ and SVG file output.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "08pgwnia240i2rw1rbgiahg673kwa7b6bvhsg3z4b47xr5sh9pvz"))))
+                "11qfc39cmwfwfpwmjh6wh98zwdv6p73bv8hqwcsss869vs1r7gmn"))))
     (build-system dune-build-system)
     (arguments
      `(#:tests? #t
@@ -5774,3 +5860,48 @@ LablGL), gnomecanvas, gnomeui, gtksourceview, gtkspell, libglade (and it can
 generate OCaml code from .glade files), libpanel, librsvg and quartz.")
     ;; Version 2 only, with linking exception.
     (license license:lgpl2.0)))
+
+(define-public ocaml-reactivedata
+  ;; Future releases will use dune.
+  (package
+    (name "ocaml-reactivedata")
+    (version "0.2.2")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/ocsigen/reactiveData")
+                    (commit version)))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "0l5z0fsckqkywjbn2nwy3s55h85yx8scc4hq9qzr9ig3hrq1mfb0"))))
+    (arguments
+     `(#:phases
+       (modify-phases %standard-phases
+         (delete 'configure)
+         (add-before 'build 'fix-deprecated
+           (lambda _
+             (substitute*
+                 "src/reactiveData.ml"
+               (("Pervasives.compare") "compare"))
+             #t))
+         (add-before 'install 'forget-makefile
+           ;; Ensure we use opam to install files
+           (lambda _
+             (delete-file "Makefile")
+             #t)))))
+    (build-system ocaml-build-system)
+    (properties `((upstream-name . "reactiveData")))
+    (native-inputs
+     `(("ocamlbuild" ,ocamlbuild)
+       ("opam" ,opam)))
+    (propagated-inputs
+     `(("ocaml-react" ,ocaml-react)))
+    (home-page "https://github.com/ocsigen/reactiveData")
+    (synopsis "Declarative events and signals for OCaml")
+    (description
+     "React is an OCaml module for functional reactive programming (FRP).  It
+provides support to program with time varying values: declarative events and
+ signals.  React doesn't define any primitive event or signal, it lets the
+client chooses the concrete timeline.")
+    (license license:lgpl2.1+)))

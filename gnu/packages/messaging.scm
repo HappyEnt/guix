@@ -26,6 +26,7 @@
 ;;; Copyright © 2020 Mason Hock <chaosmonk@riseup.net>
 ;;; Copyright © 2020 Michael Rohleder <mike@rohleder.de>
 ;;; Copyright © 2020 Raghav Gururajan <raghavgururajan@disroot.org>
+;;; Copyright © 2020 Robert Karszniewicz <avoidr@posteo.de>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -543,7 +544,7 @@ authentication.")
     (build-system glib-or-gtk-build-system)
     (native-inputs
      `(("pkg-config" ,pkg-config)
-       ("check" ,check)
+       ("check" ,check-0.14)
        ("intltool" ,intltool)
        ("gconf" ,gconf)
        ("python" ,python-2)
@@ -743,7 +744,8 @@ of xmpppy.")
                        (version-major+minor version)
                        "/gajim-" version ".tar.gz"))
        (sha256
-        (base32 "1gfcp3b5nq43xxz5my8vfhfxnnli726j3hzcgwh9fzrzzd9ic3gx"))))
+        (base32 "1gfcp3b5nq43xxz5my8vfhfxnnli726j3hzcgwh9fzrzzd9ic3gx"))
+       (patches (search-patches "gajim-honour-GAJIM_PLUGIN_PATH.patch"))))
     (build-system python-build-system)
     (arguments
      `(#:imported-modules
@@ -756,16 +758,6 @@ of xmpppy.")
         (guix build utils))
        #:phases
        (modify-phases %standard-phases
-         (add-after 'unpack 'add-plugin-dirs
-           (lambda _
-             (substitute* "gajim/common/configpaths.py"
-               (("_paths\\['PLUGINS_USER'\\]\\]")
-                "_paths['PLUGINS_USER']] + \
-([os.getenv('GAJIM_PLUGIN_PATH')] \
-if os.getenv('GAJIM_PLUGIN_PATH') \
-and Path(os.getenv('GAJIM_PLUGIN_PATH')).is_dir() \
-else [])"))
-             #t))
          (replace 'check
            (lambda _
              ;; Tests require a running X server.
@@ -859,7 +851,7 @@ and OpenPGP) and available in 29 languages.")
 (define-public gajim-omemo
   (package
     (name "gajim-omemo")
-    (version "2.7.9")
+    (version "2.6.80")
     (source
      (origin
        (method url-fetch/zipbomb)
@@ -868,7 +860,7 @@ and OpenPGP) and available in 29 languages.")
          "https://ftp.gajim.org/plugins_releases/omemo_"
          version ".zip"))
        (sha256
-        (base32 "19si2v5yrxpn2m0f684npsg0iiyl2h3r5hbxyrxv4k3acmfmhb3z"))))
+        (base32 "179hgx091c12258335znn1540jhp4z3n3wv5ksrgqq7l3jgc93d7"))))
     (build-system trivial-build-system)
     (arguments
      `(#:modules ((guix build utils))
@@ -897,7 +889,7 @@ multi-client end-to-end encryption.")
 (define-public gajim-openpgp
   (package
     (name "gajim-openpgp")
-    (version "1.3.5")
+    (version "1.2.14")
     (source
      (origin
        (method url-fetch/zipbomb)
@@ -906,7 +898,7 @@ multi-client end-to-end encryption.")
          "https://ftp.gajim.org/plugins_releases/openpgp_"
          version ".zip"))
        (sha256
-        (base32 "1jvpl2gjl5xxvsgxpmvh3mn2mm142dg2hknakkc32swb7l1fqx5m"))))
+        (base32 "0wdjpf1i4pvl4ha4plfpywwi9aw5n2mhrpv8mmbidpawxqfbd94b"))))
     (build-system trivial-build-system)
     (arguments
      `(#:modules ((guix build utils))
@@ -931,20 +923,20 @@ Encryption to Gajim.")
 (define-public dino
   (package
     (name "dino")
-    (version "0.1.0")
-    (outputs '("out" "debug"))
+    (version "0.2.0")
     (source
      (origin
        (method url-fetch)
-       (uri (string-append "https://github.com/dino/dino/releases/download/v"
-                           version "/dino-" version ".tar.gz"))
+       (uri
+        (string-append "https://github.com/dino/dino/releases/download/v"
+                       version "/dino-" version ".tar.gz"))
        (sha256
-        (base32
-         "0dcq2jhpywgxrp9x1qqmrl2z50hazspqj547b9zz70apy3y4418h"))))
+        (base32 "0iigh7bkil6prf02dqcl6lmd89jxz685h8lqr3ni4x39zkcransn"))))
     (build-system cmake-build-system)
+    (outputs '("out" "debug"))
     (arguments
      `(#:tests? #f
-       #:parallel-build? #f ; not supported
+       #:parallel-build? #f             ; not supported
        #:modules ((guix build cmake-build-system)
                   ((guix build glib-or-gtk-build-system) #:prefix glib-or-gtk:)
                   (guix build utils))
@@ -955,10 +947,21 @@ Encryption to Gajim.")
        (modify-phases %standard-phases
          (add-after 'install 'glib-or-gtk-wrap
            (assoc-ref glib-or-gtk:%standard-phases 'glib-or-gtk-wrap)))))
+    (native-inputs
+     `(("gettext" ,gettext-minimal)
+       ("glib:bin" ,glib "bin")
+       ("gtk+:bin" ,gtk+ "bin")
+       ("pkg-config" ,pkg-config)
+       ("vala" ,vala)))
     (inputs
-     `(("libgee" ,libgee)
-       ("libsignal-protocol-c" ,libsignal-protocol-c)
+     `(("glib" ,glib)
+       ("glib-networking" ,glib-networking)
+       ("gpgme" ,gpgme)
+       ("gsettings-desktop-schemas" ,gsettings-desktop-schemas)
+       ("gtk+" ,gtk+)
        ("libgcrypt" ,libgcrypt)
+       ("libgee" ,libgee)
+       ("libsignal-protocol-c" ,libsignal-protocol-c)
        ("libsoup" ,libsoup)
        ("qrencode" ,qrencode)
        ("sqlite" ,sqlite)
@@ -966,15 +969,11 @@ Encryption to Gajim.")
        ("gtk+" ,gtk+)
        ("glib-networking" ,glib-networking)
        ("gsettings-desktop-schemas" ,gsettings-desktop-schemas)))
-    (native-inputs
-     `(("pkg-config" ,pkg-config)
-       ("glib" ,glib "bin")
-       ("vala" ,vala)
-       ("gettext" ,gettext-minimal)))
+    (synopsis "Graphical Jabber/XMPP Client using GTK+/Vala")
+    (description "Dino is a chat client for the desktop.  It focuses on providing
+a minimal yet reliable Jabber/XMPP experience and having encryption enabled by
+default.")
     (home-page "https://dino.im")
-    (synopsis "Graphical Jabber (XMPP) client")
-    (description "Dino is a Jabber (XMPP) client which aims to fit well into
-a graphical desktop environment like GNOME.")
     (license license:gpl3+)))
 
 (define-public prosody
@@ -1204,7 +1203,7 @@ messenger protocol.")
 (define-public utox
   (package
    (name "utox")
-   (version "0.17.1")
+   (version "0.18.0")
    (source
     (origin
      (method git-fetch)
@@ -1215,7 +1214,7 @@ messenger protocol.")
      (file-name (string-append name "-" version "-checkout"))
      (sha256
       (base32
-       "17kwqw24iqljp2icih9k6ikx12gzr8zzqr8y5h35bg8m5s8pasq5"))))
+       "0d0mwgxffg4nhai62irf8lyhd1whp9s4k892rsmqz1sra3pbjcg9"))))
    (build-system cmake-build-system)
    (arguments
     `(#:configure-flags '("-DENABLE_TESTS=on")
@@ -1254,23 +1253,23 @@ messenger protocol.")
       ("pkg-config" ,pkg-config)))
    (synopsis "Lightweight Tox client")
    (description
-    "Utox is a lightweight Tox client.  Tox is a distributed and secure
+    "uTox is a lightweight Tox client.  Tox is a distributed and secure
 instant messenger with audio and video chat capabilities.")
-   (home-page "http://utox.org/")
+   (home-page "https://github.com/uTox/uTox")
    (license license:gpl3)))
 
 (define-public qtox
   (package
     (name "qtox")
-    (version "1.17.2")
+    (version "1.17.3")
     (source (origin
-              (method url-fetch/tarbomb)
+              (method url-fetch)
               (uri (string-append "https://github.com/qTox/qTox/releases"
                                   "/download/v" version
                                   "/v" version ".tar.gz"))
               (sha256
                (base32
-                "0fmr3a0apil3rl32247qv2pqslp3knpbj5vhprdq0ixsvifrlhmh"))
+                "11n7si9wdpf80iwkvbspp14dh5jrwm7hxkj8vqhn5pkc48c5bh9j"))
               (file-name (string-append name "-" version ".tar.gz"))))
     (build-system cmake-build-system)
     (arguments
@@ -1916,7 +1915,7 @@ building the IRC clients and bots.")
 (define-public toxic
   (package
     (name "toxic")
-    (version "0.8.3")
+    (version "0.8.4")
     (source
      (origin
        (method git-fetch)
@@ -1924,7 +1923,7 @@ building the IRC clients and bots.")
              (url "https://github.com/JFreegman/toxic")
              (commit (string-append "v" version))))
        (sha256
-        (base32 "09l2j3lwvrq7bf3051vjsnml9w63790ly3iylgf26gkrmld6k31w"))
+        (base32 "0p1cmj1kyp506y5xm04mhlznhf5wcylvgsn6b307ms91vjqs3fg2"))
        (file-name (git-file-name name version))))
     (build-system gnu-build-system)
     (arguments
@@ -2148,7 +2147,8 @@ There is support for:
        ("qtquickcontrols" ,qtquickcontrols)
        ("qtquickcontrols2" ,qtquickcontrols2)
        ("qtsvg" ,qtsvg)
-       ("qttools" ,qttools)))
+       ("qttools" ,qttools)
+       ("xdg-utils", xdg-utils)))
     (arguments
      `(#:tests? #f))                    ; no tests
     (home-page "https://matrix.org/docs/projects/client/quaternion.html")
@@ -2288,51 +2288,48 @@ Telegram messenger.")
     (license license:gpl2+)))
 
 (define-public tdlib
-  (let ((commit "f45d80fe16f99d112d545b7cd74ce46342fe3437")
-        (revision "0")
-        (version "1.6.6"))
-    (package
-      (name "tdlib")
-      (version (git-version version revision commit))
-      (source (origin
-                (method git-fetch)
-                (uri (git-reference
-                      (url "https://github.com/tdlib/td")
-                      (commit commit)))
-                (sha256
-                 (base32
-                  "1q8zw26mqhpdzvqbgc7fmn8rzwm5amb8m7s6impin4342wj7h6nr"))
-                (file-name (git-file-name name version))))
-      (build-system cmake-build-system)
-      (arguments
-       `(#:tests? #t
-         #:configure-flags
-         (list "-DCMAKE_BUILD_TYPE=Release"
-               "-DTD_ENABLE_LTO=OFF") ; FIXME: Get LTO to work.
-         #:phases
-         (modify-phases %standard-phases
-           (add-after 'unpack 'remove-failing-tests
-             (lambda _
-               (substitute* "test/CMakeLists.txt"
-                 ;; The test cases are compiled into a distinct binary
-                 ;; which uses mtproto.cpp to attempt to connect to
-                 ;; a remote server. Removing this file from the sources
-                 ;; list disables those specific test cases.
-                 (("\\$\\{CMAKE_CURRENT_SOURCE_DIR\\}/mtproto.cpp") ""))
-               #t)))))
-      (native-inputs
-       `(("gperf" ,gperf)
-         ("openssl" ,openssl)
-         ("zlib" ,zlib)
-         ("php" ,php)
-         ("doxygen" ,doxygen)))
-      (synopsis "Cross-platform library for building Telegram clients")
-      (description "Tdlib is a cross-platform library for creating custom
+  (package
+    (name "tdlib")
+    (version "1.7.0")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/tdlib/td")
+                    (commit (string-append "v" version))))
+              (sha256
+               (base32
+                "0dfir57ljcn98mkg061c5642qb93wh2lm1n4nngpl3na9vvfk75i"))
+              (file-name (git-file-name name version))))
+    (build-system cmake-build-system)
+    (arguments
+     `(#:tests? #t
+       #:configure-flags
+       (list "-DCMAKE_BUILD_TYPE=Release"
+             "-DTD_ENABLE_LTO=OFF") ; FIXME: Get LTO to work.
+       #:phases
+       (modify-phases %standard-phases
+         (add-after 'unpack 'remove-failing-tests
+           (lambda _
+             (substitute* "test/CMakeLists.txt"
+               ;; The test cases are compiled into a distinct binary
+               ;; which uses mtproto.cpp to attempt to connect to
+               ;; a remote server. Removing this file from the sources
+               ;; list disables those specific test cases.
+               (("\\$\\{CMAKE_CURRENT_SOURCE_DIR\\}/mtproto.cpp") ""))
+             #t)))))
+    (native-inputs
+     `(("gperf" ,gperf)
+       ("openssl" ,openssl)
+       ("zlib" ,zlib)
+       ("php" ,php)
+       ("doxygen" ,doxygen)))
+    (synopsis "Cross-platform library for building Telegram clients")
+    (description "Tdlib is a cross-platform library for creating custom
 Telegram clients following the official Telegram API.  It can be easily used
 from almost any programming language with a C-FFI and features first-class
 support for high performance Telegram Bot creation.")
-      (home-page "https://core.telegram.org/tdlib")
-      (license license:boost1.0))))
+    (home-page "https://core.telegram.org/tdlib")
+    (license license:boost1.0)))
 
 (define-public purple-mm-sms
   (package
@@ -2373,7 +2370,7 @@ support for high performance Telegram Bot creation.")
 (define-public chatty
  (package
    (name "chatty")
-   (version "0.1.16")
+   (version "0.1.17")
    (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -2382,7 +2379,7 @@ support for high performance Telegram Bot creation.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "085hb3ii1cy0jb3f0mim25v5r5w3gpfsdpjid5dmrpw4gi88aa2x"))))
+                "0ba1rw8a3vif9k3570hxjfm25vqys3vk3f6g8z5irklwq4bi6lmn"))))
    (build-system meson-build-system)
    (arguments
     '(#:phases

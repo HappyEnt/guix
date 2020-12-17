@@ -59,7 +59,6 @@
   #:use-module (gnu packages gtk)
   #:use-module (gnu packages guile)
   #:use-module (gnu packages image)
-  #:use-module (gnu packages imagemagick)
   #:use-module (gnu packages linux)     ; alsa-lib
   #:use-module (gnu packages mail)      ; for mailutils
   #:use-module (gnu packages multiprecision)
@@ -313,6 +312,38 @@ languages.")
              (search-path-specification
               (variable "INFOPATH")
               (files '("share/info"))))))))
+
+(define-public emacs-next-pgtk
+  (let ((commit "d46a223d8595e8edb67c6361033625797503cacf")
+        (revision "0"))
+    (package/inherit emacs-next
+      (name "emacs-next-pgtk")
+      (version (git-version "28.0.50" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://git.savannah.gnu.org/git/emacs.git/")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32
+           "1fhkgqsdpy3qkf8wyjvavnfyh8byxh0h80n0448rkg9k0lrkl4wf"))))
+      (arguments
+       (substitute-keyword-arguments (package-arguments emacs-next)
+         ((#:configure-flags flags ''())
+          `(cons* "--with-pgtk" "--with-xwidgets" ,flags))))
+      (propagated-inputs
+       `(("gsettings-desktop-schemas" ,gsettings-desktop-schemas)
+         ("glib-networking" ,glib-networking)))
+      (inputs
+       `(("webkitgtk" ,webkitgtk)
+         ,@(package-inputs emacs-next)))
+      (home-page "https://github.com/masm11/emacs")
+      (synopsis "Emacs text editor with @code{pgtk} and @code{xwidgets} support")
+      (description "This is an unofficial Emacs fork build with a pure-GTK
+graphical toolkit to work natively on Wayland.  In addition to that, xwidgets
+also enabled and works without glitches even on X server."))))
 
 (define-public emacs-minimal
   ;; This is the version that you should use as an input to packages that just

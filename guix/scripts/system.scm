@@ -29,7 +29,10 @@
   #:use-module (guix ui)
   #:use-module ((guix status) #:select (with-status-verbosity))
   #:use-module (guix store)
-  #:autoload   (guix store database) (register-path)
+  #:autoload   (guix base16) (bytevector->base16-string)
+  #:autoload   (guix store database)
+               (sqlite-register store-database-file call-with-database)
+  #:autoload   (guix build store-copy) (copy-store-item)
   #:use-module (guix describe)
   #:use-module (guix grafts)
   #:use-module (guix gexp)
@@ -129,12 +132,11 @@ BODY..., and restore them."
   (store-lift topologically-sorted))
 
 
-(define* (copy-item item references target
+(define* (copy-item item info target db
                     #:key (log-port (current-error-port)))
-  "Copy ITEM to the store under root directory TARGET and register it with
-REFERENCES as its set of references."
-  (let ((dest  (string-append target item))
-        (state (string-append target "/var/guix")))
+  "Copy ITEM to the store under root directory TARGET and populate DB with the
+given INFO, a <path-info> record."
+  (let ((dest (string-append target item)))
     (format log-port "copying '~a'...~%" item)
 
     ;; Remove DEST if it exists to make sure that (1) we do not fail badly
@@ -147,44 +149,48 @@ REFERENCES as its set of references."
                             #:directories? #t))
       (delete-file-recursively dest))
 
-    (copy-recursively item dest
-                      #:log (%make-void-port "w"))
+    (copy-store-item item target
+                     #:deduplicate? #t)
 
-    ;; Register ITEM; as a side-effect, it resets timestamps, etc.
-    ;; Explicitly use "TARGET/var/guix" as the state directory, to avoid
-    ;; reproducing the user's current settings; see
-    ;; <http://bugs.gnu.org/18049>.
-    (unless (register-path item
-                           #:prefix target
-                           #:state-directory state
-                           #:references references)
-      (leave (G_ "failed to register '~a' under '~a'~%")
-             item target))))
+    (sqlite-register db
+                     #:path item
+                     #:references (path-info-references info)
+                     #:deriver (path-info-deriver info)
+                     #:hash (string-append
+                             "sha256:"
+                             (bytevector->base16-string (path-info-hash info)))
+                     #:nar-size (path-info-nar-size info))))
 
 (define* (copy-closure item target
                        #:key (log-port (current-error-port)))
   "Copy ITEM and all its dependencies to the store under root directory
 TARGET, and register them."
   (mlet* %store-monad ((to-copy (topologically-sorted* (list item)))
-                       (refs    (mapm %store-monad references* to-copy))
-                       (info    (mapm %store-monad query-path-info*
-                                      (delete-duplicates
-                                       (append to-copy (concatenate refs)))))
+                       (info    (mapm %store-monad query-path-info* to-copy))
                        (size -> (reduce + 0 (map path-info-nar-size info))))
     (define progress-bar
       (progress-reporter/bar (length to-copy)
                              (format #f (G_ "copying to '~a'...")
                                      target)))
 
+    (define state
+      (string-append target "/var/guix"))
+
     (check-available-space size target)
 
-    (call-with-progress-reporter progress-bar
-      (lambda (report)
-        (let ((void (%make-void-port "w")))
-          (for-each (lambda (item refs)
-                      (copy-item item refs target #:log-port void)
-                      (report))
-                    to-copy refs))))
+    ;; Explicitly use "TARGET/var/guix" as the state directory to avoid
+    ;; reproducing the user's current settings; see
+    ;; <http://bugs.gnu.org/18049>.
+    (call-with-database (store-database-file #:prefix target
+                                             #:state-directory state)
+      (lambda (db)
+        (call-with-progress-reporter progress-bar
+          (lambda (report)
+            (let ((void (%make-void-port "w")))
+              (for-each (lambda (item info)
+                          (copy-item item info target db #:log-port void)
+                          (report))
+                        to-copy info))))))
 
     (return *unspecified*)))
 
@@ -385,6 +391,8 @@ STORE is an open connection to the store."
          (params (first (profile-boot-parameters %system-profile
                                                  (list number))))
          (locale (boot-parameters-locale params))
+         (store-directory-prefix
+          (boot-parameters-store-directory-prefix params))
          (old-generations
           (delv number (reverse (generation-numbers %system-profile))))
          (old-params (profile-boot-parameters
@@ -398,6 +406,7 @@ STORE is an open connection to the store."
                      ((bootloader-configuration-file-generator bootloader)
                       bootloader-config entries
                       #:locale locale
+                      #:store-directory-prefix store-directory-prefix
                       #:old-entries old-entries)))
            (drvs -> (list bootcfg)))
         (mbegin %store-monad
@@ -671,7 +680,8 @@ checking this by themselves in their 'check' procedure."
 (define* (system-derivation-for-action os action
                                        #:key image-size image-type
                                        full-boot? container-shared-network?
-                                       mappings label)
+                                       mappings label
+                                       volatile-root?)
   "Return as a monadic value the derivation for OS according to ACTION."
   (mlet %store-monad ((target (current-target-system)))
     (case action
@@ -703,7 +713,8 @@ checking this by themselves in their 'check' procedure."
                          base-image))
             (target (or base-target target))
             (size image-size)
-            (operating-system os))))))
+            (operating-system os)
+            (volatile-root? volatile-root?))))))
       ((docker-image)
        (system-docker-image os
                             #:shared-network? container-shared-network?)))))
@@ -758,6 +769,7 @@ and TARGET arguments."
                          dry-run? derivations-only?
                          use-substitutes? bootloader-target target
                          image-size image-type
+                         volatile-root?
                          full-boot? label container-shared-network?
                          (mappings '())
                          (gc-root #f))
@@ -765,7 +777,8 @@ and TARGET arguments."
 bootloader; BOOTLOADER-TAGET is the target for the bootloader; TARGET is the
 target root directory; IMAGE-SIZE is the size of the image to be built, for
 the 'vm-image' and 'disk-image' actions.  IMAGE-TYPE is the type of image to
-be built.
+be built.  When VOLATILE-ROOT? is #t, the root file system is mounted
+volatile.
 
 FULL-BOOT? is used for the 'vm' action; it determines whether to
 boot directly to the kernel or to the bootloader.  CONTAINER-SHARED-NETWORK?
@@ -813,6 +826,7 @@ static checks."
                                                 #:label label
                                                 #:image-type image-type
                                                 #:image-size image-size
+                                                #:volatile-root? volatile-root?
                                                 #:full-boot? full-boot?
                                                 #:container-shared-network? container-shared-network?
                                                 #:mappings mappings))
@@ -972,6 +986,8 @@ Some ACTIONS support additional ARGS.\n"))
   (display (G_ "
       --no-bootloader    for 'init', do not install a bootloader"))
   (display (G_ "
+      --volatile         for 'disk-image', make the root file system volatile"))
+  (display (G_ "
       --label=LABEL      for 'disk-image', label disk image with LABEL"))
   (display (G_ "
       --save-provenance  save provenance information"))
@@ -1045,6 +1061,9 @@ Some ACTIONS support additional ARGS.\n"))
          (option '("no-bootloader" "no-grub") #f #f
                  (lambda (opt name arg result)
                    (alist-cons 'install-bootloader? #f result)))
+         (option '("volatile") #f #f
+                 (lambda (opt name arg result)
+                   (alist-cons 'volatile-root? #t result)))
          (option '("label") #t #f
                  (lambda (opt name arg result)
                    (alist-cons 'label arg result)))
@@ -1106,7 +1125,8 @@ Some ACTIONS support additional ARGS.\n"))
     (image-type . raw)
     (image-size . guess)
     (install-bootloader? . #t)
-    (label . #f)))
+    (label . #f)
+    (volatile-root? . #f)))
 
 (define (verbosity-level opts)
   "Return the verbosity level based on OPTS, the alist of parsed options."
@@ -1203,6 +1223,8 @@ resulting from command-line parsing."
                                #:image-type (lookup-image-type-by-name
                                              (assoc-ref opts 'image-type))
                                #:image-size (assoc-ref opts 'image-size)
+                               #:volatile-root?
+                               (assoc-ref opts 'volatile-root?)
                                #:full-boot? (assoc-ref opts 'full-boot?)
                                #:container-shared-network?
                                (assoc-ref opts 'container-shared-network?)

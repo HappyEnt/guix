@@ -339,18 +339,18 @@ to @code{cabal repl}).")
 (define-public git-annex
   (package
     (name "git-annex")
-    (version "8.20201007")
+    (version "8.20201127")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "https://hackage.haskell.org/package/"
                            "git-annex/git-annex-" version ".tar.gz"))
        (sha256
-        (base32 "0v11yc4kkxnzvwqry277dpjwlavinrjiagfw0ayhrfwd703j1y8a"))))
+        (base32 "0n9m5ffgbzms0nh9dskrc7vjgwwwi9f9gxyh498wnspf96729zz7"))))
     (build-system haskell-build-system)
     (arguments
      `(#:configure-flags
-       '("--flags=-Android -Assistant -Pairing -Webapp")
+       '("--flags=-Android -Webapp")
        #:phases
        (modify-phases %standard-phases
          (add-before 'configure 'patch-shell-for-tests
@@ -457,6 +457,7 @@ to @code{cabal repl}).")
        ("ghc-feed" ,ghc-feed)
        ("ghc-filepath-bytestring" ,ghc-filepath-bytestring)
        ("ghc-free" ,ghc-free)
+       ("ghc-hinotify" ,ghc-hinotify)
        ("ghc-hslogger" ,ghc-hslogger)
        ("ghc-http-client" ,ghc-http-client)
        ("ghc-http-conduit" ,ghc-http-conduit)
@@ -466,7 +467,10 @@ to @code{cabal repl}).")
        ("ghc-memory" ,ghc-memory)
        ("ghc-monad-control" ,ghc-monad-control)
        ("ghc-monad-logger" ,ghc-monad-logger)
+       ("ghc-mountpoints" ,ghc-mountpoints)
        ("ghc-network" ,ghc-network)
+       ("ghc-network-info" ,ghc-network-info)
+       ("ghc-network-multicast" ,ghc-network-multicast)
        ("ghc-old-locale" ,ghc-old-locale)
        ("ghc-optparse-applicative" ,ghc-optparse-applicative)
        ("ghc-persistent" ,ghc-persistent)
@@ -483,6 +487,7 @@ to @code{cabal repl}).")
        ("ghc-split" ,ghc-split)
        ("ghc-stm-chans" ,ghc-stm-chans)
        ("ghc-tagsoup" ,ghc-tagsoup)
+       ("ghc-torrent" ,ghc-torrent)
        ("ghc-unix-compat" ,ghc-unix-compat)
        ("ghc-unordered-containers" ,ghc-unordered-containers)
        ("ghc-utf8-string" ,ghc-utf8-string)

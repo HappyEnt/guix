@@ -81,7 +81,7 @@
      `(("pkg-config" ,pkg-config)))
     (inputs
      `(("gnutls" ,gnutls)
-       ("libcap" ,libcap/next)
+       ("libcap" ,libcap)
        ("libseccomp" ,libseccomp)
        ("nettle" ,nettle)))
     (home-page "https://chrony.tuxfamily.org/")
@@ -144,7 +144,7 @@ time-stamping or reference clock, sub-microsecond accuracy is possible.")
       ;; to run as non-root (when invoked with '-u'.)
       ,@(if (string-suffix? "-linux"
                             (or (%current-target-system) (%current-system)))
-            `(("libcap" ,libcap/next))
+            `(("libcap" ,libcap))
             '())))
    (arguments
     `(#:phases
@@ -166,14 +166,14 @@ computers over a network.")
 (define-public openntpd
   (package
     (name "openntpd")
-    (version "6.2p3")
+    (version "6.8p1")
     (source (origin
               (method url-fetch)
               (uri (string-append
                     "mirror://openbsd/OpenNTPD/openntpd-" version ".tar.gz"))
               (sha256
                (base32
-                "0fn12i4kzsi0zkr4qp3dp9bycmirnfapajqvdfx02zhr4hanj0kv"))))
+                "0ijsylc7a4jlpxsqa0jq1w1c7333id8pcakzl7a5749ria1xp0l5"))))
     (build-system gnu-build-system)
     (arguments
      '(#:configure-flags `( "--with-privsep-user=ntpd"

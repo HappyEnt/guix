@@ -787,39 +787,43 @@ decompression of some loosely related file formats used by Microsoft.")
 (define-public lz4
   (package
     (name "lz4")
-    (version "1.9.2")
+    (version "1.9.3")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference (url "https://github.com/lz4/lz4")
                            (commit (string-append "v" version))))
        (sha256
-        (base32
-         "0lpaypmk70ag2ks3kf2dl4ac3ba40n5kc1ainkp9wfjawz76mh61"))
+        (base32 "1w02kazh1fps3sji2sn89fz862j1199c5ajrqcgl1bnlxj09kcbz"))
        (file-name (git-file-name name version))))
     (build-system gnu-build-system)
+    (outputs (list "out" "static"))
     (native-inputs
      `(;; For tests.
        ("python" ,python)
        ("valgrind" ,valgrind)))
     (arguments
      `(#:test-target "test"
-       #:make-flags (list "CC=gcc"
+       #:make-flags (list (string-append "CC=" ,(cc-for-target))
                           (string-append "prefix=" (assoc-ref %outputs "out")))
-       #:phases (modify-phases %standard-phases
-                  (delete 'configure)            ;no configure script
-                  (add-before 'check 'disable-broken-test
-                    (lambda _
-                      ;; XXX: test_install.sh fails when prefix is a subdirectory.
-                      (substitute* "tests/Makefile"
-                        (("^test: (.*) test-install" _ targets)
-                         (string-append "test: " targets)))
-                      #t))
-                  (add-after 'install 'delete-static-library
-                    (lambda* (#:key outputs #:allow-other-keys)
-                      (let ((out (assoc-ref outputs "out")))
-                        (delete-file (string-append out "/lib/liblz4.a"))
-                        #t))))))
+       #:phases
+       (modify-phases %standard-phases
+         (delete 'configure)            ; no configure script
+         (add-before 'check 'disable-broken-test
+           (lambda _
+             (substitute* "tests/Makefile"
+               ;; This fails when $prefix is not a single top-level directory.
+               (("^test: (.*) test-install" _ targets)
+                (string-append "test: " targets)))
+             #t))
+         (add-after 'install 'move-static-library
+           (lambda* (#:key outputs #:allow-other-keys)
+             (let ((out (assoc-ref outputs "out"))
+                   (static (assoc-ref outputs "static")))
+               (mkdir-p (string-append static "/lib"))
+               (rename-file (string-append out "/lib/liblz4.a")
+                            (string-append static "/lib/liblz4.a"))
+               #t))))))
     (home-page "https://www.lz4.org")
     (synopsis "Compression algorithm focused on speed")
     (description "LZ4 is a lossless compression algorithm, providing
@@ -845,9 +849,9 @@ time for compression ratio.")
                 "0zmhvczscqz0mzh4b9m8m42asq14db0a6lc8clp5ljq5ybrv70d9"))))
     (build-system gnu-build-system)
     (arguments
-     '(#:tests? #f                      ; no check target
+     `(#:tests? #f                      ; no check target
        #:make-flags
-       (list "CC=gcc"
+       (list (string-append "CC=" ,(cc-for-target))
              "XZ_SUPPORT=1"
              "LZO_SUPPORT=1"
              "LZ4_SUPPORT=1"
@@ -952,7 +956,8 @@ tarballs.")
                 "0j2zm3z271x5aw63mwhr3vymzn45p2vvrlrpm9cz2nywna41b0hq"))))
     (build-system gnu-build-system)
     (arguments
-     `(#:make-flags (list "INSTALL=install" "CC=gcc"
+     `(#:make-flags (list "INSTALL=install"
+                          (string-append "CC=" ,(cc-for-target))
                           (string-append "PREFIX=" (assoc-ref %outputs "out")))
        #:phases (modify-phases %standard-phases
                   (delete 'configure)
@@ -1297,7 +1302,7 @@ or junctions, and always follows hard links.")
     (source
      (origin (method git-fetch)
              (uri (git-reference
-                    (url "http://github.com/twogood/unshield.git")
+                    (url "http://github.com/twogood/unshield")
                     (commit version)))
              (file-name (git-file-name name version))
              (sha256
@@ -1422,7 +1427,10 @@ or junctions, and always follows hard links.")
 
                #t))))
        #:make-flags
-       (list "CC=gcc"
+       ;; TODO: Integrate in next rebuild cycle.
+       (list ,(if (%current-target-system)
+                (string-append "CC=" (cc-for-target))
+                "CC=gcc")
              (string-append "PREFIX=" (assoc-ref %outputs "out"))
              (string-append "LIBDIR=" (assoc-ref %outputs "lib") "/lib")
              (string-append "INCLUDEDIR=" (assoc-ref %outputs "lib") "/include")
@@ -1454,8 +1462,14 @@ speed.")
     (version (package-version zstd))
     (source (package-source zstd))
     (build-system gnu-build-system)
+    (inputs
+     `(,@(if (%current-target-system)
+           `(("googletest" ,googletest))
+           '())))
     (native-inputs
-     `(("googletest" ,googletest)))
+     `(,@(if (%current-system)
+           `(("googletest" ,googletest))
+           '())))
     (arguments
      `(#:phases
        (modify-phases %standard-phases
@@ -1473,7 +1487,8 @@ speed.")
                (install-file "README.md" doc)
                #t))))
        #:make-flags
-       (list "CC=gcc"
+       (list (string-append "CC=" ,(cc-for-target))
+             (string-append "CXX=" ,(cxx-for-target))
              (string-append "PREFIX=" (assoc-ref %outputs "out")))))
     (home-page (package-home-page zstd))
     (synopsis "Threaded implementation of the Zstandard compression algorithm")
@@ -1591,6 +1606,55 @@ recreates the stored directory structure by default.")
     (license (license:non-copyleft "file://LICENSE"
                                    "See LICENSE in the distribution."))))
 
+(define-public ziptime
+  (let ((commit "2a5bc9dfbf7c6a80e5f7cb4dd05b4036741478bc")
+        (revision "0"))
+  (package
+    (name "ziptime")
+    (version (git-version "0.0.0" revision commit))
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://android.googlesource.com/platform/build")
+             (commit commit)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0hrn61b3a97dlc4iqc28rwx8k8zf7ycbwzqqp93vj34zy5a541kn"))))
+    (build-system gnu-build-system)
+    (arguments
+     `(#:tests? #f                      ; no test suite
+       #:phases
+       (modify-phases %standard-phases
+         (add-after 'unpack 'change-directory
+           (lambda _
+             (chdir "tools/ziptime")))
+         (delete 'configure)            ; nothing to configure
+         (replace 'build
+           ;; There is no Makefile, only an ‘Android.bp’ file.  Ignore it.
+           (lambda _
+             (let ((c++ ,(cxx-for-target)))
+               (apply invoke c++ "-O2" "-o" "ziptime"
+                      (find-files "." "\\.cpp$")))))
+         (replace 'install
+           (lambda* (#:key outputs #:allow-other-keys)
+             (let* ((out (assoc-ref outputs "out"))
+                    (bin (string-append out "/bin"))
+                    (doc (string-append out "/share/doc/" ,name "-" ,version)))
+               (install-file "ziptime" bin)
+               (install-file "README.txt" doc)))))))
+    ;; There is no separate home page for this tiny bundled build tool.
+    (home-page (string-append "https://android.googlesource.com/platform/build/"
+                              "+/master/tools/ziptime/README.txt"))
+    (synopsis "Normalize @file{.zip} archive header timestamps")
+    (description
+     "Ziptime helps make @file{.zip} archives reproducible by replacing
+timestamps in the file header with a fixed time (1 January 2008).
+
+``Extra fields'' are not changed, so you'll need to use the @code{-X} option to
+@command{zip} to prevent it from storing the ``universal time'' field.")
+    (license license:asl2.0))))
+
 (define-public zziplib
   (package
     (name "zziplib")
@@ -1667,7 +1731,7 @@ archive can be reverted.")
     (source
      (origin
        (method url-fetch)
-       (uri (string-append "http://savannah.nongnu.org/download/atool/atool-"
+       (uri (string-append "mirror://savannah/atool/atool-"
                            version ".tar.gz"))
        (sha256
         (base32
@@ -1834,7 +1898,7 @@ non-Windows systems without running the actual installer using wine.")
 (define-public google-brotli
   (package
     (name "google-brotli")
-    (version "1.0.7")
+    (version "1.0.9")
     (source
      (origin
        (method git-fetch)
@@ -1843,7 +1907,15 @@ non-Windows systems without running the actual installer using wine.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1811b55wdfg4kbsjcgh1kc938g118jpvif97ilgrmbls25dfpvvw"))))
+        (base32 "1fikasxf7r2dwlk8mv8w7nmjkn0jw5ic31ky3mvpkdzwgd4xfndl"))
+       (modules '((guix build utils)))
+       (snippet
+        '(begin
+           ;; Cherry-picked from upstream since the latest release
+           ;; https://github.com/google/brotli/commit/09b0992b6acb7faa6fd3b23f9bc036ea117230fc
+           (substitute* (find-files "scripts" "^lib.*pc\\.in")
+             (("-R\\$\\{libdir\\} ") ""))
+           #t))))
     (build-system cmake-build-system)
     (arguments
      `(#:phases

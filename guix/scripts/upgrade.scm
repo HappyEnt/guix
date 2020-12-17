@@ -1,6 +1,7 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;; Copyright © 2019, 2020 Ludovic Courtès <ludo@gnu.org>
 ;;; Copyright © 2020 Jakub Kądziołka <kuba@kadziolka.net>
+;;; Copyright © 2020 Simon Tournier <zimon.toutoune@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -21,6 +22,7 @@
   #:use-module (guix ui)
   #:use-module (guix scripts package)
   #:use-module (guix scripts build)
+  #:use-module (guix transformations)
   #:use-module (guix scripts)
   #:use-module (srfi srfi-1)
   #:use-module (srfi srfi-26)
@@ -40,6 +42,8 @@ This is an alias for 'guix package -u'.\n"))
       --do-not-upgrade[=REGEXP] do not upgrade any packages matching REGEXP"))
   (newline)
   (show-build-options-help)
+  (newline)
+  (show-transformation-options-help)
   (newline)
   (display (G_ "
   -h, --help             display this help and exit"))
@@ -71,15 +75,10 @@ This is an alias for 'guix package -u'.\n"))
   (synopsis "upgrade packages to their latest version")
 
   (define (handle-argument arg result arg-handler)
-    ;; Accept at most one non-option argument, and treat it as an upgrade
-    ;; regexp.
-    (match (assq-ref result 'upgrade)
-      (#f
-       (values (alist-cons 'upgrade arg
-                           (alist-delete 'upgrade result))
-               arg-handler))
-      (_
-       (leave (G_ "~A: extraneous argument~%") arg))))
+    ;; Treat non-option arguments as upgrade regexps.
+    (values (alist-cons 'upgrade arg
+                        (delete '(upgrade . #f) result))
+            arg-handler))
 
   (define opts
     (parse-command-line args %options

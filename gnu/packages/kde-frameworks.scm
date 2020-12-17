@@ -811,7 +811,7 @@ interfaces in the areas of colors, fonts, text, images, keyboard input.")
     (inputs
      `(("qtbase" ,qtbase)
        ("qtdeclarative" ,qtdeclarative)))
-    (home-page "https://cgit.kde.org/kholidays.git")
+    (home-page "https://invent.kde.org/frameworks/kholidays")
     (synopsis "Library for regional holiday information")
     (description "This library provides a C++ API that determines holiday and
 other special events for a geographical region.")
@@ -1963,7 +1963,8 @@ covers feedback and persistent events.")
                 "03rp7p7i8ihz5wg58gjs638jk7xbszknfiy2j3r979snc57g95mv"))
               ;; Default to: external paths/symlinks can be followed by a
               ;; package
-              (patches (search-patches "kpackage-allow-external-paths.patch"))))
+              (patches (search-patches "kpackage-allow-external-paths.patch"
+                                       "kpackage-fix-KF5PackageMacros.cmake.patch"))))
     (build-system cmake-build-system)
     (native-inputs
      `(("extra-cmake-modules" ,extra-cmake-modules)))
@@ -3449,7 +3450,8 @@ setUrl, setUserAgent and call.")
                     name "-" version ".tar.xz"))
               (sha256
                (base32
-                "06cxajsxj62g3c37ssrrcaxb9a12zbyp2kvrjqym329k5vd89272"))))
+                "06cxajsxj62g3c37ssrrcaxb9a12zbyp2kvrjqym329k5vd89272"))
+              (patches (search-patches "plasma-framework-fix-KF5PlasmaMacros.cmake.patch"))))
     (build-system cmake-build-system)
     (propagated-inputs
      `(("kpackage" ,kpackage)

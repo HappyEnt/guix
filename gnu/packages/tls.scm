@@ -165,7 +165,7 @@ living in the same process.")
   (package
     (name "gnutls")
     ;; XXX Unversion openconnect's "gnutls" input when ungrafting.
-    (replacement gnutls-3.6.14)
+    (replacement gnutls/fixed)
     (version "3.6.12")
     (source (origin
              (method url-fetch)
@@ -254,10 +254,11 @@ required structures.")
     (properties '((ftp-server . "ftp.gnutls.org")
                   (ftp-directory . "/gcrypt/gnutls")))))
 
-(define-public gnutls-3.6.14
+;; Replacement package to fix multiple security vulnerabilities.
+(define-public gnutls/fixed
   (package
     (inherit gnutls)
-    (version "3.6.14")
+    (version "3.6.15")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://gnupg/gnutls/v"
@@ -267,7 +268,7 @@ required structures.")
                                        "gnutls-cross.patch"))
               (sha256
                (base32
-                "0qwxsfizynly0ns537vnhnlm5lh03la4vbsmz675n0n7vqd7ac2n"))))
+                "0n0m93ymzd0q9hbknxc2ycanz49sqlkyyf73g9fk7n787llc7a0f"))))
     (native-inputs
      `(,@(if (%current-target-system)             ;for cross-build
              `(("guile" ,guile-3.0))              ;to create .go files
@@ -286,7 +287,7 @@ required structures.")
   ;; Authentication of Named Entities.  This is required for GNS functionality
   ;; by GNUnet and gnURL.  This is done in an extra package definition
   ;; to have the choice between GnuTLS with Dane and without Dane.
-  (package/inherit gnutls
+  (package/inherit gnutls/fixed
     (name "gnutls-dane")
     (inputs `(("unbound" ,unbound)
               ,@(package-inputs gnutls)))))
@@ -306,7 +307,7 @@ required structures.")
   (package
    (name "openssl")
    (version "1.1.1f")
-   (replacement openssl-1.1.1g)
+   (replacement openssl-1.1.1i)
    (source (origin
              (method url-fetch)
              (uri (list (string-append "https://www.openssl.org/source/openssl-"
@@ -334,25 +335,33 @@ required structures.")
       #:disallowed-references ,(list (canonical-package perl))
       #:phases
       (modify-phases %standard-phases
-	,@(if (%current-target-system)
-	      '((add-before
-		    'configure 'set-cross-compile
-		  (lambda* (#:key target outputs #:allow-other-keys)
-		    (setenv "CROSS_COMPILE" (string-append target "-"))
-		    (setenv "CONFIGURE_TARGET_ARCH"
-			    (cond
-			     ((string-prefix? "i586" target)
-			      "hurd-x86")
-			     ((string-prefix? "i686" target)
-			      "linux-x86")
-			     ((string-prefix? "x86_64" target)
-			      "linux-x86_64")
-			     ((string-prefix? "arm" target)
-			      "linux-armv4")
-			     ((string-prefix? "aarch64" target)
-			      "linux-aarch64")))
-		    #t)))
-	      '())
+       ,@(if (%current-target-system)
+           '((add-before
+               'configure 'set-cross-compile
+               (lambda* (#:key target outputs #:allow-other-keys)
+                 (setenv "CROSS_COMPILE" (string-append target "-"))
+                 (setenv "CONFIGURE_TARGET_ARCH"
+                         (cond
+                           ((string-prefix? "i586" target)
+                            "hurd-x86")
+                           ((string-prefix? "i686" target)
+                            "linux-x86")
+                           ((string-prefix? "x86_64" target)
+                            "linux-x86_64")
+                           ((string-prefix? "mips64el" target)
+                            "linux-mips64")
+                           ((string-prefix? "arm" target)
+                            "linux-armv4")
+                           ((string-prefix? "aarch64" target)
+                            "linux-aarch64")
+                           ((string-prefix? "powerpc64le" target)
+                            "linux-ppc64le")
+                           ((string-prefix? "powerpc64" target)
+                            "linux-ppc64")
+                           ((string-prefix? "powerpc" target)
+                            "linux-ppc")))
+                 #t)))
+           '())
         (replace 'configure
           (lambda* (#:key outputs #:allow-other-keys)
             (let* ((out (assoc-ref outputs "out"))
@@ -363,8 +372,8 @@ required structures.")
                  (string-append (assoc-ref %build-inputs "coreutils")
                                 "/bin/env")))
               (invoke ,@(if (%current-target-system)
-			    '("./Configure")
-			    '("./config"))
+                          '("./Configure")
+                          '("./config"))
                       "shared"       ;build shared libraries
                       "--libdir=lib"
 
@@ -376,9 +385,9 @@ required structures.")
 
                       (string-append "--prefix=" out)
                       (string-append "-Wl,-rpath," lib)
-		      ,@(if (%current-target-system)
-			    '((getenv "CONFIGURE_TARGET_ARCH"))
-			    '())))))
+                      ,@(if (%current-target-system)
+                          '((getenv "CONFIGURE_TARGET_ARCH"))
+                          '())))))
         (add-after 'install 'move-static-libraries
           (lambda* (#:key outputs #:allow-other-keys)
             ;; Move static libraries to the "static" output.
@@ -430,10 +439,10 @@ required structures.")
    (license license:openssl)
    (home-page "https://www.openssl.org/")))
 
-(define openssl-1.1.1g
+(define openssl-1.1.1i
   (package
    (inherit openssl)
-   (version "1.1.1g")
+   (version "1.1.1i")
    (source (origin
              (method url-fetch)
              (uri (list (string-append "https://www.openssl.org/source/openssl-"
@@ -446,7 +455,7 @@ required structures.")
              (patches (search-patches "openssl-1.1-c-rehash-in.patch"))
              (sha256
               (base32
-               "0ikdcc038i7jk8h7asq5xcn8b1xc2rrbc88yfm4hqbz3y5s4gc6x"))))))
+               "0hjj1phcwkz69lx1lrvr9grhpl4y529mwqycqc1hdla1zqsnmgp8"))))))
 
 (define-public openssl-1.0
   (package

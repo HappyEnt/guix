@@ -16,6 +16,7 @@
 ;;; Copyright © 2019 Jesse Gildersleve <jessejohngildersleve@protonmail.com>
 ;;; Copyright © 2019, 2020 Guillaume Le Vaillant <glv@posteo.net>
 ;;; Copyright © 2020 Marius Bakke <mbakke@fastmail.com>
+;;; Copyright © 2020 Zhu Zihao <all_but_last@163.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -44,6 +45,7 @@
   #:use-module (guix download)
   #:use-module (guix git-download)
   #:use-module (guix utils)
+  #:use-module (guix build-system copy)
   #:use-module (guix build-system gnu)
   #:use-module (guix build-system ant)
   #:use-module (guix build-system asdf)
@@ -76,21 +78,10 @@
   #:use-module (gnu packages xorg)
   #:use-module (ice-9 match))
 
-(define (asdf-substitutions lisp)
-  ;; Prepend XDG_DATA_DIRS/LISP-bundle-systems to ASDF's
-  ;; 'default-system-source-registry'.
-  `((("\\(,dir \"systems/\"\\)\\)")
-     (format #f
-             "(,dir \"~a-bundle-systems\")))
-
-      ,@(loop :for dir :in (xdg-data-dirs \"common-lisp/\")
-              :collect `(:directory (,dir \"systems\"))"
-             ,lisp))))
-
 (define-public cl-asdf
   (package
     (name "cl-asdf")
-    (version "3.3.3")
+    (version "3.3.4")
     (source
      (origin
        (method url-fetch)
@@ -98,8 +89,11 @@
         (string-append "https://common-lisp.net/project/asdf/archives/asdf-"
                        version ".lisp"))
        (sha256
-        (base32 "18lr6kxvzhr79c9rx3sdricz30aby866fj0m24w27zxsqlyvn3rd"))))
+        (base32 "1hpx30f6yrak15nw992k7x3pn75ahvjs04n4f134k68mhgs62km2"))))
     (build-system trivial-build-system)
+    (native-inputs
+     `(("config-patch" ,@(search-patches "cl-asdf-config-directories.patch"))
+       ("patch" ,patch)))
     (arguments
      `(#:modules ((guix build utils)
                   (guix build lisp-utils))
@@ -110,9 +104,14 @@
          (let* ((out (string-append (assoc-ref %outputs "out")))
                 (asdf-install (string-append out %source-install-prefix
                                              "/source/asdf/"))
-                (asdf (string-append (assoc-ref %build-inputs "source"))))
+                (src-asdf (string-append (assoc-ref %build-inputs "source")))
+                (dst-asdf (string-append asdf-install "asdf.lisp"))
+                (patch (string-append (assoc-ref %build-inputs "patch")
+                                      "/bin/patch"))
+                (config-patch (assoc-ref %build-inputs "config-patch")))
            (mkdir-p asdf-install)
-           (copy-file asdf (string-append asdf-install "asdf.lisp"))))))
+           (copy-file src-asdf dst-asdf)
+           (invoke patch "-p1" "-i" config-patch dst-asdf)))))
     (home-page "https://common-lisp.net/project/asdf/")
     (synopsis "Another System Definition Facility")
     (description
@@ -252,19 +251,20 @@ interface to the Tk widget system.")
          (delete 'check)
          (add-after 'unpack 'replace-asdf
            ;; Use system ASDF instead of bundled one.
-           (lambda* (#:key inputs outputs #:allow-other-keys)
+           (lambda* (#:key inputs #:allow-other-keys)
              (let* ((cl-asdf (assoc-ref inputs "cl-asdf"))
                     (guix-asdf (string-append
                                 cl-asdf
                                 "/share/common-lisp/source/asdf/asdf.lisp"))
-                    (out (string-append (assoc-ref outputs "out")))
                     (contrib-asdf "contrib/asdf/asdf.lisp"))
-               (copy-file guix-asdf contrib-asdf)
-               ;; Add ecl-bundle-systems to 'default-system-source-registry'.
-               (substitute* contrib-asdf
-                 ,@(asdf-substitutions name)))
+               (copy-file guix-asdf contrib-asdf))
              #t))
-         (add-after 'install 'wrap
+         (add-after 'install 'remove-build-stamp
+           (lambda* (#:key outputs #:allow-other-keys)
+             (delete-file (string-append (assoc-ref outputs "out")
+                                         "/lib/ecl-" ,version "/build-stamp"))
+             #t))
+         (add-after 'remove-build-stamp 'wrap
            (lambda* (#:key inputs outputs #:allow-other-keys)
              (let* ((ecl (assoc-ref outputs "out"))
                     (input-path (lambda (lib path)
@@ -286,7 +286,8 @@ interface to the Tk widget system.")
                            (input-path lib "/include"))
                          `("kernel-headers" ,@libraries)))
                  `("LIBRARY_PATH" suffix ,library-directories)
-                 `("LD_LIBRARY_PATH" suffix ,library-directories)))))
+                 `("LD_LIBRARY_PATH" suffix ,library-directories))
+               #t)))
          (add-after 'wrap 'check (assoc-ref %standard-phases 'check))
          (add-before 'check 'fix-path-to-ecl
            (lambda _
@@ -296,7 +297,10 @@ interface to the Tk widget system.")
     (native-search-paths
      (list (search-path-specification
             (variable "XDG_DATA_DIRS")
-            (files '("share")))))
+            (files '("share")))
+           (search-path-specification
+            (variable "XDG_CONFIG_DIRS")
+            (files '("etc")))))
     (home-page "http://ecls.sourceforge.net/")
     (synopsis "Embeddable Common Lisp")
     (description "ECL is an implementation of the Common Lisp language as
@@ -322,9 +326,10 @@ supporting ASDF, Sockets, Gray streams, MOP, and other useful components.")
              (commit "clisp-2.49.92-2018-02-18")))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0k2dmgl0miz3767iks4p0mvp6xw0ysyxhjpklyh11j010rmh6hqb"))
-       (patches (search-patches "clisp-remove-failing-test.patch"))))
+        (base32 "0k2dmgl0miz3767iks4p0mvp6xw0ysyxhjpklyh11j010rmh6hqb"))))
     (build-system gnu-build-system)
+    (native-inputs
+     `(("cl-asdf" ,cl-asdf)))
     (inputs `(("libffcall" ,libffcall)
               ("ncurses" ,ncurses)
               ("readline" ,readline)
@@ -337,8 +342,11 @@ supporting ASDF, Sockets, Gray streams, MOP, and other useful components.")
                                  '())
                             "--with-dynamic-ffi"
                             "--with-dynamic-modules"
+                            "--with-ffcall"
+                            "--with-readline"
+                            "--with-sigsegv"
+                            "--with-module=asdf"
                             "--with-module=rawsock")
-       #:build #f
        #:phases
        (modify-phases %standard-phases
          (add-after 'unpack 'patch-sh-and-pwd
@@ -356,9 +364,24 @@ supporting ASDF, Sockets, Gray streams, MOP, and other useful components.")
                (("/bin/sh") "sh"))
              (substitute* '("src/clisp-link.in")
                (("/bin/pwd") "pwd"))
-             #t)))
-       ;; Makefiles seem to have race conditions.
-       #:parallel-build? #f))
+             #t))
+         (add-after 'unpack 'replace-asdf
+           ;; Use system ASDF instead of bundled one.
+           (lambda* (#:key inputs #:allow-other-keys)
+             (let* ((cl-asdf (assoc-ref inputs "cl-asdf"))
+                    (guix-asdf (string-append
+                                cl-asdf
+                                "/share/common-lisp/source/asdf/asdf.lisp"))
+                    (contrib-asdf "modules/asdf/asdf.lisp"))
+               (delete-file contrib-asdf)
+               (copy-file guix-asdf contrib-asdf)))))))
+    (native-search-paths
+     (list (search-path-specification
+            (variable "XDG_DATA_DIRS")
+            (files '("share")))
+           (search-path-specification
+            (variable "XDG_CONFIG_DIRS")
+            (files '("etc")))))
     (home-page "https://clisp.sourceforge.io/")
     (synopsis "A Common Lisp implementation")
     (description
@@ -370,14 +393,14 @@ an interpreter, a compiler, a debugger, and much more.")
 (define-public sbcl
   (package
     (name "sbcl")
-    (version "2.0.9")
+    (version "2.0.11")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://sourceforge/sbcl/sbcl/" version "/sbcl-"
                            version "-source.tar.bz2"))
        (sha256
-        (base32 "17wvrcwgp45z9b6arik31fjnz7908qhr5ackxq1y0gqi1hsh1xy4"))))
+        (base32 "07cpswxh2f38b440xdn3fjk7b4r0ipj3sbwb3jd134phrr9smll7"))))
     (build-system gnu-build-system)
     (outputs '("out" "doc"))
     (native-inputs
@@ -428,16 +451,13 @@ an interpreter, a compiler, a debugger, and much more.")
            ;; of ASDF we use to build software; therefore, replace the contrib
            ;; ASDF with the version packaged into Guix.
            ;; [1] - https://bugs.launchpad.net/sbcl/+bug/1823442
-           (lambda* (#:key inputs outputs #:allow-other-keys)
+           (lambda* (#:key inputs #:allow-other-keys)
              (let* ((cl-asdf (assoc-ref inputs "cl-asdf"))
                     (guix-asdf (string-append
                                 cl-asdf
                                 "/share/common-lisp/source/asdf/asdf.lisp"))
-                    (out (string-append (assoc-ref outputs "out")))
                     (contrib-asdf "contrib/asdf/asdf.lisp"))
-               (copy-file guix-asdf contrib-asdf)
-               (substitute* contrib-asdf
-                 ,@(asdf-substitutions name)))
+               (copy-file guix-asdf contrib-asdf))
              #t))
          (add-before 'build 'patch-unix-tool-paths
            (lambda* (#:key outputs inputs #:allow-other-keys)
@@ -500,7 +520,7 @@ an interpreter, a compiler, a debugger, and much more.")
                                          `("clisp")))
                      (string-append "--prefix="
                                     (assoc-ref outputs "out"))
-                     "--dynamic-space-size=2Gb"
+                     "--dynamic-space-size=3072"
                      "--with-sb-core-compression"
                      "--with-sb-xref-for-internals")))
          (replace 'install
@@ -544,7 +564,10 @@ an interpreter, a compiler, a debugger, and much more.")
     (native-search-paths
      (list (search-path-specification
             (variable "XDG_DATA_DIRS")
-            (files '("share")))))
+            (files '("share")))
+           (search-path-specification
+            (variable "XDG_CONFIG_DIRS")
+            (files '("etc")))))
     (home-page "http://www.sbcl.org/")
     (synopsis "Common Lisp implementation")
     (description "Steel Bank Common Lisp (SBCL) is a high performance Common
@@ -604,7 +627,8 @@ statistical profiler, a code coverage tool, and many other extensions.")
                 "0x4bjx6cxsjvxyagijhlvmc7jkyxifdvz5q5zvz37028va65243c")
                (_ "15l7cfa4a7jkfwdzsfm4q3n22jnb57imxahpql3h77xin57v1gbz"))))))))
     (native-inputs
-     `(("m4" ,m4)))
+     `(("cl-asdf" ,cl-asdf)
+       ("m4" ,m4)))
     (arguments
      `(#:tests? #f                      ;no 'check' target
        #:modules ((ice-9 match)
@@ -616,6 +640,16 @@ statistical profiler, a code coverage tool, and many other extensions.")
          (add-after 'unpack 'unpack-image
            (lambda* (#:key inputs #:allow-other-keys)
              (invoke "tar" "xzvf" (assoc-ref inputs "ccl-bootstrap"))))
+         (add-after 'unpack 'replace-asdf
+           ;; Use system ASDF instead of bundled one.
+           (lambda* (#:key inputs #:allow-other-keys)
+             (let* ((cl-asdf (assoc-ref inputs "cl-asdf"))
+                    (guix-asdf (string-append
+                                cl-asdf
+                                "/share/common-lisp/source/asdf/asdf.lisp"))
+                    (contrib-asdf "tools/asdf.lisp"))
+               (delete-file contrib-asdf)
+               (copy-file guix-asdf contrib-asdf))))
          (delete 'configure)
          (add-before 'build 'pre-build
            ;; Enter the source directory for the current platform's lisp
@@ -679,6 +713,13 @@ statistical profiler, a code coverage tool, and many other extensions.")
                      "exec -a \"$0\" " libdir kernel " \"$@\"\n"))))
                (chmod wrapper #o755))
              #t)))))
+    (native-search-paths
+     (list (search-path-specification
+            (variable "XDG_DATA_DIRS")
+            (files '("share")))
+           (search-path-specification
+            (variable "XDG_CONFIG_DIRS")
+            (files '("etc")))))
     (supported-systems '("i686-linux" "x86_64-linux" "armhf-linux"))
     (home-page "https://ccl.clozure.com/")
     (synopsis "Common Lisp implementation")
@@ -1001,3 +1042,87 @@ including a built-in database engine and a GUI system.")
      (package
        (inherit picolisp32)
        (name "picolisp")))))
+
+(define-public janet
+  (package
+    (name "janet")
+    (version "1.12.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/janet-lang/janet")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0if514zdmbjvvrsa9x5yfvg2b14sz53yaka12g3yhwkq8ls3qk0c"))))
+    (build-system gnu-build-system)
+    (arguments
+     `(#:make-flags (list
+                     (string-append "DESTDIR=" (assoc-ref %outputs "out"))
+                     (string-append "PREFIX=")
+                     (string-append "CC=" (assoc-ref %build-inputs "gcc")
+                                    "/bin/gcc"))
+       #:phases
+       (modify-phases %standard-phases
+         (delete 'configure)
+         (replace 'check
+           (lambda _
+             (invoke "make" "test"))))))
+    (home-page "https://janet-lang.org/")
+    (synopsis "Functional, imperative and embeddable programming language")
+    (description
+     "Janet is a functional and imperative programming language.  It can be
+used for rapid prototyping, dynamic systems, and other domains where dynamic
+languages shine.  You can also add Janet scripting to an application by
+embedding a single C file and two headers.  It can be easily ported to new
+platforms.  The entire language (core library, interpreter, compiler,
+assembler, PEG) is less than 1MB.")
+    (license license:expat)))
+
+(define-public lisp-repl-core-dumper
+  (package
+    (name "lisp-repl-core-dumper")
+    (version "0.3.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://gitlab.com/ambrevar/lisp-repl-core-dumper.git")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1w7x7d7bnrdj0bd04vnjy7d7sngvcx1yjr4iw429hdd9lzlg8rbg"))))
+    (build-system copy-build-system)
+    (arguments
+     '(#:install-plan
+       '(("lisp-repl-core-dumper" "bin/"))
+       #:phases
+       (modify-phases %standard-phases
+         (add-before 'install 'fix-utils-path
+           (lambda* (#:key inputs #:allow-other-keys)
+             (let* ((coreutils (string-append (assoc-ref inputs "coreutils") "/bin/"))
+                    (paste (string-append coreutils "paste"))
+                    (sort (string-append coreutils "sort"))
+                    (basename (string-append coreutils "basename"))
+                    (sed (string-append (assoc-ref inputs "sed") "/bin/sed")))
+               (substitute* "lisp-repl-core-dumper"
+                 (("\\$\\(basename") (string-append "$(" basename))
+                 (("\\<paste\\>") paste)
+                 (("\\<sed\\>") sed)
+                 (("\\<sort\\>") sort))))))))
+    (inputs
+     `(("coreutils" ,coreutils-minimal)
+       ("sed" ,sed)))
+    (home-page "https://gitlab.com/ambrevar/lisp-repl-core-dumper")
+    (synopsis "Generate REPL-optimized Lisp cores on demand")
+    (description
+     "This tool generates Lisp images that can embed the provided systems
+and make for REPLs that start blazing fast.
+
+@itemize
+@item It’s portable and should work with any compiler.
+@item It works for any REPL.
+@item It allows you to include arbitrary libraries.
+@end itemize\n")
+    (license license:gpl3+)))

@@ -79,7 +79,7 @@
                 "0svybbrvpf6q955y6fclxh3md64z0dgmh0x54x2j60503hhs071m"))))
     (build-system meson-build-system)
     (native-inputs
-     `(("check" ,check)
+     `(("check" ,check-0.14)
        ("gettext" ,gettext-minimal)
        ("pkg-config" ,pkg-config)))
     (inputs
@@ -470,7 +470,7 @@ Libraries stack (eo, evas, ecore, edje, emotion, ethumb and elementary).")
            (lambda _ (setenv "HOME" "/tmp") #t)))
        #:tests? #f)) ; tests require running dbus service
     (native-inputs
-     `(("check" ,check)
+     `(("check" ,check-0.14)
        ("gettext" ,gettext-minimal)
        ("pkg-config" ,pkg-config)))
     (inputs
@@ -566,14 +566,14 @@ directories.
 (define-public evisum
   (package
     (name "evisum")
-    (version "0.5.6")
+    (version "0.5.7")
     (source
       (origin
         (method url-fetch)
         (uri (string-append "https://download.enlightenment.org/rel/apps/"
                             "evisum/evisum-" version ".tar.xz"))
         (sha256
-         (base32 "1l8pym7738kncvic5ga03sj9d5igigvmcxa9lbg47z2yvdjwzv97"))))
+         (base32 "0pm63n3rls8vkjv3awq0f3zlqk33ddql3g0rl2bc46n48g2mcmbd"))))
     (build-system meson-build-system)
     (arguments
      '(#:tests? #f))                    ; no tests

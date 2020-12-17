@@ -13,7 +13,7 @@
 ;;; Copyright © 2016 doncatnip <gnopap@gmail.com>
 ;;; Copyright © 2016 Ivan Vilata i Balaguer <ivan@selidor.net>
 ;;; Copyright © 2017 Mekeor Melire <mekeor.melire@gmail.com>
-;;; Copyright © 2017, 2019 Marius Bakke <mbakke@fastmail.com>
+;;; Copyright © 2017, 2019, 2020 Marius Bakke <marius@gnu.org>
 ;;; Copyright © 2017, 2020 Oleg Pykhalov <go.wigust@gmail.com>
 ;;; Copyright © 2018, 2019, 2020 Tobias Geerinckx-Rice <me@tobias.gr>
 ;;; Copyright © 2018 Pierre-Antoine Rouby <contact@parouby.fr>
@@ -36,6 +36,11 @@
 ;;; Copyright © 2020 Boris A. Dekshteyn <harlequin78@gmail.com>
 ;;; Copyright © 2020 Marcin Karpezo <sirmacik@wioo.waw.pl>
 ;;; Copyright © 2020 EuAndreh <eu@euandre.org>
+;;; Copyright © 2020 Michael Rohleder <mike@rohleder.de>
+;;; Copyright © 2020 Guillaume Le Vaillant <glv@posteo.net>
+;;; Copyright © 2020 B. Wilson <elaexuotee@wilsonb.com>
+;; Copyright © 2020 Niklas Eklund <niklas.eklund@posteo.net>
+;;; Copyright © 2020 Robert Smith <robertsmith@posteo.net>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -71,6 +76,7 @@
   #:use-module (gnu packages autotools)
   #:use-module (gnu packages base)
   #:use-module (gnu packages bison)
+  #:use-module (gnu packages build-tools) ;for meson-0.55
   #:use-module (gnu packages calendar)
   #:use-module (gnu packages docbook)
   #:use-module (gnu packages documentation)
@@ -272,14 +278,14 @@ commands would.")
 (define-public i3-wm
   (package
     (name "i3-wm")
-    (version "4.18.2")
+    (version "4.18.3")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://i3wm.org/downloads/i3-"
                                   version ".tar.bz2"))
               (sha256
                (base32
-                "030jym6b8b07yf4y6pb806hg8k77zsprv569gy0r72rh5zb1g1mj"))))
+                "03dijnwv2n8ak9jq59fhq0rc80m5wjc9d54fslqaivnnz81pkbjk"))))
     (build-system gnu-build-system)
     (arguments
      `(#:configure-flags
@@ -342,7 +348,7 @@ many programming languages.")
 (define-public i3-gaps
   (package (inherit i3-wm)
            (name "i3-gaps")
-           (version "4.18.2")
+           (version "4.18.3")
            (source (origin
                      (method url-fetch)
                      (uri (string-append
@@ -350,7 +356,7 @@ many programming languages.")
                            version "/i3-" version ".tar.bz2"))
                      (sha256
                       (base32
-                       "0lz08wf4b0yprzqsmymn94kiyg885dcwmh0p64v2rnf52s165g2g"))))
+                       "1hcakwyz78lgp8mhqv7pw86jlb3m415pfql1q19rkijnhm3fn3ci"))))
            (home-page "https://github.com/Airblader/i3")
            (synopsis "Tiling window manager with gaps")
            (description "i3-gaps is a fork of i3wm, a tiling window manager
@@ -610,7 +616,7 @@ Features include:
                                         "/bin/gawk")))
 
                (substitute* "lock"
-                 (("$(which wmctrl)") wmctrl)
+                 (("\\$\\(command -V wmctrl\\)") wmctrl)
                  (("convert") mconvert)
                  (("shot=\\(import") (string-append "shot=\(" mimport))
                  (("awk -F") (string-append awk " -F"))
@@ -629,7 +635,7 @@ Features include:
                             (string-append bin "/i3lock-fancy"))
                (copy-recursively "icons" icons)
                #t))))))
-    (native-inputs
+    (inputs
      `(("imagemagick" ,imagemagick)
        ("wmctrl" ,wmctrl)
        ("gawk" ,gawk)))
@@ -1204,18 +1210,17 @@ It is inspired by Xmonad and dwm.  Its major features include:
 (define-public cwm
   (package
     (name "cwm")
-    (version "6.6")
+    (version "6.7")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "https://leahneukirchen.org/releases/cwm-"
                            version ".tar.gz"))
        (sha256
-        (base32
-         "0p350pbfn92m21jiq4i324sdskxhs71p435g0mgz7cmzprnhhg92"))))
+        (base32 "022zld29qawd8gl700g4m24qa89il3aks397zkhh66wvzssdblzx"))))
     (build-system gnu-build-system)
     (arguments
-     `(#:make-flags (list "CC=gcc"
+     `(#:make-flags (list (string-append "CC=" ,(cc-for-target))
                           (string-append "PREFIX=" %output))
        #:tests? #f
        #:phases
@@ -1341,7 +1346,7 @@ functionality to display information about the most commonly used services.")
 (define-public wlroots
   (package
     (name "wlroots")
-    (version "0.10.1")
+    (version "0.12.0")
     (source
      (origin
        (method git-fetch)
@@ -1350,32 +1355,35 @@ functionality to display information about the most commonly used services.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0j2lh9vc92zhn44rjbia5aw3y1rpgfng1x1h17lcvj5m4i6vj0pc"))))
+        (base32 "01j38lmgs2c6fq68v8b75pkilia2wsgzgp46ivfbi9hhx47kgcfn"))))
     (build-system meson-build-system)
     (arguments
      `(#:configure-flags '("-Dlogind-provider=elogind")
+       #:meson ,meson-0.55
        #:phases
        (modify-phases %standard-phases
          (add-before 'configure 'hardcode-paths
            (lambda* (#:key inputs #:allow-other-keys)
-             (substitute* "xwayland/xwayland.c"
+             (substitute* "xwayland/server.c"
                (("Xwayland") (string-append (assoc-ref inputs
                                                        "xorg-server-xwayland")
                                             "/bin/Xwayland")))
              #t)))))
-    (inputs `(("elogind" ,elogind)
-              ("eudev" ,eudev)
-              ("libinput" ,libinput)
-              ("libxkbcommon" ,libxkbcommon)
-              ("mesa" ,mesa)
-              ("pixman" ,pixman)
-              ("wayland" ,wayland)
-              ("xorg-server-xwayland" ,xorg-server-xwayland)))
-    (native-inputs `(("ffmpeg" ,ffmpeg)
-                     ("libcap" ,libcap)
-                     ("libpng" ,libpng)
-                     ("pkg-config" ,pkg-config)
-                     ("wayland-protocols" ,wayland-protocols)))
+    (propagated-inputs
+     `(;; As required by wlroots.pc.
+       ("elogind" ,elogind)
+       ("eudev" ,eudev)
+       ("libinput" ,libinput)
+       ("libxkbcommon" ,libxkbcommon)
+       ("mesa" ,mesa)
+       ("pixman" ,pixman)
+       ("wayland" ,wayland)
+       ("xcb-util-errors" ,xcb-util-errors)
+       ("xcb-util-wm" ,xcb-util-wm)
+       ("xorg-server-xwayland" ,xorg-server-xwayland)))
+    (native-inputs
+     `(("pkg-config" ,pkg-config)
+       ("wayland-protocols" ,wayland-protocols)))
     (home-page "https://github.com/swaywm/wlroots")
     (synopsis "Pluggable, composable, unopinionated modules for building a
 Wayland compositor")
@@ -1386,9 +1394,7 @@ modules for building a Wayland compositor.")
 (define-public sway
   (package
     (name "sway")
-    ;; XXX When updating, check whether grim-revert-output-rotation.patch can
-    ;; be dropped from the grim package.
-    (version "1.4")
+    (version "1.5.1")
     (source
      (origin
        (method git-fetch)
@@ -1397,7 +1403,7 @@ modules for building a Wayland compositor.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "11qf89y3q92g696a6f4d23qb44gqixg6qxq740vwv2jw59ms34ja"))))
+        (base32 "1xsa3h8zhf29p0mi90baxpr76jkd9pd1gr97ky8cnjbcs4isj9j0"))))
     (build-system meson-build-system)
     (arguments
      `(#:phases
@@ -1426,21 +1432,21 @@ modules for building a Wayland compositor.")
               ("swaybg" ,swaybg)
               ("wayland" ,wayland)
               ("wlroots" ,wlroots)))
-    (native-inputs `(("libcap" ,libcap)
-                     ("linux-pam" ,linux-pam)
-                     ("mesa" ,mesa)
-                     ("pkg-config" ,pkg-config)
-                     ("scdoc" ,scdoc)
-                     ("wayland-protocols" ,wayland-protocols)))
+    (native-inputs
+     `(("linux-pam" ,linux-pam)
+       ("mesa" ,mesa)
+       ("pkg-config" ,pkg-config)
+       ("scdoc" ,scdoc)
+       ("wayland-protocols" ,wayland-protocols)))
     (home-page "https://github.com/swaywm/sway")
     (synopsis "Wayland compositor compatible with i3")
     (description "Sway is a i3-compatible Wayland compositor.")
-    (license license:expat)))       ; MIT license
+    (license license:expat)))
 
 (define-public swayidle
   (package
     (name "swayidle")
-    (version "1.5")
+    (version "1.6")
     (source
      (origin
        (method git-fetch)
@@ -1449,7 +1455,7 @@ modules for building a Wayland compositor.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "05qi96j58xqxjiighay1d39rfanxcpn6vlynj23mb5dymxvlaq9n"))))
+        (base32 "1nd3v8r9549lykdwh4krldfl59lzaspmmai5k1icy7dvi6kkr18r"))))
     (build-system meson-build-system)
     (arguments
      `(#:configure-flags '("-Dlogind-provider=elogind")))
@@ -1466,7 +1472,7 @@ modules for building a Wayland compositor.")
 (define-public swaylock
   (package
     (name "swaylock")
-    (version "1.4")
+    (version "1.5")
     (source
      (origin
        (method git-fetch)
@@ -1475,7 +1481,7 @@ modules for building a Wayland compositor.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1ii9ql1mxkk2z69dv6bg1x22nl3a46iww764wqjiv78x08xpk982"))))
+        (base32 "0r95p4w11dwm5ra614vddz83r8j7z6gd120z2vcchy7m9b0f15kf"))))
     (build-system meson-build-system)
     (inputs `(("cairo" ,cairo)
               ("gdk-pixbuf" ,gdk-pixbuf)
@@ -1554,10 +1560,31 @@ modules for building a Wayland compositor.")
 Wlroots based compositors.")
     (license license:expat))) ; MIT license
 
+(define-public wlr-randr
+  (package
+    (name "wlr-randr")
+    (version "0.1.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/emersion/wlr-randr")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "10c8zzp78s5bw34vvjhilipa28bsdx3jbyhnxgp8f8kawh3cvgsc"))))
+    (build-system meson-build-system)
+    (inputs `(("wayland" ,wayland)))
+    (native-inputs `(("pkg-config" ,pkg-config)))
+    (home-page "https://github.com/emersion/wlr-randr")
+    (synopsis "Utility to manage Wayland compositor outputs")
+    (description "wlr-randr is a utility to manage outputs of a Wayland compositor.")
+    (license license:expat))) ; MIT license
+
 (define-public mako
   (package
     (name "mako")
-    (version "1.4")
+    (version "1.4.1")
     (source
      (origin
        (method git-fetch)
@@ -1566,7 +1593,7 @@ Wlroots based compositors.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "11ymiq6cr2ma0iva1mqybn3j6k73bsc6lv6pcbdq7hkhd4f9b7j9"))))
+        (base32 "0hwvibpnrximb628w9dsfjpi30b5jy7nfkm4d94z5vhp78p43vxh"))))
     (build-system meson-build-system)
     (inputs `(("cairo" ,cairo)
               ("elogind" ,elogind)
@@ -1582,10 +1609,34 @@ Wlroots based compositors.")
 compositors that support the layer-shell protocol.")
     (license license:expat))) ; MIT license
 
+(define-public kanshi
+  (package
+    (name "kanshi")
+    (version "1.1.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/emersion/kanshi")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0nbpgm8qnn7ljsg9vgs35kl8l4rrk542vdcbx8wrn9r909ld3x92"))))
+    (build-system meson-build-system)
+    (inputs `(("wayland" ,wayland)))
+    (native-inputs `(("pkg-config" ,pkg-config)
+                     ("scdoc" ,scdoc)))
+    (home-page "https://wayland.emersion.fr/kanshi")
+    (synopsis "Hotswappable output profiles for Wayland")
+    (description "Kanshi allows you to define output profiles that are
+automatically enabled and disabled on hotplug.  Kanshi can be used with
+Wayland compositors supporting the wlr-output-management protocol.")
+    (license license:expat))) ; MIT license
+
 (define-public stumpwm
   (package
     (name "stumpwm")
-    (version "19.11")
+    (version "20.11")
     (source
      (origin
        (method git-fetch)
@@ -1594,7 +1645,7 @@ compositors that support the layer-shell protocol.")
              (commit version)))
        (file-name (git-file-name "stumpwm" version))
        (sha256
-        (base32 "1ha8803ll7472kqxsy2xz0v5d4sv8apmc9z631d67m31q0z1m9rz"))))
+        (base32 "1ghs6ihvmb3bz4q4ys1d3h6rdi96xyiw7l2ip7jh54c25049aymf"))))
     (build-system asdf-build-system/sbcl)
     (native-inputs `(("fiasco" ,sbcl-fiasco)
                      ("texinfo" ,texinfo)
@@ -1607,10 +1658,10 @@ compositors that support the layer-shell protocol.")
               ("alexandria" ,sbcl-alexandria)))
     (outputs '("out" "lib"))
     (arguments
-     '(#:asd-system-name "stumpwm"
+     '(#:asd-systems '("stumpwm")
        #:phases
        (modify-phases %standard-phases
-         (add-after 'create-symlinks 'build-program
+         (add-after 'create-asdf-configuration 'build-program
            (lambda* (#:key outputs #:allow-other-keys)
              (build-program
               (string-append (assoc-ref outputs "out") "/bin/stumpwm")
@@ -1676,22 +1727,18 @@ productive, customizable lisp based systems.")
              (lambda* (#:key inputs outputs #:allow-other-keys)
                (let* ((out (assoc-ref outputs "out"))
                       (program (string-append out "/bin/stumpwm")))
+                 (setenv "HOME" "/tmp")
                  (build-program program outputs
                                 #:entry-program '((stumpwm:stumpwm) 0)
-                                #:dependencies '("stumpwm"
-                                                 ,@(@@ (gnu packages lisp-xyz) slynk-systems))
+                                #:dependencies '("stumpwm" "slynk")
                                 #:dependency-prefixes
                                 (map (lambda (input) (assoc-ref inputs input))
                                      '("stumpwm" "slynk")))
-                 ;; Remove unneeded file.
-                 (delete-file (string-append out "/bin/stumpwm-exec.fasl"))
                  #t)))
            (delete 'copy-source)
            (delete 'build)
            (delete 'check)
-           (delete 'create-asd-file)
-           (delete 'cleanup)
-           (delete 'create-symlinks)))))))
+           (delete 'cleanup)))))))
 
 (define stumpwm-contrib
   (let ((commit "920f8fc1488f7953f205e1dda4c2ecbbbda56d63")
@@ -1722,7 +1769,8 @@ productive, customizable lisp based systems.")
     (name "stumpish")
     (inputs
      `(("bash" ,bash)
-       ("rlwrap" ,rlwrap)))
+       ("rlwrap" ,rlwrap)
+       ("xprop" ,xprop)))
     (build-system trivial-build-system)
     (arguments
      '(#:modules ((guix build utils))
@@ -1734,6 +1782,8 @@ productive, customizable lisp based systems.")
          (substitute* "stumpish"
            (("rlwrap") (string-append (assoc-ref %build-inputs "rlwrap")
                                       "/bin/rlwrap"))
+           (("xprop") (string-append (assoc-ref %build-inputs "xprop")
+                                      "/bin/xprop"))
            (("/bin/sh") (string-append (assoc-ref %build-inputs "bash")
                                        "/bin/bash")))
          (install-file "stumpish" (string-append %output "/bin")))))
@@ -1753,7 +1803,7 @@ productive, customizable lisp based systems.")
      `(("stumpwm" ,stumpwm "lib")
        ("clx-truetype" ,sbcl-clx-truetype)))
     (arguments
-     '(#:asd-system-name "ttf-fonts"
+     '(#:asd-systems '("ttf-fonts")
        #:tests? #f
        #:phases
        (modify-phases %standard-phases
@@ -1770,7 +1820,7 @@ rendering.")
     (inherit stumpwm-contrib)
     (name "sbcl-stumpwm-pass")
     (arguments
-     '(#:asd-system-name "pass"
+     '(#:asd-systems '("pass")
        #:tests? #f
        #:phases
        (modify-phases %standard-phases
@@ -1787,7 +1837,7 @@ password-store into StumpWM.")
     (inherit stumpwm-contrib)
     (name "sbcl-stumpwm-globalwindows")
     (arguments
-     '(#:asd-system-name "globalwindows"
+     '(#:asd-systems '("globalwindows")
        #:tests? #f
        #:phases
        (modify-phases %standard-phases
@@ -1804,7 +1854,7 @@ windows in the current X session.")
     (inherit stumpwm-contrib)
     (name "sbcl-stumpwm-swm-gaps")
     (arguments
-     '(#:asd-system-name "swm-gaps"
+     '(#:asd-systems '("swm-gaps")
        #:tests? #f
        #:phases
        (modify-phases %standard-phases
@@ -1821,7 +1871,7 @@ between windows.")
     (inherit stumpwm-contrib)
     (name "sbcl-stumpwm-net")
     (arguments
-     '(#:asd-system-name "net"
+     '(#:asd-systems '("net")
        #:tests? #f
        #:phases
        (modify-phases %standard-phases
@@ -1839,7 +1889,7 @@ between windows.")
     (inherit stumpwm-contrib)
     (name "sbcl-stumpwm-wifi")
     (arguments
-     '(#:asd-system-name "wifi"
+     '(#:asd-systems '("wifi")
        #:tests? #f
        #:phases
        (modify-phases %standard-phases
@@ -1857,7 +1907,7 @@ between windows.")
     (inherit stumpwm-contrib)
     (name "sbcl-stumpwm-stumptray")
     (arguments
-     '(#:asd-system-name "stumptray"
+     '(#:asd-systems '("stumptray")
        #:tests? #f
        #:phases
        (modify-phases %standard-phases
@@ -1879,7 +1929,7 @@ between windows.")
     (inherit stumpwm-contrib)
     (name "sbcl-stumpwm-kbd-layouts")
     (arguments
-     '(#:asd-system-name "kbd-layouts"
+     '(#:asd-systems '("kbd-layouts")
        #:tests? #f
        #:phases
        (modify-phases %standard-phases
@@ -1888,6 +1938,107 @@ between windows.")
      "https://github.com/stumpwm/stumpwm-contrib/tree/master/util/kbd-layouts")
     (synopsis "Keyboard layout switcher for StumpWM")
     (description "Keyboard layout switcher for StumpWM")
+    (license license:gpl3+)))
+
+(define-public sbcl-stumpwm-numpad-layouts
+  (package
+    (inherit stumpwm-contrib)
+    (name "sbcl-stumpwm-numpad-layouts")
+    (arguments
+     '(#:asd-systems '("numpad-layouts")
+       #:tests? #f
+       #:phases
+       (modify-phases %standard-phases
+         (add-after 'unpack 'chdir
+           (lambda _
+             (chdir "util/numpad-layouts"))))))
+    (home-page
+     "https://github.com/stumpwm/stumpwm-contrib/tree/master/util/numpad-layouts")
+    (synopsis "Keyboard numpad layouts for StumpWM")
+    (description "This is a module for handling different keyboards numpad
+layouts in StumpWM.")
+    (license license:gpl3+)))
+
+(define-public sbcl-stumpwm-cpu
+  (package
+    (inherit stumpwm-contrib)
+    (name "sbcl-stumpwm-cpu")
+    (arguments
+     '(#:asd-systems '("cpu")
+       #:tests? #f
+       #:phases
+       (modify-phases %standard-phases
+         (add-after 'unpack 'chdir
+           (lambda _
+             (chdir "modeline/cpu"))))))
+    (home-page
+     "https://github.com/stumpwm/stumpwm-contrib/tree/master/modeline/cpu")
+    (synopsis "Modeline support for CPU info")
+    (description "Modeline support for CPU info.")
+    (license license:gpl3+)))
+
+(define-public sbcl-stumpwm-mem
+  (package
+    (inherit stumpwm-contrib)
+    (name "sbcl-stumpwm-mem")
+    (arguments
+     '(#:asd-systems '("mem")
+       #:tests? #f
+       #:phases
+       (modify-phases %standard-phases
+         (add-after 'unpack 'chdir
+           (lambda _
+             (chdir "modeline/mem"))))))
+    (home-page
+     "https://github.com/stumpwm/stumpwm-contrib/tree/master/modeline/mem")
+    (synopsis "Modeline support for memory info")
+    (description "Modeline support for memory info.")
+    (license license:gpl3+)))
+
+(define-public sbcl-stumpwm-winner-mode
+  (package
+    (inherit stumpwm-contrib)
+    (name "sbcl-stumpwm-winner-mode")
+    (arguments
+     '(#:asd-systems '("winner-mode")
+       #:tests? #f
+       #:phases
+       (modify-phases %standard-phases
+         (add-after 'unpack 'chdir
+           (lambda _
+             (chdir "util/winner-mode"))))))
+    (home-page
+     "https://github.com/stumpwm/stumpwm-contrib/tree/master/util/winner-mode")
+    (synopsis "Emacs' winner-mode for StumpWM")
+    (description "This module provides a winner-mode for StumpWM similar to the
+one in Emacs.")
+    (license license:gpl3+)))
+
+(define-public sbcl-stumpwm-screenshot
+  (package
+    (inherit stumpwm-contrib)
+    (name "sbcl-stumpwm-screenshot")
+    (inputs
+     `(("stumpwm" ,stumpwm "lib")
+       ("zpng" ,sbcl-zpng)))
+    (arguments
+     '(#:asd-systems '("screenshot")
+       #:tests? #f
+       #:phases
+       (modify-phases %standard-phases
+         (add-after 'unpack 'chdir
+           (lambda _
+             (chdir "util/screenshot")))
+         (add-after 'chdir 'fix-build
+           (lambda _
+             (substitute* "screenshot.asd"
+               (("#:zpng")
+                "#:stumpwm #:zpng")))))))
+    (home-page
+     "https://github.com/stumpwm/stumpwm-contrib/tree/master/util/screenshot")
+    (synopsis "Screenshots for StumpWM")
+    (description "This StumpWM module can take screenshots and store them as
+PNG files.")
     (license license:gpl3+)))
 
 (define-public lemonbar
@@ -1927,42 +2078,86 @@ formatting, RandR and Xinerama support and EWMH compliance without
 wasting your precious memory.")
       (license license:x11))))
 
-(define-public xclickroot
-  (let ((commit "309fd17174dba4149b5ea66654c6fd02cfcf7c9a")
-        (revision "1"))
+(define-public lemonbar-xft
+  ;; Upstream v2.0 tag is several years behind HEAD
+  (let ((commit "481e12363e2a0fe0ddd2176a8e003392be90ed02"))
     (package
-      (name "xclickroot")
-      (version (git-version "0.0.1" revision commit)) ;no upstream release
+      (inherit lemonbar)
+      (name "lemonbar-xft")
+      (version (string-append "2.0." (string-take commit 7)))
       (source (origin
                 (method git-fetch)
                 (uri (git-reference
-                      (url "https://github.com/phillbush/xclickroot")
+                      (url "https://github.com/drscream/lemonbar-xft")
                       (commit commit)))
                 (file-name (git-file-name name version))
                 (sha256
                  (base32
-                  "0fjqkg3wnyks0my1vrzhxfjicsfy8xwnijaazmpz6mhilcqkpvnd"))))
-      (build-system gnu-build-system)
+                  "0588g37h18lv50h7w8vfbwhvc3iajh7sdr53848spaif99nh3mh4"))))
       (inputs
-       `(("libx11" ,libx11)))
+       `(("freetype" ,freetype)
+         ("libxft" ,libxft)
+         ("libx11" ,libx11)
+         ,@(package-inputs lemonbar)))
       (arguments
-       `(#:tests? #f ;no test suite
-         #:make-flags
-         (list ,(string-append "CC=" (cc-for-target))
-               (string-append "PREFIX=" %output))
-         #:phases
-         (modify-phases %standard-phases
-           (delete 'configure))))
-      (home-page "https://github.com/phillbush/xclickroot")
-      (synopsis "Run a command when a mouse button is pressed on the root window")
-      (description "@code{xclickroot} runs a command every time a given mouse
+       (substitute-keyword-arguments (package-arguments lemonbar)
+         ((#:make-flags make-flags)
+          `(append
+            ,make-flags
+            (list (string-append
+                   "CFLAGS="
+                   (string-join
+                    (list (string-append
+                           "-I" (assoc-ref %build-inputs "freetype")
+                           "/include/freetype2")
+                          (string-append
+                           "-D" "VERSION="
+                           (format #f "'~s'" ,version))))))))))
+      (home-page "https://github.com/drscream/lemonbar-xft")
+      (synopsis
+       (string-append
+        (package-synopsis lemonbar)
+        " with fontconfig support"))
+      (description
+       (string-append
+        (package-description lemonbar)
+        "This is a fork of the @code{lemonbar} package that adds fontconfig
+support, for easier unicode usage.")))))
+
+(define-public xclickroot
+  (package
+    (name "xclickroot")
+    (version "1.2")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/phillbush/xclickroot")
+                    (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "1nd5qz0qz5j7gx2jsbcp234giwaa0xmg42vrcjrcf587q9ivakfl"))))
+    (build-system gnu-build-system)
+    (inputs
+     `(("libx11" ,libx11)))
+    (arguments
+     `(#:tests? #f ;no test suite
+       #:make-flags
+       (list ,(string-append "CC=" (cc-for-target))
+             (string-append "PREFIX=" %output))
+       #:phases
+       (modify-phases %standard-phases
+         (delete 'configure))))
+    (home-page "https://github.com/phillbush/xclickroot")
+    (synopsis "Run a command when a mouse button is pressed on the root window")
+    (description "@code{xclickroot} runs a command every time a given mouse
 button is pressed on the root window.")
-      (license license:public-domain))))
+    (license license:public-domain)))
 
 (define-public xmenu
   (package
     (name "xmenu")
-    (version "3.4")
+    (version "4.4.1")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -1971,10 +2166,11 @@ button is pressed on the root window.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1sw9l87fh03jp03a2v7rhgpyx29yg2x9blzfzp40jwad2whs7m7n"))))
+                "1s70zvsaqnsjqs298vw3py0vcvia68xlks1wcz37pb88bwligz1x"))))
     (build-system gnu-build-system)
     (inputs
      `(("libx11" ,libx11)
+       ("libxinerama" ,libxinerama)
        ("libxft" ,libxft)
        ("freetype" ,freetype)
        ("imlib2" ,imlib2)))
@@ -2051,16 +2247,16 @@ start-up.")
 (define-public xnotify
   (package
     (name "xnotify")
-    (version "0.5.0")
+    (version "0.7.3")
     (source (origin
               (method git-fetch)
               (uri (git-reference
                     (url "https://github.com/phillbush/xnotify")
-                    (commit (string-append "v" version))))
+                    (commit version)))
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0ris7jhi7hgw7nxkwkn3zk7n3y4nvnnm6dbz0qs0g2srp2k67v7v"))))
+                "09s29m8z4x3mc3wja2587ik3f6zg16b40adr3nllnpyy1mqnprq5"))))
     (build-system gnu-build-system)
     (inputs
      `(("libx11" ,libx11)

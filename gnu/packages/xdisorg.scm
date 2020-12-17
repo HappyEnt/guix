@@ -41,6 +41,8 @@
 ;;; Copyright © 2020 Brett Gilio <brettg@gnu.org>
 ;;; Copyright © 2020 Gabriel Arazas <foo.dogsquared@gmail.com>
 ;;; Copyright © 2020 James Smith <jsubuntuxp@disroot.org>
+;;; Copyright © 2020 B. Wilson <elaexuotee@wilsonb.com>
+;;; Copyright © 2020 Zheng Junjie <873216071@qq.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -109,6 +111,38 @@
   #:use-module (ice-9 match))
 
 ;; packages outside the x.org system proper
+
+(define-public xtitle
+  (package
+    (name "xtitle")
+    (version "0.4.4")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/baskerville/xtitle")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0f5070k2bwarghl1vq886pl52xck1x5p7x3qhlfchsc2y3dcqms9"))))
+    (build-system gnu-build-system)
+    (inputs
+     `(("libxcb" ,libxcb)
+       ("xcb-util" ,xcb-util)
+       ("xcb-util-wm" ,xcb-util-wm)))
+    (arguments
+     `(#:tests? #f                      ;no test suite
+       #:make-flags (list (string-append "CC=" ,(cc-for-target))
+                          (string-append "PREFIX=" %output))
+       #:phases (modify-phases %standard-phases (delete 'configure))))
+    (home-page "https://github.com/baskerville/xtitle")
+    (synopsis "Output X window titles")
+    (description
+     "If arguments are given, @code{xtitle} outputs the title of each
+specified window, otherwise it outputs the title of the active window.  With
+@emph{snoop} mode on, it continuously monitors the specified windows and
+outputs when titles change.")
+    (license license:unlicense)))
 
 (define-public arandr
   (package
@@ -324,18 +358,19 @@ avoiding password prompts when X11 forwarding has already been setup.")
 (define-public libxkbcommon
   (package
     (name "libxkbcommon")
-    (version "0.10.0")
+    (version "1.0.1")
     (source (origin
              (method url-fetch)
              (uri (string-append "https://xkbcommon.org/download/libxkbcommon-"
                                  version ".tar.xz"))
              (sha256
               (base32
-               "1wmnl0hngn6vrqrya4r8hvimlkr4jag39yjprls4gyrqvh667hsp"))))
+               "13bcdf2xpjxwbghas0cr448z89qqki2ssgfgswc257y9859v4s5b"))))
     (build-system meson-build-system)
     (inputs
      `(("libx11" ,libx11)
        ("libxcb" ,libxcb)
+       ("libxml2" ,libxml2)
        ("wayland" ,wayland)
        ("wayland-protocols" ,wayland-protocols)
        ("xkeyboard-config" ,xkeyboard-config)))
@@ -474,34 +509,37 @@ following the mouse.")
   (package
     (name "pixman")
     (version "0.38.4")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append
-                    "https://www.cairographics.org/releases/pixman-"
-                    version ".tar.gz"))
-              (sha256
-               (base32
-                "1ryxzdf048x7wsx4dlvrr1p00gzwfs7lybnhgc7ygbj0dvyxcrns"))
-              (patches (search-patches "pixman-CVE-2016-5296.patch"))))
+    (source
+     (origin
+       (method url-fetch)
+       (uri
+        (string-append
+         "https://www.cairographics.org/releases/pixman-"
+         version ".tar.gz"))
+       (sha256
+        (base32 "1ryxzdf048x7wsx4dlvrr1p00gzwfs7lybnhgc7ygbj0dvyxcrns"))
+       (patches
+        (search-patches
+         "pixman-CVE-2016-5296.patch"))))
     (build-system gnu-build-system)
     (arguments
      '(#:configure-flags '("--disable-static")))
+    (native-inputs
+     `(("pkg-config" ,pkg-config)))
     (inputs
      `(("libpng" ,libpng)
        ("zlib" ,zlib)))
-    (native-inputs
-     `(("pkg-config" ,pkg-config)))
-    (home-page "http://www.pixman.org/")
     (synopsis "Low-level pixel manipulation library")
     (description "Pixman is a low-level software library for pixel
 manipulation, providing features such as image compositing and trapezoid
 rasterisation.")
+    (home-page "http://www.pixman.org/")
     (license license:x11)))
 
 (define-public libdrm
   (package
     (name "libdrm")
-    (version "2.4.101")
+    (version "2.4.102")
     (source (origin
               (method url-fetch)
               (uri (string-append
@@ -509,8 +547,7 @@ rasterisation.")
                     version ".tar.xz"))
               (sha256
                (base32
-                "19vqbhqljhln0lrpnv3s7y3lkhsdcp76dl8bhqj3cis9ism1pwyx"))
-              (patches (search-patches "libdrm-realpath-virtio.patch"))))
+                "0nx0bd9dhymdsd99v4ifib77yjirkvkxf5hzdkbr7qr8dhrzkjwb"))))
     (build-system meson-build-system)
     (arguments
      `(#:configure-flags
@@ -843,7 +880,7 @@ shows it again when the mouse cursor moves or a mouse button is pressed.")
 (define-public xlockmore
   (package
     (name "xlockmore")
-    (version "5.62")
+    (version "5.66")
     (source (origin
              (method url-fetch)
              (uri (list (string-append "http://sillycycle.com/xlock/"
@@ -854,7 +891,7 @@ shows it again when the mouse cursor moves or a mouse button is pressed.")
                                        "xlockmore-" version ".tar.xz")))
              (sha256
               (base32
-               "0b05wgj4mpssy4hd7km5c48i454dfg45p11mfmsr7xjd2gnz5gqi"))))
+               "0wdb7gpyjw3sigmhiplgg1bqxz6wipr0c3n9492x2a18cv1saxjr"))))
     (build-system gnu-build-system)
     (arguments
      '(#:configure-flags (list (string-append "--enable-appdefaultdir="
@@ -1089,7 +1126,7 @@ Escape key when Left Control is pressed and released on its own.")
 (define-public libwacom
   (package
     (name "libwacom")
-    (version "1.5")
+    (version "1.6")
     (source (origin
               (method url-fetch)
               (uri (string-append
@@ -1097,7 +1134,7 @@ Escape key when Left Control is pressed and released on its own.")
                     "libwacom-" version "/libwacom-" version ".tar.bz2"))
               (sha256
                (base32
-                "0yyl6vzpfd7dq8a8k9dn8r494542ci4r1i0pillg1p4f7jvryd3b"))))
+                "1a5ffxyhl6crspybcfsx5ribgrgkzwfl5w9y32slxbgjwczb473h"))))
     (build-system glib-or-gtk-build-system)
     (arguments
      `(#:configure-flags '("--disable-static")))
@@ -1458,7 +1495,7 @@ connectivity of the X server running on a particular @code{DISPLAY}.")
 (define-public rofi
   (package
     (name "rofi")
-    (version "1.6.0")
+    (version "1.6.1")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://github.com/DaveDavenport/rofi/"
@@ -1466,7 +1503,7 @@ connectivity of the X server running on a particular @code{DISPLAY}.")
                                   version "/rofi-" version ".tar.xz"))
               (sha256
                (base32
-                "0566b499lbpfb1gk4p17iw78ywmk9l2jww1kqjbdanrl22hai1y4"))))
+                "12p9z8bl1gg8k024m4a6zfz7gf1zbyffardh98raqgabn6knwk22"))))
     (build-system gnu-build-system)
     (inputs
      `(("pango" ,pango)
@@ -2459,7 +2496,7 @@ create layout indicator widgets.")
 (define-public j4-dmenu-desktop
   (package
     (name "j4-dmenu-desktop")
-    (version "2.17")
+    (version "2.18")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -2468,7 +2505,7 @@ create layout indicator widgets.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0v23fimkn83dcm5p53y2ymhklff3kwppxhf75sm8xmswrzkixpgc"))))
+                "1gxpgifzy0hnpd0ymw3r32amzr32z3bgb90ldjzl438p6h1q0i26"))))
     (build-system cmake-build-system)
     (native-inputs
      `(("catch2" ,catch-framework2)))
@@ -2495,7 +2532,7 @@ using @command{dmenu}.")
 (define-public wofi
   (package
     (name "wofi")
-    (version "1.1.2")
+    (version "1.2.3")
     (source (origin
               (method hg-fetch)
               (uri (hg-reference
@@ -2504,7 +2541,7 @@ using @command{dmenu}.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "086j5wshawjbwdmmmldivfagc2rr7g5a2gk11l0snqqslm294xsn"))))
+                "0glpb2gf5n78s01z3rn614ak8ibxhfr824gy6xlljbxclgds264i"))))
     (build-system meson-build-system)
     (arguments
      `(#:glib-or-gtk? #t))
@@ -2550,3 +2587,75 @@ such as sway, similar to @command{rofi}.")
      "@command{dex}, @dfn{DesktopEntry Execution}, is a program to generate
 and execute @file{.desktop} files of the Application type.")
     (license license:gpl3+)))
+
+(define-public sx
+  (package
+    (name "sx")
+    (version "2.1.6")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/Earnestly/sx")
+                    (commit version)))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "0p24ghp1ygvyc2hv81byhxax7491yhcc5priq5ldv07nzl7akagc"))))
+    (build-system gnu-build-system)
+    (arguments
+     '(#:tests? #f                      ; no tests
+       #:make-flags
+       (let ((out (assoc-ref %outputs "out")))
+         (list (string-append "PREFIX=" out)))
+       #:phases
+       (modify-phases %standard-phases
+         ;; no configure script
+         (delete 'configure))))
+    (propagated-inputs
+     `(("xauth" ,xauth)))
+    (home-page "https://github.com/Earnestly/sx")
+    (synopsis "Start an xorg server")
+    (description
+     "@command{sx} is a simple alternative to both @command{xinit} and
+@command{startx} for starting an Xorg server.")
+    (license license:x11)))
+
+(define-public hsetroot
+  (package
+    (name "hsetroot")
+    (version "1.0.5")
+    (home-page "https://github.com/himdel/hsetroot")
+    (source (origin
+              (method git-fetch)
+              (file-name (git-file-name name version))
+              (uri (git-reference
+                    (url home-page)
+                    (commit version)))
+              (sha256
+               (base32
+                "1jbk5hlxm48zmjzkaq5946s58rqwg1v1ds2sdyd2ba029hmvr722"))))
+    (build-system gnu-build-system)
+    (arguments
+     `(#:tests? #f
+       #:make-flags
+       (list
+        "CC=gcc"
+        (string-append "PREFIX=" (assoc-ref %outputs "out")))
+       #:phases
+       (modify-phases %standard-phases
+         (delete 'configure)
+         (add-before 'install 'mkdir-install-path
+           (lambda* (#:key outputs #:allow-other-keys)
+             (let ((out (assoc-ref outputs "out")))
+               (mkdir-p (string-append out "/bin"))))))))
+    (inputs
+     `(("libx11" ,libx11)
+       ("imlib2" ,imlib2)
+       ("libxinerama" ,libxinerama)))
+    (native-inputs
+     `(("pkg-config" ,pkg-config)))
+    (synopsis "Imlib2-based wallpaper changer")
+    (description
+     "The @command{hsetroot} command composes wallpapers for X.
+This package is the fork of hsetroot by Hyriand.")
+    (license license:gpl2+)))

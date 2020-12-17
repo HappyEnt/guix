@@ -30,7 +30,7 @@
 ;;; Copyright © 2018 Gábor Boskovits <boskovits@gmail.com>
 ;;; Copyright © 2018 Mădălin Ionel Patrașcu <madalinionel.patrascu@mdc-berlin.de>
 ;;; Copyright © 2018 Alex Vong <alexvong1995@gmail.com>
-;;; Copyright © 2019 Nicolas Goaziou <mail@nicolasgoaziou.fr>
+;;; Copyright © 2019, 2020 Nicolas Goaziou <mail@nicolasgoaziou.fr>
 ;;; Copyright © 2019 Brendan Tildesley <mail@brendan.scot>
 ;;; Copyright © 2019 Alex Griffin <a@ajgrf.com>
 ;;; Copyright © 2019 Hartmut Goebel <h.goebel@crazy-compilers.com>
@@ -46,6 +46,7 @@
 ;;; Copyright © 2020 Paul Garlick <pgarlick@tourbillion-technology.com>
 ;;; Copyright © 2020 Michael Rohleder <mike@rohleder.de>
 ;;; Copyright © 2020 Ryan Prior <rprior@protonmail.com>
+;;; Copyright © 2020 Alexandru-Sergiu Marton <brown121407@posteo.ro>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -73,12 +74,15 @@
   #:use-module (guix git-download)
   #:use-module (guix utils)
   #:use-module (guix build-system ant)
+  #:use-module (guix build-system cargo)
   #:use-module (guix build-system cmake)
   #:use-module (guix build-system glib-or-gtk)
   #:use-module (guix build-system gnu)
   #:use-module (guix build-system go)
+  #:use-module (guix build-system meson)
   #:use-module (guix build-system perl)
   #:use-module (guix build-system python)
+  #:use-module (guix build-system qt)
   #:use-module (guix build-system scons)
   #:use-module (guix build-system trivial)
   #:use-module (gnu packages)
@@ -88,9 +92,12 @@
   #:use-module (gnu packages autotools)
   #:use-module (gnu packages base)
   #:use-module (gnu packages bison)
+  #:use-module (gnu packages bittorrent)
   #:use-module (gnu packages boost)
   #:use-module (gnu packages check)
   #:use-module (gnu packages compression)
+  #:use-module (gnu packages crates-gtk)
+  #:use-module (gnu packages crates-io)
   #:use-module (gnu packages curl)
   #:use-module (gnu packages cyrus-sasl)
   #:use-module (gnu packages databases)
@@ -107,6 +114,7 @@
   #:use-module (gnu packages glib)
   #:use-module (gnu packages gnome)
   #:use-module (gnu packages gnu-doc)
+  #:use-module (gnu packages gnunet)
   #:use-module (gnu packages gnupg)
   #:use-module (gnu packages golang)
   #:use-module (gnu packages gperf)
@@ -114,6 +122,7 @@
   #:use-module (gnu packages guile)
   #:use-module (gnu packages guile-xyz)
   #:use-module (gnu packages hurd)
+  #:use-module (gnu packages icu4c)
   #:use-module (gnu packages image)
   #:use-module (gnu packages java)
   #:use-module (gnu packages jemalloc)
@@ -128,6 +137,8 @@
   #:use-module (gnu packages lisp-xyz)
   #:use-module (gnu packages lsof)
   #:use-module (gnu packages lua)
+  #:use-module (gnu packages mail)
+  #:use-module (gnu packages man)
   #:use-module (gnu packages markup)
   #:use-module (gnu packages ncurses)
   #:use-module (gnu packages networking)
@@ -146,6 +157,7 @@
   #:use-module (gnu packages qt)
   #:use-module (gnu packages re2c)
   #:use-module (gnu packages readline)
+  #:use-module (gnu packages search)
   #:use-module (gnu packages sphinx)
   #:use-module (gnu packages texinfo)
   #:use-module (gnu packages textutils)
@@ -225,6 +237,51 @@ Interface} specification.")
     (license license:asl2.0)
     (home-page "https://modwsgi.readthedocs.io/")))
 
+(define-public monolith
+  (package
+    (name "monolith")
+    (version "2.3.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/Y2Z/monolith.git")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "16k5mp64a5l063rdj65hbpx414xv0bqdvhvz49k8018f2a2jj5xl"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:cargo-inputs
+       (("rust-base64" ,rust-base64-0.13)
+        ("rust-chrono" ,rust-chrono-0.4)
+        ("rust-clap" ,rust-clap-2)
+        ("rust-cssparser" ,rust-cssparser-0.27)
+        ("rust-html5ever" ,rust-html5ever-0.24)
+        ("rust-sha2" ,rust-sha2-0.9)
+        ("rust-url" ,rust-url-2))
+       #:cargo-development-inputs
+       (("rust-assert-cmd" ,rust-assert-cmd-1)
+        ("rust-reqwest" ,rust-reqwest-0.10)
+        ("rust-tempfile" ,rust-tempfile-3))))
+    (native-inputs
+     `(("pkg-config" ,pkg-config)))
+    (inputs
+     `(("openssl" ,openssl)))
+    (home-page "https://github.com/Y2Z/monolith")
+    (synopsis "Command line tool for saving web pages as a single HTML file")
+    (description
+     "Monolith bundles any web page into a single HTML file.
+
+Unlike conventional ``Save page as…'', Monolith not only saves the target
+document, it embeds CSS, image, and JavaScript assets all at once, producing
+a single HTML5 document.
+
+If compared to saving websites with @samp{wget -mpk}, Monolith embeds
+all assets as data URLs and therefore displays the saved page exactly
+the same, being completely separated from the Internet.")
+    (license license:unlicense)))
+
 (define-public nginx
   (package
     (name "nginx")
@@ -232,14 +289,14 @@ Interface} specification.")
     ;; ’stable’ and recommends that “in general you deploy the NGINX mainline
     ;; branch at all times” (https://www.nginx.com/blog/nginx-1-6-1-7-released/)
     ;; Consider updating the nginx-documentation package together with this one.
-    (version "1.19.3")
+    (version "1.19.5")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://nginx.org/download/nginx-"
                                   version ".tar.gz"))
               (sha256
                (base32
-                "1w4dkq7bl5gyix3x0ap3d9lndh7zyvc3mscl693d4ybql57vgrci"))))
+                "173rv8gacd9bakb0r9jmkr4pqgjw9mzpdh3f7x2d8ln4ssplc2jw"))))
     (build-system gnu-build-system)
     (inputs `(("openssl" ,openssl)
               ("pcre" ,pcre)
@@ -322,9 +379,9 @@ and as a proxy to reduce the load on back-end HTTP or mail servers.")
 
 (define-public nginx-documentation
   ;; This documentation should be relevant for the current nginx package.
-  (let ((version "1.19.3")
-        (revision 2603)
-        (changeset "94ebfbcd68bb"))
+  (let ((version "1.19.5")
+        (revision 2622)
+        (changeset "64bbb9163a14"))
     (package
       (name "nginx-documentation")
       (version (simple-format #f "~A-~A-~A" version revision changeset))
@@ -336,7 +393,7 @@ and as a proxy to reduce the load on back-end HTTP or mail servers.")
                (file-name (string-append name "-" version))
                (sha256
                 (base32
-                 "1yryharm4dkjnj424r7sy0rc28h8ypfyj8as255a42gmllkwl2pg"))))
+                 "085f3c00mqsaq95hp1bv9y0b517jv4zzs2q0j1c9m8nvh7k09zaa"))))
       (build-system gnu-build-system)
       (arguments
        '(#:tests? #f                    ; no test suite
@@ -565,7 +622,7 @@ documentation.")
   (package
     (inherit nginx)
     (name "nginx-lua-module")
-    (version "0.10.15")
+    (version "0.10.16")
     (source
      (origin
        (method git-fetch)
@@ -574,8 +631,7 @@ documentation.")
              (commit (string-append "v" version))))
        (file-name (git-file-name "lua-nginx-module" version))
        (sha256
-        (base32
-         "1j216isp0546hycklbr5wi8mlga5hq170hk7f2sm16sfavlkh5gz"))))
+        (base32 "0nwcbqm1visg1dkxav7qa16w0d0n8cgqn4881xiqn88xfkxj0dyg"))))
     (build-system gnu-build-system)
     (inputs
      `(("nginx-sources" ,(package-source nginx-socket-cloexec))
@@ -626,7 +682,7 @@ programming language.")))
 (define-public lighttpd
   (package
     (name "lighttpd")
-    (version "1.4.55")
+    (version "1.4.56")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://download.lighttpd.net/lighttpd/"
@@ -634,7 +690,7 @@ programming language.")))
                                   "lighttpd-" version ".tar.xz"))
               (sha256
                (base32
-                "09z947730yjh438wrqb3z1c5hr1dbb11a8sr92g3vk6mr7lm02va"))))
+                "0xyzahrkmldwskwgjgj4dc3rmfmgqiwwr9y7jfhqpbp8g76q9kp4"))))
     (build-system gnu-build-system)
     (arguments
      `(#:configure-flags
@@ -1013,7 +1069,8 @@ instances, while JSON's objects will be mapped to @code{QVariantMap}.")
      `(("qca" ,qca)
        ("qtbase" ,qtbase)))
     (arguments
-     '(#:phases
+     '(#:tests? #f                      ;FIXME: some tests are failing
+       #:phases
        (modify-phases %standard-phases
          (add-after 'unpack 'patch-code
            (lambda _
@@ -1021,11 +1078,17 @@ instances, while JSON's objects will be mapped to @code{QVariantMap}.")
              (substitute* "src/src.pro"
                (("/lib64") "/lib"))
              #t))
-         (delete 'configure) ; no configure script
-         (delete 'check) ; no test target
-         (add-before 'build 'qmake
-           (lambda _
-             (let ((qca (assoc-ref %build-inputs "qca")))
+         (add-after 'unpack 'adjust-mkspecs-directory
+           (lambda* (#:key outputs #:allow-other-keys)
+             (substitute* "src/src.pro"
+               ;; Do not attempt to install the .prf file into qtbase
+               ;; "lib/qt5/mkspecs/features", ref <https://bugs.gnu.org/45031>.
+               (("\\$\\$\\[QMAKE_MKSPECS\\]")
+                (string-append (assoc-ref outputs "out") "/lib/qt5/mkspecs")))
+             #t))
+         (replace 'configure
+           (lambda* (#:key inputs #:allow-other-keys)
+             (let ((qca (assoc-ref inputs "qca")))
                (invoke
                 "qmake"
                 (string-append "PREFIX=" (assoc-ref %outputs "out"))
@@ -1346,15 +1409,15 @@ perform the opening handshake in HTTP.")
 (define-public libpsl
   (package
     (name "libpsl")
-    (version "0.21.0")
+    (version "0.21.1")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://github.com/rockdaboot/libpsl/"
-                                  "releases/download/libpsl-" version
+                                  "releases/download/" version
                                   "/libpsl-" version ".tar.gz"))
               (sha256
                (base32
-                "04pfagb7ppq3yibx4lhazd1v9nwkxdfkyy2rgcrmrf3mldsirga1"))))
+                "0k0d46bbh1jj2ll369f134vciplrzbqkg7fv9m62bl6lzghy2v5c"))))
     (build-system gnu-build-system)
     (native-inputs
      `(("pkg-config" ,pkg-config)
@@ -1422,7 +1485,7 @@ used to validate and fix HTML data.")
 (define-public esbuild
   (package
     (name "esbuild")
-    (version "0.7.16")
+    (version "0.8.23")
     (source
      (origin
        (method git-fetch)
@@ -1431,8 +1494,7 @@ used to validate and fix HTML data.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32
-         "0lmq7yqssnc1cgd63m5zl734ahf8c0q0k1p2zdcn3qm15wfz7sh7"))
+        (base32 "0lrz685hdhx4cyxbslacg5x2xvm8zd1a5kjg4b7q10i5w56wb5xc"))
        (modules '((guix build utils)))
        (snippet
         '(begin
@@ -1447,15 +1509,15 @@ used to validate and fix HTML data.")
        (modify-phases %standard-phases
          (replace 'check
            (lambda* (#:key tests? unpack-path #:allow-other-keys)
-             (if tests?
+             (when tests?
                (with-directory-excursion (string-append "src/" unpack-path)
                  (invoke "make" "test-go")))
              #t)))))
     (inputs
-     `(("go-golang-org-x-sys" ,go-golang-org-x-sys)))
+     `(("golang.org/x/sys" ,go-golang-org-x-sys)))
     (native-inputs
-     `(("go-github-com-kylelemons-godebug" ,go-github-com-kylelemons-godebug)))
-    (home-page "https://github.com/evanw/esbuild")
+     `(("github.com/kylelemons/godebug" ,go-github-com-kylelemons-godebug)))
+    (home-page "https://esbuild.github.io/")
     (synopsis "Bundler and minifier tool for JavaScript and TypeScript")
     (description
      "The esbuild tool provides a unified bundler, transpiler and
@@ -1620,20 +1682,30 @@ hash/signatures.")
 (define-public libyaml
   (package
     (name "libyaml")
-    (version "0.2.4")
+    (version "0.2.5")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "https://pyyaml.org/download/libyaml/yaml-"
                            version ".tar.gz"))
        (sha256
-        (base32 "0mq5wf17ifcwwxq3kbimhi53jn3fg23vcynqpzxjcz3vfjlfs2nq"))))
+        (base32
+         "1x4fcw13r3lqy8ndydr3ili87wicplw2awbcv6r21qgyfndswhn6"))))
     (build-system gnu-build-system)
+    (arguments
+     '(#:configure-flags '("--disable-static")))
     (home-page "https://pyyaml.org/wiki/LibYAML")
     (synopsis "YAML 1.1 parser and emitter written in C")
     (description
      "LibYAML is a YAML 1.1 parser and emitter written in C.")
     (license license:expat)))
+
+(define-public libyaml+static
+  (package
+    (inherit libyaml)
+    (name "libyaml+static")
+    (arguments
+     '(#:configure-flags '("--enable-static")))))
 
 (define-public libquvi-scripts
   (package
@@ -3787,15 +3859,14 @@ exists it is used instead.")
 (define-public perl-lwp-protocol-https
   (package
     (name "perl-lwp-protocol-https")
-    (version "6.07")
+    (version "6.09")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://cpan/authors/id/O/OA/OALDERS/"
                            "LWP-Protocol-https-" version ".tar.gz"))
        (sha256
-        (base32
-         "1rxrpwylfw1afah0nk96kgkwjbl2p1a7lwx50iipg8c4rx3cjb2j"))))
+        (base32 "14pm785cgyrnppks6ccasb2vkqifh0a8fz36nmnhc2v926jy3kqn"))))
     (build-system perl-build-system)
     (native-inputs
      ;; For tests.
@@ -4421,14 +4492,14 @@ RFC 6570.")
               (uri (string-append
                     "mirror://cpan/authors/id/S/SZ/SZBALINT/WWW-Curl-"
                     version".tar.gz"))
-              (patches (search-patches "perl-www-curl-remove-symbol.patch"))
+              (patches (search-patches "perl-www-curl-fix-struct-void.patch"
+                                       "perl-www-curl-remove-symbol.patch"))
               (sha256
                (base32
                 "1fmp9aib1kaps9vhs4dwxn7b15kgnlz9f714bxvqsd1j1q8spzsj"))))
     (build-system perl-build-system)
     (arguments
      '(#:tests? #f                          ;XXX: tests require network access
-
        #:phases (modify-phases %standard-phases
                    (add-before 'configure 'set-search-path
                      (lambda _
@@ -5101,7 +5172,7 @@ commenting.")
     (native-inputs
      `(("netsurf-buildsystem" ,netsurf-buildsystem)
        ("pkg-config" ,pkg-config)
-       ("check" ,check)))               ;for tests
+       ("check" ,check-0.14)))          ;for tests
     (arguments netsurf-buildsystem-arguments)
     (home-page "https://www.netsurf-browser.org/projects/libwapcaplet/")
     (synopsis "String internment library")
@@ -5150,6 +5221,7 @@ written in C.  It is developed as part of the NetSurf project.")
              (url "https://github.com/tlsa/libcyaml")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
+       (patches (search-patches "libcyaml-libyaml-compat.patch"))
        (sha256
         (base32 "0428p0rwq71nhh5nzcbapsbrjxa0x5l6h6ns32nxv7j624f0zd93"))))
     (build-system gnu-build-system)
@@ -5628,14 +5700,14 @@ on the fly.")
 (define-public hitch
   (package
     (name "hitch")
-    (version "1.6.0")
+    (version "1.7.0")
     (home-page "https://hitch-tls.org/")
     (source (origin
               (method url-fetch)
               (uri (string-append home-page "source/hitch-" version ".tar.gz"))
               (sha256
                (base32
-                "01n70yf8hx42jb801jv5q1xhrpqxyjnqhd98hjf81lvxpd5fnisf"))))
+                "1i75giwyr66ip8xsvk3gg5xdbxnmcabgxz8dqi06c58mw7qzhzn9"))))
     (build-system gnu-build-system)
     (arguments
      `(#:phases (modify-phases %standard-phases
@@ -5768,13 +5840,13 @@ deployments.")
   (package
     (name "varnish")
     (home-page "https://varnish-cache.org/")
-    (version "6.4.0")
+    (version "6.5.1")
     (source (origin
               (method url-fetch)
               (uri (string-append home-page "_downloads/varnish-" version ".tgz"))
               (sha256
                (base32
-                "1hkn98vbxk7rc1sd08367qn6rcv8wkxgwbmm1x46y50vi0nvldpn"))))
+                "1dfdswri6lkfk6kml3szvffm91y49pajgqy1k5y26llqixl4r5hi"))))
     (build-system gnu-build-system)
     (arguments
      `(#:configure-flags (list (string-append "LDFLAGS=-Wl,-rpath=" %output "/lib")
@@ -5842,18 +5914,25 @@ configuration language.")
   (package
     (name "varnish-modules")
     (home-page "https://github.com/varnish/varnish-modules")
-    (version "0.16.0")
+    (version "0.17.0")
     (source (origin
-              (method url-fetch)
-              (uri (string-append "https://github.com/varnish/varnish-modules"
-                                  "/releases/download/varnish-modules-" version
-                                  "/varnish-modules-" version ".tar.gz"))
+              (method git-fetch)
+              (uri (git-reference (url home-page) (commit version)))
+              (file-name (git-file-name name version))
               (sha256
                (base32
-                "1ph5bplsip4rycql1c2hgbvmrwbgcrgv2ldgfp7saxxbsv5cpcds"))))
+                "0zg8y2sgkygdani70zp9rbx278431fmssj26d47c5qsiw939i519"))))
     (build-system gnu-build-system)
     (native-inputs
-     `(("pkg-config" ,pkg-config)))
+     `(("pkg-config" ,pkg-config)
+
+       ;; For bootstrapping.
+       ("autoconf" ,autoconf)
+       ("automake" ,automake)
+       ("libtool" ,libtool)
+
+       ;; For generating manuals.
+       ("rst2man" ,python-docutils)))
     (inputs
      `(("python" ,python)
        ("varnish" ,varnish)))
@@ -6244,7 +6323,7 @@ command-line arguments or read from stdin.")
     (home-page "https://github.com/jjjake/internetarchive")
     (synopsis "Command-line interface to archive.org")
     (description "@code{ia} is a command-line tool for using
-@url{archive.org} from the command-line.  It also emplements the
+@url{archive.org} from the command-line.  It also implements the
 internetarchive python module for programmatic access to archive.org.")
     (license license:agpl3+)))
 
@@ -6352,7 +6431,7 @@ Instagram and YouTube.")
          "03ihjmc4bqxxqv71bb43r2f23sx0xnbq1k2fsg9fw05qa5s9x187"))))
     (build-system python-build-system)
     (inputs
-     `(("python2-dnspython" ,python2-dnspython)
+     `(("python2-dnspython" ,python2-dnspython-1.16)
        ("python2-pyxdg" ,python2-pyxdg)
        ("python2-requests" ,python2-requests)))
     (native-inputs
@@ -6425,6 +6504,48 @@ file links.")
 file upload, download, on-screen display, namespace operations (move/copy),
 collection creation and deletion, and locking operations.")
     (license license:gpl2)))
+
+(define-public castor
+  (package
+    (name "castor")
+    (version "0.8.16")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://git.sr.ht/~julienxx/castor")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0rwg1w7srjwa23mkypl8zk6674nhph4xsc6nc01f6g5k959szylr"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:cargo-inputs
+       (("rust-ansi-parser" ,rust-ansi-parser-0.6)
+        ("rust-dirs" ,rust-dirs-2.0)
+        ("rust-gdk" ,rust-gdk-0.13)
+        ("rust-gtk" ,rust-gtk-0.8)
+        ("rust-linkify" ,rust-linkify-0.4)
+        ("rust-native-tls" ,rust-native-tls-0.2)
+        ("rust-open" ,rust-open-1)
+        ("rust-percent-encoding" ,rust-percent-encoding-2)
+        ("rust-url" ,rust-url-2))))
+    (native-inputs
+     `(("pkg-config" ,pkg-config)))
+    (inputs
+     `(("atk" ,atk)
+       ("cairo" ,cairo)
+       ("gdk-pixbuf" ,gdk-pixbuf)
+       ("gtk+" ,gtk+)
+       ("libressl" ,libressl)
+       ("pango" ,pango)))
+    (home-page "https://git.sr.ht/~julienxx/castor")
+    (synopsis "Graphical client for plain-text protocols")
+    (description
+     "Castor is a graphical client for plain-text protocols written in
+Rust with GTK.  It currently supports the Gemini, Gopher and Finger
+protocols.")
+    (license license:expat)))
 
 (define-public python-py-ubjson
   (package
@@ -7702,3 +7823,185 @@ solution for any project's interface needs:
 @item Easily integrated and extensible with Python or Lua scripting.
 @end itemize\n")
     (license license:expat)))
+
+(define-public gmnisrv
+  (let ((commit "d484ba0ab0020866535a44be5948c9482b8f2b8d")
+        (revision "1"))
+    (package
+      (name "gmnisrv")
+      (version (git-version "0" revision commit))
+      (home-page "https://git.sr.ht/~sircmpwn/gmnisrv")
+      (source (origin
+                (method git-fetch)
+                (uri (git-reference
+                      (url home-page)
+                      (commit commit)))
+                (sha256
+                 (base32
+                  "11phipixsxx1jgm42agp76p5s68l0zj65kgb41vzaymgwcq79ivn"))
+                (file-name (git-file-name name version))))
+      (build-system gnu-build-system)
+      (arguments
+       `(#:phases
+         (modify-phases %standard-phases
+           (add-before 'configure 'set-variables
+             (lambda _
+               (setenv "CC" "gcc")
+               #t))
+           (delete 'check))))
+      (inputs
+       `(("openssl" ,openssl)))
+      (native-inputs
+       `(("pkg-config" ,pkg-config)
+         ("scdoc" ,scdoc)))
+      (propagated-inputs
+       `(("mailcap" ,mailcap)))
+      (synopsis "Simple Gemini protocol server")
+      (description "gmnisrv is a simple Gemini protocol server written in C.")
+      (license (list license:gpl3+
+                     license:bsd-3))))) ;; for ini.c and ini.h
+
+(define-public libzim
+  (package
+    (name "libzim")
+    (version "6.2.2")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/openzim/libzim")
+                    (commit version)))
+              (sha256
+               (base32
+                "0p2317cp19lx0hw9n4fsb3nw2vc4hc1yyi98k3yrs41pkr840kwa"))
+              (file-name (git-file-name name version))))
+    (build-system meson-build-system)
+    (arguments
+     ;; TODO: Find out why tests fail.
+     '(#:tests? #f))
+    (inputs
+     `(("icu4c" ,icu4c)
+       ("liblzma" ,xz)
+       ("libuuid" ,util-linux "lib")
+       ("xapian" ,xapian)
+       ("zlib" ,zlib)
+       ("zstd" ,zstd "lib")))
+    (native-inputs
+     `(("pkg-config" ,pkg-config)
+       ("googletest" ,googletest)))
+    (home-page "https://wiki.openzim.org/wiki/Main_Page")
+    (synopsis "Reference implementation of the ZIM specification")
+    (description "The openZIM project proposes offline storage solutions for
+content coming from the Web.  The zimlib is the standard implementation of the
+ZIM specification.  It is a library which implements the read and write method
+for ZIM files.")
+    (license license:gpl2)))
+
+(define-public kiwix-lib
+  (package
+    (name "kiwix-lib")
+    (version "9.4.0")
+    (home-page "https://github.com/kiwix/kiwix-lib/")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url home-page)
+                    (commit version)))
+              (sha256
+               (base32
+                "0nsm4qgl0cb6wv983n0px1kf217k4kykb8q56b8j6ikp061lzamm"))
+              (file-name (git-file-name name version))))
+    (build-system meson-build-system)
+    (arguments
+     `(#:phases
+       (modify-phases %standard-phases
+         (add-before 'configure 'fix-paths-and-includes
+           (lambda* (#:key inputs #:allow-other-keys)
+             (setenv "CPPFLAGS" (string-append "-I" (assoc-ref inputs "mustache")))
+             (substitute* "src/aria2.cpp"
+               (("ARIA2_CMD \"aria2c\"")
+                (string-append "ARIA2_CMD \""
+                               (assoc-ref inputs "aria2")
+                               "/bin/aria2c\"")))
+             #t)))))
+    (inputs
+     `(("aria2" ,aria2)
+       ("curl" ,curl)
+       ("icu4c" ,icu4c)
+       ("libmicrohttpd" ,libmicrohttpd)
+       ("libzim" ,libzim)
+       ("pugixml" ,pugixml)
+       ("xapian" ,xapian)
+       ("zlib" ,zlib)
+       ("zstd" ,zstd "lib")))
+    (native-inputs
+     `(("mustache" ,(origin
+                      (method git-fetch)
+                      (uri (git-reference
+                            (url "https://github.com/kainjow/Mustache")
+                            ;; XXX: Readme says to use version 3.  Can we use 3.2.1?
+                            (commit "v4.1")))
+                      (file-name (git-file-name "mustache" "4.1"))
+                      (sha256
+                       (base32
+                        "0r9rbk6v1wpld2ismfsk2lkhbyv3dkf0p03hkjivbj05qkfhvlbb"))))
+       ("pkg-config" ,pkg-config)))
+    (synopsis "Common code base for all Kiwix ports")
+    (description "The Kiwix library provides the Kiwix software suite core.
+It contains the code shared by all Kiwix ports.")
+    (license license:gpl3)))
+
+(define-public kiwix-desktop
+  (package
+    (name "kiwix-desktop")
+    (version "2.0.5")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append
+                    "https://download.kiwix.org/release/kiwix-desktop/kiwix-desktop-"
+                    version
+                    ".tar.gz"))
+              (sha256
+               (base32
+                "1a9h4qmh6fkfscyp6lax0ri07dvvzw2wp4kr1sm86n0bdk3cwwha"))))
+    (build-system gnu-build-system)
+    (arguments
+     `(#:phases
+       (modify-phases %standard-phases
+         (replace 'configure
+           (lambda* (#:key outputs #:allow-other-keys)
+             (invoke "qmake"
+                     (string-append "PREFIX="
+                                    (assoc-ref outputs "out")))))
+         (add-before 'configrue 'enable-print-support
+           (lambda _
+             (substitute* "kiwix-desktop.pro"
+               (("webenginewidgets") "webenginewidgets printsupport"))
+             #t))
+         (add-before 'configure 'substitute-source
+           ;; Looks like .pro file is missing a feature.
+           ;; See https://github.com/kiwix/kiwix-desktop/issues/556.
+           (lambda* (#:key inputs #:allow-other-keys)
+             (substitute* "kiwix-desktop.pro"
+               (("webenginewidgets" all) (string-append all " printsupport")))
+             #t)))))
+    (inputs
+     `(("curl" ,curl)
+       ("icu4c" ,icu4c)
+       ("kiwix-lib" ,kiwix-lib)
+       ("libzim" ,libzim)
+       ("pugixml" ,pugixml)
+       ("qtbase" ,qtbase)
+       ("qtdeclarative" ,qtdeclarative)
+       ("qtwebchannel" ,qtwebchannel)
+       ("qtwebengine" ,qtwebengine)
+       ("xapian" ,xapian)
+       ("zlib" ,zlib)
+       ("zstd" ,zstd "lib")))
+    (native-inputs
+     `(("pkg-config" ,pkg-config)
+       ("qmake" ,qtbase)))
+    (home-page "https://wiki.kiwix.org/wiki/Software")
+    (synopsis "Viewer and manager of ZIM files")
+    (description "Kiwix Desktop allows you to enjoy a lot of different content
+offline (such as Wikipedia), without any access to Internet.")
+    (license license:gpl3)))

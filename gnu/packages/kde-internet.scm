@@ -178,14 +178,14 @@ This package is part of the KDE networking module.")
 (define-public konversation
   (package
     (name "konversation")
-    (version "1.7.6")
+    (version "1.7.7")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/konversation/" version
                            "/src/konversation-" version ".tar.xz"))
        (sha256
-        (base32 "14x0rs867grb1xjddycn9l6bfl3h3rp4cmx4zqd2gsvkihn4zlpx"))))
+        (base32 "19qqq9s8k0cl71ib33xn07f26j5ji2g4336jk65im6452cf1dv27"))))
     (build-system qt-build-system)
     (native-inputs
      `(("extra-cmake-modules" ,extra-cmake-modules)
@@ -450,7 +450,7 @@ a full-featured client for BitTorrent.")
        ("qtbase" ,qtbase)))
     (arguments
      `(#:tests? #f)) ;; 2/7 tests fail (due to network issues?)
-    (home-page "https://cgit.kde.org/libgravatar.git")
+    (home-page "https://invent.kde.org/pim/libgravatar")
     (synopsis "Online avatar lookup library")
     (description "This library retrieves avatar images based on a
 hash from a person's email address, as well as local caching to avoid
@@ -484,7 +484,7 @@ unnecessary network operations.")
        ("qca" ,qca)
        ("qtbase" ,qtbase)
        ("solid" ,solid)))
-    (home-page "https://cgit.kde.org/libktorrent.git")
+    (home-page "https://invent.kde.org/network/libktorrent")
     (synopsis "BitTorrent protocol library for C++ / Qt 5 / KDE Frameworks")
     (description "The KTorrent library supports connectivity to HTTP and UDP
 trackers, mainline DHT and the new generation Micro Transport

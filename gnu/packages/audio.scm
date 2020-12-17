@@ -4,7 +4,7 @@
 ;;; Copyright © 2015 Andreas Enge <andreas@enge.fr>
 ;;; Copyright © 2015 Alex Kost <alezost@gmail.com>
 ;;; Copyright © 2015, 2016 Mark H Weaver <mhw@netris.org>
-;;; Copyright © 2016, 2017, 2018, 2019 Efraim Flashner <efraim@flashner.co.il>
+;;; Copyright © 2016, 2017, 2018, 2019, 2020 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2016, 2017 Alex Griffin <a@ajgrf.com>
 ;;; Copyright © 2016 Nikita <nikita@n0.is>
 ;;; Copyright © 2016 Lukas Gradl <lgradl@openmailbox.org>
@@ -58,6 +58,7 @@
   #:use-module (gnu packages backup)
   #:use-module (gnu packages base)
   #:use-module (gnu packages bison)
+  #:use-module (gnu packages build-tools)
   #:use-module (gnu packages boost)
   #:use-module (gnu packages check)
   #:use-module (gnu packages compression)
@@ -140,7 +141,7 @@
        (method git-fetch)
        (uri
         (git-reference
-         (url "https://github.com/KhronosGroup/OpenSL-ES-Registry.git")
+         (url "https://github.com/KhronosGroup/OpenSL-ES-Registry")
          (commit "ea5104bf37bf525c25e6ae2386586048179d0fda")))
        (file-name (git-file-name name version))
        (sha256
@@ -202,7 +203,7 @@ promoting the market for advanced audio.")
        (method git-fetch)
        (uri
         (git-reference
-         (url "https://github.com/Mindwerks/wildmidi.git")
+         (url "https://github.com/Mindwerks/wildmidi")
          (commit (string-append name "-" version))))
        (file-name (git-file-name name version))
        (sha256
@@ -277,7 +278,7 @@ Coding (AAC) encoder.")
        (method git-fetch)
        (uri
         (git-reference
-         (url "https://github.com/tinyalsa/tinyalsa.git")
+         (url "https://github.com/tinyalsa/tinyalsa")
          (commit version)))
        (file-name (git-file-name name version))
        (sha256
@@ -300,7 +301,7 @@ Linux kernel.")
 (define-public libopenmpt
   (package
     (name "libopenmpt")
-    (version "0.5.2")
+    (version "0.5.4")
     (source
      (origin
        (method url-fetch)
@@ -308,7 +309,7 @@ Linux kernel.")
         (string-append "https://download.openmpt.org/archive/libopenmpt/src/"
                        "libopenmpt-" version "+release.autotools.tar.gz"))
        (sha256
-        (base32 "1cwpc4j90dpxa2siia68rg9qwwm2xk6bhxnslfjj364507jy6s4l"))))
+        (base32 "0h7gpjx1221jwsq3k91p8zhf1h77qaxyasakc88s3g57vawhckgk"))))
     (build-system gnu-build-system)
     (arguments
      `(#:configure-flags
@@ -475,41 +476,15 @@ implementation of Adaptive Multi Rate Narrowband and Wideband
 (define-public alsa-modular-synth
   (package
     (name "alsa-modular-synth")
-    (version "2.1.2")
+    (version "2.2.0")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://sourceforge/alsamodular/alsamodular"
                                   "/" version "/ams-" version ".tar.bz2"))
               (sha256
                (base32
-                "1azbrhpfk4nnybr7kgmc7w6al6xnzppg853vas8gmkh185kk11l0"))
-              (patches
-               (search-patches "alsa-modular-synth-fix-vocoder.patch"))))
+                "056dn6b9c5nsw2jdww7z1kxrjqqfvxjzxhsd5x9gi4wkwyiv21nz"))))
     (build-system gnu-build-system)
-    (arguments
-     `(#:configure-flags
-       '("--enable-qt5"
-         "CXXFLAGS=-std=gnu++11")
-       #:phases
-       (modify-phases %standard-phases
-         (add-after 'set-paths 'hide-default-gcc
-           (lambda* (#:key inputs #:allow-other-keys)
-             (let ((gcc (assoc-ref inputs "gcc")))
-               ;; Remove the default GCC from CPLUS_INCLUDE_PATH to prevent
-               ;; conflicts with the GCC 5 input.
-               (setenv "CPLUS_INCLUDE_PATH"
-                       (string-join
-                        (delete (string-append gcc "/include/c++")
-                                (string-split (getenv "CPLUS_INCLUDE_PATH") #\:))
-                        ":"))
-               #t)))
-         ;; Insert an extra space between linker flags.
-         (add-before 'configure 'add-missing-space
-           (lambda _
-             (substitute* "configure"
-               (("LIBS\\+=\\$LIBSsave") "LIBS+=\" $LIBSsave\"")
-               (("CFLAGS\\+=\\$CFLAGSsave") "CFLAGS+=\" $CFLAGSsave\""))
-             #t)))))
     (inputs
      `(("alsa-lib" ,alsa-lib)
        ;; We cannot use zita-alsa-pcmi (the successor of clalsadrv) due to
@@ -522,8 +497,7 @@ implementation of Adaptive Multi Rate Narrowband and Wideband
        ("qtbase" ,qtbase)))
     (native-inputs
      `(("pkg-config" ,pkg-config)
-       ("qttools" ,qttools)
-       ("gcc@5" ,gcc-5)))
+       ("qttools" ,qttools)))
     (home-page "http://alsamodular.sourceforge.net/")
     (synopsis "Realtime modular synthesizer and effect processor")
     (description
@@ -862,18 +836,30 @@ tools.")
          "audiofile-Fix-index-overflow-in-IMA.cpp.patch"
          ;; CVE-2017-6827, CVE-2017-6828, CVE-2017-6832, CVE-2017-6835,
          ;; CVE-2017-6837:
-         "audiofile-Check-the-number-of-coefficients.patch"
+         "audiofile-check-number-of-coefficients.patch"
          ;; CVE-2017-6839:
-         "audiofile-Fix-overflow-in-MSADPCM-decodeSam.patch"
+         "audiofile-overflow-in-MSADPCM.patch"
          ;; CVE-2017-6830, CVE-2017-6834, CVE-2017-6836, CVE-2017-6838:
-         "audiofile-Fix-multiply-overflow-sfconvert.patch"
-         "audiofile-signature-of-multiplyCheckOverflow.patch"
+         "audiofile-multiply-overflow.patch"
+         "audiofile-function-signature.patch"
          ;; CVE-2017-6831:
          "audiofile-Fail-on-error-in-parseFormat.patch"
          ;; CVE-2017-6833:
-         "audiofile-division-by-zero-BlockCodec-runPull.patch"
+         "audiofile-division-by-zero.patch"
          "audiofile-CVE-2018-13440.patch"
          "audiofile-CVE-2018-17095.patch"))))
+    (properties `((lint-hidden-cve . ("CVE-2017-6829"
+
+                                      "CVE-2017-6827" "CVE-2017-6828"
+                                      "CVE-2017-6832" "CVE-2017-6835"
+                                      "CVE-2017-6837"
+
+                                      "CVE-2017-6839"
+
+                                      "CVE-2017-6830" "CVE-2017-6834"
+                                      "CVE-2017-6836" "CVE-2017-6838"
+
+                                      "CVE-2017-6831" "CVE-2017-6833"))))
     (build-system gnu-build-system)
     (inputs
      `(("alsa-lib" ,alsa-lib)))
@@ -2926,7 +2912,7 @@ aimed at audio/musical applications.")
     (description "This package contains the @command{resample} and
 @command{windowfilter} command line utilities.  The @command{resample} command
 allows changing the sampling rate of a sound file, while the
-@command{windowfilter} command allows to design Finite Impulse Response (FIR)
+@command{windowfilter} command allows designing Finite Impulse Response (FIR)
 filters using the so-called @emph{window method}.")
     (home-page "https://ccrma.stanford.edu/~jos/resample/Free_Resampling_Software.html")
     (license license:lgpl2.1+)))
@@ -3002,14 +2988,14 @@ input/output.")
 (define-public sratom
   (package
     (name "sratom")
-    (version "0.6.4")
+    (version "0.6.6")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://download.drobilla.net/sratom-"
                                   version ".tar.bz2"))
               (sha256
                (base32
-                "0vh0biy3ngpzzgdml309c2mqz8xq9q0hlblczb4c6alhp0a8yv0l"))))
+                "178v90qvsp6lw4sqdmdz0bzyjkgwhv9m75ph1d1z8say5bv0p4gv"))))
     (build-system waf-build-system)
     (arguments `(#:tests? #f))          ;no check target
     (propagated-inputs
@@ -3029,14 +3015,14 @@ the Turtle syntax.")
 (define-public suil
   (package
     (name "suil")
-    (version "0.10.6")
+    (version "0.10.8")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://download.drobilla.net/suil-"
                                   version ".tar.bz2"))
               (sha256
                (base32
-                "0z4v01pjw4wh65x38w6icn28wdwxz13ayl8hvn4p1g9kmamp1z06"))))
+                "0h0ghk1s0lrj4gh12r7390b0ybaw7awnj0vhchyy9ll0gvhqgkci"))))
     (build-system waf-build-system)
     (arguments
      `(#:tests? #f))                    ;no check target
@@ -3510,8 +3496,11 @@ interface.")
     (source
      (origin
        (method url-fetch)
-       (uri (string-append "mirror://sourceforge/qsynth/qsynth/" version
-                           "/qsynth-" version ".tar.gz"))
+       (uri (list
+              (string-append "mirror://sourceforge/qsynth/qsynth/" version
+                             "/qsynth-" version ".tar.gz")
+              (string-append "mirror://sourceforge/qsynth/qsynth (attic)"
+                             "/qsynth-" version ".tar.gz")))
        (sha256
         (base32 "18im4w8agj60nkppwbkxqnhpp13z5li3w30kklv4lgs20rvgbvl6"))))
     (build-system gnu-build-system)
@@ -3790,8 +3779,11 @@ machine-readable ASCII format.")
     (version "3.0.10")
     (source (origin
              (method url-fetch)
-             (uri (string-append "http://etree.org/shnutils/shntool/dist/src/"
-                                 "shntool-" version ".tar.gz"))
+             (uri (list
+                    (string-append "http://etree.org/shnutils/shntool/dist/src/"
+                                   "shntool-" version ".tar.gz")
+                    (string-append "mirror://debian/pool/main/s/shntool/shntool_"
+                                   version ".orig.tar.gz")))
              (sha256
               (base32
                "00i1rbjaaws3drkhiczaign3lnbhr161b7rbnjr8z83w8yn2wc3l"))))
@@ -3822,9 +3814,9 @@ use them split WAVE data into multiple files.")
     (build-system gnu-build-system)
     (arguments
      ;; Test files are missing: https://github.com/foo86/dcadec/issues/53
-     '(#:tests? #f
+     `(#:tests? #f
        #:make-flags
-       (list "CC=gcc"
+       (list (string-append "CC=" ,(cc-for-target))
              ;; Build shared library.
              "CONFIG_SHARED=1"
              (string-append "PREFIX=" (assoc-ref %outputs "out"))
@@ -3899,8 +3891,8 @@ loudness of audio and video files to the same level.")
            "0hbb290n3wb23f2k692a6bhc23nnqmxqi9sc9j15pnya8wifw64g"))))
       (build-system gnu-build-system)
       (arguments
-       '(#:make-flags (list (string-append "PREFIX=" %output)
-                            "CC=gcc")
+       `(#:make-flags (list (string-append "PREFIX=" %output)
+                            (string-append "CC=" ,(cc-for-target)))
          #:tests? #f ; No tests
          #:phases
          (modify-phases %standard-phases
@@ -4068,14 +4060,14 @@ on the ALSA software PCM plugin.")
 (define-public snd
   (package
     (name "snd")
-    (version "20.7")
+    (version "20.9")
     (source (origin
               (method url-fetch)
               (uri (string-append "ftp://ccrma-ftp.stanford.edu/pub/Lisp/"
                                   "snd-" version ".tar.gz"))
               (sha256
                (base32
-                "1kd422krz8ln4m8g3p14wfplcq8lgpzly9297rpbvyc94dc6sdwj"))))
+                "0jxkycxn6jcbs4gklk9sk3gfr0y26dz1m71nxah9rnx80wnzj6hr"))))
     (build-system glib-or-gtk-build-system)
     (arguments
      `(#:tests? #f                      ; no tests
@@ -4218,7 +4210,7 @@ representations.")
 (define-public cava
   (package
     (name "cava")
-    (version "0.6.1")
+    (version "0.7.3")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -4227,7 +4219,7 @@ representations.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1kvhqgijs29909w3sq9m0bslx2zxxn4b3i07kdz4hb0dqkppxpjy"))))
+                "04j5hb29hivcbk542sfsx9m57dbnj2s6qpvy9fs488zvgjbgxrai"))))
     (build-system gnu-build-system)
     (native-inputs
      `(("autoconf" ,autoconf)
@@ -4695,7 +4687,7 @@ in the package.")
 (define-public libaudec
   (package
     (name "libaudec")
-    (version "0.2.3")
+    (version "0.2.4")
     (source
       (origin
         (method git-fetch)
@@ -4705,11 +4697,13 @@ in the package.")
         (file-name (git-file-name name version))
         (sha256
           (base32
-            "04hw61db8wscj28qjyiaiafx8xl87njgmvqszxyhs4gmg8xgjip7"))))
+            "1570m2dfia17dbkhd2qhx8jjihrpm7g8nnyg6n4wif4vv229s7dz"))))
    (build-system meson-build-system)
    (arguments
-     ;; Compile tests.
-    `(#:configure-flags `("-Dtests=true")))
+    `(#:meson ,meson-0.55
+      #:configure-flags
+      ;; Build the tests.
+      `("-Dtests=true")))
    (inputs
     `(("libsamplerate" ,libsamplerate)
       ("libsndfile" ,libsndfile)))

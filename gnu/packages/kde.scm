@@ -6,11 +6,12 @@
 ;;; Copyright © 2017, 2018, 2019, 2020 Tobias Geerinckx-Rice <me@tobias.gr>
 ;;; Copyright © 2018 Gábor Boskovits <boskovits@gmail.com>
 ;;; Copyright © 2019 Nicolas Goaziou <mail@nicolasgoaziou.fr>
-;;; Copyright © 2018, 2019 Hartmut Goebel <h.goebel@crazy-compilers.com>
+;;; Copyright © 2018, 2019, 2020 Hartmut Goebel <h.goebel@crazy-compilers.com>
 ;;; Copyright © 2019, 2020 Ludovic Courtès <ludo@gnu.org>
 ;;; Copyright © 2020 Marius Bakke <marius@gnu.org>
 ;;; Copyright © 2020 Michael Rohleder <mike@rohleder.de>
 ;;; Copyright © 2020 Prafulla Giri <pratheblackdiamond@gmail.com>
+;;; Copyright © 2020 Zheng Junjie <873216071@qq.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -40,12 +41,17 @@
   #:use-module (gnu packages algebra)
   #:use-module (gnu packages apr)
   #:use-module (gnu packages audio)
+  #:use-module (gnu packages bison)
   #:use-module (gnu packages boost)
   #:use-module (gnu packages code)
   #:use-module (gnu packages cpp)
   #:use-module (gnu packages compression)
   #:use-module (gnu packages curl)
+  #:use-module (gnu packages djvu)
   #:use-module (gnu packages documentation)
+  #:use-module (gnu packages ebook)
+  #:use-module (gnu packages flex)
+  #:use-module (gnu packages fontutils)
   #:use-module (gnu packages gettext)
   #:use-module (gnu packages ghostscript)
   #:use-module (gnu packages gl)
@@ -57,6 +63,7 @@
   #:use-module (gnu packages kde-plasma)
   #:use-module (gnu packages linux)
   #:use-module (gnu packages llvm)
+  #:use-module (gnu packages markup)
   #:use-module (gnu packages maths)
   #:use-module (gnu packages pdf)
   #:use-module (gnu packages perl)
@@ -128,14 +135,14 @@ This package contains GUI widgets for baloo.")
        ("kiconthemes" ,kiconthemes)
        ("knewstuff" ,knewstuff)
        ("qtbase" ,qtbase)))
-    (home-page "https://cgit.kde.org/grantleetheme.git")
+    (home-page "https://invent.kde.org/pim/grantleetheme")
     (synopsis "Library providing Grantlee theme support")
     (description "This library provides Grantlee theme support.")
     (license ;; LGPL for libraries, FDL for documentation
      (list license:lgpl2.1+ license:fdl1.2+))))
 
 (define-public kdenlive
-  (let ((version "20.08.2"))
+  (let ((version "20.08.3"))
     (package
       (name "kdenlive")
       (version version)
@@ -147,7 +154,7 @@ This package contains GUI widgets for baloo.")
                (commit (string-append "v" version))))
          (file-name (string-append name "-" version "-checkout"))
          (sha256
-          (base32 "1zcckv4wj12pvxjg85c8l67vi3amz79yv8mf7m4fbxnam3yxhy90"))))
+          (base32 "0x0qfwf6wfnybjyjvmllpf87sm27d1n2akslhp2k8ins838qy55i"))))
       (build-system cmake-build-system)
       (native-inputs
        `(("extra-cmake-modules" ,extra-cmake-modules)
@@ -360,7 +367,7 @@ for some KDevelop language plugins (Ruby, PHP, CSS...).")
     (inputs
      `(("qtbase" ,qtbase)
        ("qtsvg" ,qtsvg)))
-    (home-page "https://cgit.kde.org/kdiagram.git/")
+    (home-page "https://invent.kde.org/graphics/kdiagram")
     (synopsis "Libraries for creating business diagrams")
     (description "This package provides libraries for integrating business
 diagrams in Qt-based applications.
@@ -374,7 +381,7 @@ illustrate project schedules.")
 (define-public krita
   (package
     (name "krita")
-    (version "4.4.0")
+    (version "4.4.1")
     (source (origin
               (method url-fetch)
               (uri (string-append
@@ -382,7 +389,7 @@ illustrate project schedules.")
                     "/krita-" version ".tar.gz"))
               (sha256
                (base32
-                "13r7x4gql5wp88hmpv9m6m3lh7gsybm4la48hqbjcb3iwiv86pzw"))))
+                "05rq5hkh2lmk8hall2h9ccaav0nw8fj7vd4aff5fyp2fiq3aybbg"))))
     (build-system cmake-build-system)
     (arguments
      `(#:tests? #f
@@ -445,7 +452,7 @@ illustrate project schedules.")
        ("openexr" ,openexr)
        ("perl" ,perl)
        ("poppler-qt5" ,poppler-qt5)
-       ("qtbase" ,qtbase-for-krita)
+       ("qtbase" ,qtbase)
        ("qtdeclarative" ,qtdeclarative)
        ("qtmultimedia" ,qtmultimedia)
        ("qtsvg" ,qtsvg)
@@ -516,7 +523,7 @@ used in KDE development tools Kompare and KDevelop.")
 straightforward and cross-platform API for a range of cryptographic features,
 including SSL/TLS, X.509 certificates, SASL, OpenPGP, S/MIME CMS, and smart
 cards.")
-    (license license:lgpl2.1)))
+    (license license:lgpl2.1+)))
 
 (define-public kpmcore
   (package
@@ -763,6 +770,119 @@ Python, PHP, and Perl.")
     (description "Runtime library for kdegames")
     (license (list license:gpl2+  license:fdl1.2+))))
 
+(define-public okular
+  (package
+    (name "okular")
+    (version "20.12.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "mirror://kde/stable/release-service/" version
+                           "/src/" name "-" version ".tar.xz"))
+       (sha256
+        (base32 "1kib8zqfd9qgqn7bz88hay2j3kcvarnlfyr3a417pi6rvaam6b4p"))))
+    (build-system qt-build-system)
+    ;; The tests fail because they can't find the proper mimetype plugins:
+    ;; "org.kde.okular.core: No plugin for mimetype '"image/jpeg"'."
+    ;; The built program seems to work okay, so we skip the tests for now.
+    (arguments
+     `(#:tests? #f
+       #:configure-flags
+       (list "-DBUILD_TESTING=OFF")))
+    (native-inputs
+     `(("extra-cmake-modules" ,extra-cmake-modules)
+       ("kdoctools" ,kdoctools)
+       ("pkg-config" ,pkg-config)))
+    (inputs
+     `(("ebook-tools" ,ebook-tools)
+       ("breeze-icons" ,breeze-icons)
+       ("discount" ,discount)
+       ("djvulibre" ,djvulibre)
+       ("kactivities" ,kactivities)
+       ("khtml" ,khtml)
+       ("chmlib" ,chmlib)
+       ("kdegraphics-mobipocket" ,kdegraphics-mobipocket)
+       ("karchive" ,karchive)
+       ("kbookmarks" ,kbookmarks)
+       ("kcompletion" ,kcompletion)
+       ("kconfig" ,kconfig)
+       ("qtbase" ,qtbase)
+       ("libjpeg-turbo" ,libjpeg-turbo)
+       ("libtiff" ,libtiff)
+       ("kirigami" ,kirigami)
+       ("purpose" ,purpose)
+       ("freetype" ,freetype)
+       ("kiconthemes" ,kiconthemes)
+       ("kio" ,kio)
+       ("kparts" ,kparts)
+       ("kpty" ,kpty)
+       ("qtspeech" ,qtspeech)
+       ("kwallet" ,kwallet)
+       ("kwindowsystem" ,kwindowsystem)
+       ("libkexiv2" ,libkexiv2)
+       ("libspectre" ,libspectre)
+       ("libzip" ,libzip)
+       ("phonon" ,phonon)
+       ("poppler-qt5" ,poppler-qt5)
+       ("qca" ,qca)
+       ("qtdeclarative" ,qtdeclarative)
+       ("qtsvg" ,qtsvg)
+       ("threadweaver" ,threadweaver)
+       ("kcrash" ,kcrash)
+       ("kjs" ,kjs)))
+    (home-page "https://kde.org/applications/graphics/okular/")
+    (synopsis "Document Viewer")
+    (description "Okular is a universal document viewer developed by KDE.
+ Okular works on multiple platforms, including but not limited to
+ Linux, Windows, macOS, *BSD, etc.")
+    (license license:gpl2+)))
+
+(define-public kdegraphics-mobipocket
+  (package
+    (name "kdegraphics-mobipocket")
+    (version "20.12.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "mirror://kde/stable/release-service/" version
+                           "/src/" name "-" version ".tar.xz"))
+       (sha256
+        (base32 "0fm880lp9g60zgrkjyh4jxws6x0s77l9ia4f8pza3w8sxcbbswk5"))))
+    (build-system cmake-build-system)
+    (native-inputs
+     `(("extra-cmake-modules" ,extra-cmake-modules)))
+    (inputs
+     `(("kio" ,kio)
+       ("qtbase" ,qtbase)))
+    (home-page "https://apps.kde.org/en/kdegraphics_mobipocket")
+    (synopsis "KDE thumbnailer for Mobipocket files")
+    (description "This package provides a KDE plugin that shows thumbnails of
+Mobipocket e-books in Dolphin and other KDE apps.")
+    (license license:gpl2+)))
+
+(define-public libkexiv2
+  (package
+    (name "libkexiv2")
+    (version "20.12.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "mirror://kde/stable/release-service/" version
+                           "/src/" name "-" version ".tar.xz"))
+       (sha256
+        (base32 "0k0iinf7s8qlk3fwvq7iic1b4zn2gm65rfd58q7d3wb1i1j2hjjk"))))
+    (build-system cmake-build-system)
+    (native-inputs
+     `(("extra-cmake-modules" ,extra-cmake-modules)))
+    (inputs
+     `(("exiv2" ,exiv2)
+       ("qtbase" ,qtbase)))
+    (home-page "https://invent.kde.org/graphics/libkexiv2")
+    (synopsis "Manipulate the metadata of images")
+    (description "Libkexiv2 wraps the Exiv2 library, allowing to manipulate
+picture metadata as EXIF/IPTC and XMP.")
+    (license license:gpl2+)))
+
 (define-public zeroconf-ioslave
   (package
     (name "zeroconf-ioslave")
@@ -790,3 +910,47 @@ services such as printers which advertise themselves with DNSSD (called Avahi
 or Bonjour by other projects).")
     (license ;; GPL for programs, LGPL for libraries, FDL for documentation
      (list license:gpl2+ license:lgpl2.0+ license:fdl1.2+))))
+
+
+(define-public kuserfeedback
+  ;; FIXME: Try to reduce data collection and ensure transmission i disabled by default.
+  ;; FIXME: Check https://www.reddit.com/r/kde/comments/f7ojg9 for insights
+  (package
+    (name "kuserfeedback")
+    (version "1.0.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "mirror://kde/stable/kuserfeedback/"
+                           "/kuserfeedback-" version ".tar.xz"))
+       (sha256
+        (base32 "1dwx9fscnfp3zsxdir774skn8xvad2dvscnaaw3ji6mrnkmm6bss"))))
+    (build-system qt-build-system)
+    (native-inputs
+     `(("extra-cmake-modules" ,extra-cmake-modules)
+       ("qttools" ,qttools)
+       ;; For optional component "Survey target expression parser"
+       ("bison" ,bison)
+       ("flex" ,flex)
+       ;; For syntax checking and unit tests of PHP server code
+       ;;("php" ,php)
+       ;;("phpunit" ,phpunit)
+       ))
+    (inputs
+     `(("qtbase" ,qtbase)
+       ("qtcharts" ,qtcharts)
+       ("qtdeclarative" ,qtdeclarative)
+       ("qtsvg" ,qtsvg)))
+    (arguments
+     `(#:tests? #f))  ;; 4/17 fail
+    (home-page "https://api.kde.org/frameworks/kuserfeedback/html/")
+    (synopsis "Framework for collecting feedback from application users via
+telemetry and targeted surveys")
+    (description "This framework consists of the following components:
+@itemize
+@item Libraries for use in applications.
+@item QML bindings for the above.
+@item A server application.
+@item A management and analytics application.
+@end itemize")
+    (license license:expat)))

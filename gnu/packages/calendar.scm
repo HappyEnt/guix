@@ -38,6 +38,7 @@
   #:use-module (gnu packages base)
   #:use-module (gnu packages check)
   #:use-module (gnu packages dav)
+  #:use-module (gnu packages docbook)
   #:use-module (gnu packages freedesktop)
   #:use-module (gnu packages glib)
   #:use-module (gnu packages gnome)
@@ -125,12 +126,20 @@ the <tz.h> library for handling time zones and leap seconds.")
     (build-system cmake-build-system)
     (arguments
      '(#:tests? #f ; test suite appears broken
+       #:parallel-build? #f             ;may cause GIR generation failure
        #:configure-flags '("-DSHARED_ONLY=true"
                            ;; required by evolution-data-server
                            "-DGOBJECT_INTROSPECTION=true"
                            "-DICAL_GLIB_VAPI=true")
        #:phases
        (modify-phases %standard-phases
+         (add-after 'unpack 'patch-docbook-reference
+           (lambda* (#:key inputs #:allow-other-keys)
+             (substitute* "doc/reference/libical-glib/libical-glib-docs.sgml.in"
+               (("http://www.oasis-open.org/docbook/xml/4.3/")
+                (string-append (assoc-ref inputs "docbook-xml")
+                               "/xml/dtd/docbook/")))
+             #t))
          (add-before 'configure 'patch-paths
            (lambda* (#:key inputs #:allow-other-keys)
              ;; TODO: libical 3.1.0 supports using TZDIR instead of a hard-coded
@@ -145,7 +154,8 @@ the <tz.h> library for handling time zones and leap seconds.")
                  (("\\\"/usr/share/lib/zoneinfo\\\"") "")))
              #t)))))
     (native-inputs
-     `(("gobject-introspection" ,gobject-introspection)
+     `(("docbook-xml" ,docbook-xml-4.3)
+       ("gobject-introspection" ,gobject-introspection)
        ("gtk-doc" ,gtk-doc)
        ("perl" ,perl)
        ("pkg-config" ,pkg-config)
@@ -168,26 +178,17 @@ data units.")
 (define-public khal
   (package
     (name "khal")
-    (version "0.10.1")
+    (version "0.10.2")
     (source (origin
-             (method url-fetch)
-             (uri (pypi-uri "khal" version))
-             (sha256
-              (base32
-               "1r8bkgjwkh7i8ygvsv51h1cnax50sb183vafg66x5snxf3dgjl6l"))
-             (patches
-               (list
-                 (origin
-                   (method url-fetch)
-                   ;; This patch fixes an issue with python-urwid-2.1.0
-                   (uri "https://github.com/pimutils/khal/commit/2c5990c2de2015b251ba23617faa40ee11b8c22a.patch")
-                   (file-name "khal-compat-urwid-2.1.0.patch")
-                   (sha256
-                    (base32
-                     "11nd8hkjz68imwqqn0p54zmb53z2pfxmzchaviy7jc1ky5s9l663")))))))
+              (method url-fetch)
+              (uri (pypi-uri "khal" version))
+              (sha256
+               (base32
+                "11qhrga44knlnp88py9p547d4nr5kn041d2nszwa3dqw7mf22ks9"))))
     (build-system python-build-system)
     (arguments
-     `(#:phases (modify-phases %standard-phases
+     `(#:tests? #f ; The test suite is unreliable. See <https://bugs.gnu.org/44197>
+       #:phases (modify-phases %standard-phases
         ;; Building the manpage requires khal to be installed.
         (add-after 'install 'manpage
           (lambda* (#:key inputs outputs #:allow-other-keys)
@@ -197,28 +198,9 @@ data units.")
             (install-file
              "doc/build/man/khal.1"
              (string-append (assoc-ref outputs "out") "/share/man/man1"))
-            #t))
-        (add-before 'check 'fix-tests
-          (lambda _
-            ;; Reported upstream: <https://github.com/pimutils/khal/issues/947>.
-            (substitute* "tests/cli_test.py"
-             (("Invalid value for \"\\[ICS\\]\"") "Invalid value for \\'[ICS]\\'"))
-            #t))
-        (replace 'check
-          (lambda* (#:key inputs #:allow-other-keys)
-            ;; The tests require us to choose a timezone.
-            (setenv "TZ"
-                    (string-append (assoc-ref inputs "tzdata")
-                                   "/share/zoneinfo/Zulu"))
-            (invoke "py.test" "tests"))))))
+            #t)))))
     (native-inputs
-     `(("python-pytest" ,python-pytest)
-       ("python-pytest-cov" ,python-pytest-cov)
-       ("python-setuptools-scm" ,python-setuptools-scm)
-       ;; Required for tests
-       ("python-freezegun" ,python-freezegun)
-       ("tzdata" ,tzdata-for-tests)
-       ("vdirsyncer" ,vdirsyncer)
+     `(("python-setuptools-scm" ,python-setuptools-scm)
        ;; Required to build manpage
        ("python-sphinxcontrib-newsfeed" ,python-sphinxcontrib-newsfeed)
        ("python-sphinx" ,python-sphinx)))
@@ -229,6 +211,11 @@ data units.")
        ("python-icalendar" ,python-icalendar)
        ("python-tzlocal" ,python-tzlocal)
        ("python-urwid" ,python-urwid)
+       ("python-pytz" ,python-pytz)
+       ("python-setproctitle" ,python-setproctitle)
+       ("python-atomicwrites" ,python-atomicwrites)
+       ("python-click" ,python-click)
+       ("python-click-log" ,python-click-log)
        ("python-pyxdg" ,python-pyxdg)))
     (synopsis "Console calendar program")
     (description "Khal is a standards based console calendar program,

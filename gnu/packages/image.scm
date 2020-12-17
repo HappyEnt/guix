@@ -26,6 +26,7 @@
 ;;; Copyright © 2020 Giacomo Leidi <goodoldpaul@autistici.org>
 ;;; Copyright © 2020 R Veera Kumar <vkor@vkten.in>
 ;;; Copyright © 2020 Maxim Cournoyer <maxim.cournoyer@gmail.com>
+;;; Copyright © 2020 Zhu Zihao <all_but_last@163.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -58,8 +59,10 @@
   #:use-module (gnu packages freedesktop)
   #:use-module (gnu packages gettext)
   #:use-module (gnu packages ghostscript)
+  #:use-module (gnu packages gimp)
   #:use-module (gnu packages gl)
   #:use-module (gnu packages glib)
+  #:use-module (gnu packages gnome)
   #:use-module (gnu packages graphics)
   #:use-module (gnu packages gtk)
   #:use-module (gnu packages lua)
@@ -75,9 +78,11 @@
   #:use-module (gnu packages python-xyz)
   #:use-module (gnu packages qt)
   #:use-module (gnu packages sphinx)
+  #:use-module (gnu packages swig)
   #:use-module (gnu packages textutils)
   #:use-module (gnu packages video)
   #:use-module (gnu packages web)
+  #:use-module (gnu packages xdisorg)
   #:use-module (gnu packages xml)
   #:use-module (gnu packages xorg)
   #:use-module ((guix licenses) #:prefix license:)
@@ -90,6 +95,7 @@
   #:use-module (guix build-system copy)
   #:use-module (guix build-system meson)
   #:use-module (guix build-system python)
+  #:use-module (guix build-system qt)
   #:use-module (guix build-system scons)
   #:use-module (guix deprecation)
   #:use-module (srfi srfi-1))
@@ -790,7 +796,7 @@ images of initially unknown height.")
        (method git-fetch)
        (uri
         (git-reference
-         (url "https://github.com/uclouvain/openjpeg-data.git")
+         (url "https://github.com/uclouvain/openjpeg-data")
          (commit "c5c4a8c")))
        (file-name (git-file-name name version))
        (sha256
@@ -807,35 +813,33 @@ test suite, including conformance tests (following Rec. ITU-T T.803 | ISO/IEC
   (package
     (name "openjpeg")
     (version "2.3.1")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/uclouvain/openjpeg")
-                    (commit (string-append "v" version))))
-              (file-name (git-file-name "openjpeg" version))
-              (sha256
-               (base32
-                "1dn98d2dfa1lqyxxmab6rrcv52dyhjr4g7i4xf2w54fqsx14ynrb"))))
+    (source
+     (origin
+       (method git-fetch)
+       (uri
+        (git-reference
+         (url "https://github.com/uclouvain/openjpeg")
+         (commit
+          (string-append "v" version))))
+       (file-name
+        (git-file-name "openjpeg" version))
+       (sha256
+        (base32 "1dn98d2dfa1lqyxxmab6rrcv52dyhjr4g7i4xf2w54fqsx14ynrb"))))
     (build-system cmake-build-system)
     (arguments
-     '(#:tests? #f                   ;TODO: requires a 1.1 GiB data repository
+     '(#:tests? #f           ;TODO: requires a 1.1 GiB data repository
        #:configure-flags '("-DBUILD_STATIC_LIBS=OFF")))
     (inputs
-      `(("lcms" ,lcms)
-        ("libpng" ,libpng)
-        ("libtiff" ,libtiff)
-        ("zlib" ,zlib)))
-    (synopsis "JPEG 2000 codec")
-    (description
-      "The OpenJPEG library is a JPEG 2000 codec written in C.  It has
-been developed in order to promote the use of JPEG 2000, the new
-still-image compression standard from the Joint Photographic Experts
-Group (JPEG).
-
-In addition to the basic codec, various other features are under
-development, among them the JP2 and MJ2 (Motion JPEG 2000) file formats,
-an indexing tool useful for the JPIP protocol, JPWL-tools for
-error-resilience, a Java-viewer for j2k-images, ...")
+     `(("lcms" ,lcms)
+       ("libpng" ,libpng)
+       ("libtiff" ,libtiff)
+       ("zlib" ,zlib)))
+    (synopsis "OPENJPEG Library and Applications")
+    (description "OpenJPEG is an implementation of JPEG 2000 codec written in C
+language.  It has been developed in order to promote the use of JPEG 2000, a
+still-image compression standard from the Joint Photographic Experts Group
+(JPEG).  Since April 2015, it is officially recognized by ISO/IEC and ITU-T as a
+JPEG 2000 Reference Software.")
     (home-page "https://github.com/uclouvain/openjpeg")
     (license license:bsd-2)))
 
@@ -975,7 +979,7 @@ Metafile}, and @acronym{EMF+, Enhanced Metafile Plus} files.")
 (define-public imlib2
   (package
     (name "imlib2")
-    (version "1.6.1")
+    (version "1.7.0")
     (source (origin
               (method url-fetch)
               (uri (string-append
@@ -983,8 +987,10 @@ Metafile}, and @acronym{EMF+, Enhanced Metafile Plus} files.")
                     "/imlib2-" version ".tar.bz2"))
               (sha256
                (base32
-                "0v8n3dswx7rxqfd0q03xwc7j2w1mv8lv18rdxv487a1xw5vklfad"))))
+                "0zdk4afdrrr1539f2q15zja19j4wwfmpswzws2ffgflcnhywlxhr"))))
     (build-system gnu-build-system)
+    (arguments
+     '(#:configure-flags (list "--disable-static")))
     (native-inputs
      `(("pkgconfig" ,pkg-config)))
     (inputs
@@ -1789,33 +1795,26 @@ parsing, viewing, modifying, and saving this metadata.")
 (define-public flameshot
   (package
     (name "flameshot")
-    (version "0.5.1")
+    (version "0.8.5")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/lupoDharkael/flameshot")
+             (url "https://github.com/flameshot-org/flameshot")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "13h77np93r796jf289v4r687cmnpqkyqs34dm9gif4akaig74ky0"))))
-    (build-system gnu-build-system)
+         "1z77igs60lz106vsf6wsayxjafxm3llf2lm4dpvsqyyrxybfq191"))))
+    (build-system qt-build-system)
     (native-inputs
      `(("qttools" ,qttools)))
     (inputs
-     `(("qtbase" ,qtbase)))
+     `(("qtbase" ,qtbase)
+       ("qtsvg" ,qtsvg)))
     (arguments
-     `(#:tests? #f ; no tests
-       #:phases
-       (modify-phases %standard-phases
-         (replace 'configure
-           (lambda* (#:key outputs #:allow-other-keys)
-             (invoke "qmake"
-                     "CONFIG+=packaging"
-                     (string-append "BASEDIR=" (assoc-ref outputs "out"))
-                     "PREFIX=/"))))))
-    (home-page "https://github.com/lupoDharkael/flameshot")
+     `(#:tests? #f))                    ;no tests
+    (home-page "https://github.com/flameshot-org/flameshot")
     (synopsis "Powerful yet simple to use screenshot software")
     (description "Flameshot is a screenshot program.
 Features:
@@ -1911,8 +1910,7 @@ identical visual appearance.")
            (commit (string-append "v" version))))
      (file-name (git-file-name name version))
      (sha256
-      (base32 "0fjmjq0ws9rlblkcqxxw2lv7zvvyi618jqzlnz5z9zb477jwdfib"))
-     (patches (search-patches "grim-revert-output-rotation.patch"))))
+      (base32 "0fjmjq0ws9rlblkcqxxw2lv7zvvyi618jqzlnz5z9zb477jwdfib"))))
    (build-system meson-build-system)
    (native-inputs `(("pkg-config" ,pkg-config)
                     ("scdoc" ,scdoc)))
@@ -1929,7 +1927,7 @@ identical visual appearance.")
 (define-public slurp
   (package
    (name "slurp")
-   (version "1.2.0")
+   (version "1.3.1")
    (source
     (origin
      (method git-fetch)
@@ -1938,18 +1936,20 @@ identical visual appearance.")
            (commit (string-append "v" version))))
      (file-name (git-file-name name version))
      (sha256
-      (base32 "0580m6kaiilgsrcj608r837r37sl6a25y7w21p7d6ij20fs3gvg1"))))
+      (base32 "1fby2v2ylcadgclds05wpkl9xi2r9dfz49dqyqpn20rjv1wnz3jv"))))
    (build-system meson-build-system)
-   (native-inputs `(("pkg-config" ,pkg-config)))
-   (inputs `(("cairo" ,cairo)
-             ("scdoc" ,scdoc)
-             ("wayland" ,wayland)
-             ("wayland-protocols" ,wayland-protocols)))
+   (native-inputs
+    `(("pkg-config" ,pkg-config)
+      ("scdoc" ,scdoc)))
+   (inputs
+    `(("cairo" ,cairo)
+      ("libxkbcommon" ,libxkbcommon)
+      ("wayland" ,wayland)
+      ("wayland-protocols" ,wayland-protocols)))
    (home-page "https://github.com/emersion/slurp")
    (synopsis "Select a region in a Wayland compositor")
    (description "Slurp can select a region in a Wayland compositor and print it
 to the standard output.  It works well together with grim.")
-   ;; MIT license.
    (license license:expat)))
 
 (define-public sng
@@ -2124,16 +2124,16 @@ by AOM, including with alpha.")
     (name "mtpaint")
     ;; The author neither releases tarballs nor uses git version tags.
     ;; Instead, author puts version in git commit title.
-    (version "3.49.27")
+    (version "3.49.33")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
              (url "https://github.com/wjaguar/mtPaint")
-             (commit "26751cd0336414e2f16cbe25c9fe2702f34e7b5c")))
+             (commit "5272e2b1e773c8e02ac3506b2d3bde82ad946b21")))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "12mzai9pqvyb342m21rjz0jxiy75q24sjw6ax147pzy8frzkgd54"))))
+        (base32 "1bmq4m0dxczl18n1yiqb75g05a4c3pal1vdcyypkilx7ijsr0cmc"))))
     (build-system gnu-build-system)
     (native-inputs
      `(("gettext" ,gettext-minimal)
@@ -2165,6 +2165,66 @@ It can create and edit indexed palette or 24bit RGB images, offers basic
 painting and palette manipulation tools.  It also handles JPEG, JPEG2000,
 GIF, TIFF, WEBP, BMP, PNG, XPM formats.")
     (license license:gpl3+)))
+
+(define-public mypaint
+  (package
+    (name "mypaint")
+    (version "2.0.1")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append "https://github.com/mypaint/mypaint/"
+                                  "releases/download/v" version "/mypaint-"
+                                  version ".tar.xz"))
+              (sha256
+               (base32
+                "05mvay73vb9d2sh1ckv4vny45n059dmsps1jcppjizfmrpbkgr7k"))))
+    (build-system python-build-system)
+    (arguments
+     `(#:imported-modules ((guix build glib-or-gtk-build-system)
+                           ,@%python-build-system-modules)
+       #:modules ((guix build python-build-system)
+                  ((guix build glib-or-gtk-build-system) #:prefix glib-or-gtk:)
+                  (guix build utils))
+       #:phases
+       (modify-phases %standard-phases
+         (add-after 'install 'glib-or-gtk-wrap
+           (assoc-ref glib-or-gtk:%standard-phases 'glib-or-gtk-wrap))
+         (add-after 'install 'wrap-program
+           (lambda* (#:key outputs inputs #:allow-other-keys)
+             (let* ((out (assoc-ref outputs "out"))
+                    (gdk-pixbuf (assoc-ref inputs "gdk-pixbuf"))
+                    (gtk+ (assoc-ref inputs "gtk+")))
+               (wrap-program (string-append out "/bin/mypaint")
+                 `("GI_TYPELIB_PATH" ":" prefix
+                   (,(getenv "GI_TYPELIB_PATH"))))
+               #t)))
+         (add-before 'check 'pre-check
+           (lambda _
+             ;; Tests need writing access
+             (setenv "HOME" "/tmp")
+             #t)))))
+    (native-inputs
+     `(("pkg-config" ,pkg-config)
+       ("gobject-introspection" ,gobject-introspection)
+       ("swig" ,swig)
+       ("gettext" ,gettext-minimal)))
+    (inputs
+     `(("gtk+" ,gtk+)
+       ("gdk-pixbuf" ,gdk-pixbuf+svg)
+       ("hicolor-icon-theme" ,hicolor-icon-theme)
+       ("libmypaint" ,libmypaint)
+       ("mypaint-brushes" ,mypaint-brushes)
+       ("json-c" ,json-c)
+       ("lcms" ,lcms)
+       ("python-numpy" ,python-numpy)
+       ("python-pycairo" ,python-pycairo)
+       ("python-pygobject" ,python-pygobject)))
+    (home-page "http://mypaint.org/")
+    (synopsis "Fast and simple painting app for artists")
+    (description
+     "MyPaint is a simple drawing and painting program that works well with
+Wacom-style graphics tablets.")
+    (license license:gpl2+)))
 
 (define-public phockup
   (package

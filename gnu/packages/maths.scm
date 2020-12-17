@@ -41,6 +41,7 @@
 ;;; Copyright © 2020 B. Wilson <elaexuotee@wilsonb.com>
 ;;; Copyright © 2020 Vinicius Monego <monego@posteo.net>
 ;;; Copyright © 2020 Simon Tournier <zimon.toutoune@gmail.com>
+;;; Copyright © 2020 Martin Becze <mjbecze@riseup.net>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -306,13 +307,13 @@ programming language.")
 (define-public units
   (package
    (name "units")
-   (version "2.19")
+   (version "2.21")
    (source (origin
             (method url-fetch)
             (uri (string-append "mirror://gnu/units/units-" version
                                 ".tar.gz"))
             (sha256 (base32
-                     "0mk562g7dnidjgfgvkxxpvlba66fh1ykmfd9ylzvcln1vxmi6qj2"))))
+                     "1bybhqs4yrly9myb5maz3kdmf8k4fhk2m1d5cbcryn40z6lq0gkc"))))
    (build-system gnu-build-system)
    (inputs
     `(("readline" ,readline)
@@ -517,7 +518,7 @@ numbers.")
 (define-public sleef
   (package
     (name "sleef")
-    (version "3.4.1")
+    (version "3.5.1")
     (source
      (origin
        (method git-fetch)
@@ -526,7 +527,7 @@ numbers.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1gvf7cfvszmgjrsqivwmyy1jnp3hy80dmszxx827lhjz8yqq5019"))))
+        (base32 "1jybqrl2dvjxzg30xrhh847s375n2jr1pix644wi6hb5wh5mx3f7"))))
     (build-system cmake-build-system)
     (arguments
      '(#:configure-flags (list "-DCMAKE_BUILD_TYPE=Release"
@@ -1538,17 +1539,17 @@ similar to MATLAB, GNU Octave or SciPy.")
 (define-public netcdf
   (package
     (name "netcdf")
-    (version "4.4.1.1")
+    (version "4.7.4")
     (source
      (origin
        (method url-fetch)
-       (uri (string-append "ftp://ftp.unidata.ucar.edu/pub/netcdf/"
-                           "netcdf-" version ".tar.gz"))
+       (uri (string-append
+             "https://www.unidata.ucar.edu/downloads/netcdf/ftp/"
+             "netcdf-c-" version ".tar.gz"))
        (sha256
         (base32
-         "1blc7ik5yin7i0ls2kag0a9xjk12m0dzx6v1x88az3ras3scci2d"))
-       (patches (search-patches "netcdf-date-time.patch"
-                                "netcdf-tst_h_par.patch"))))
+         "1a2fpp15a2rl1m50gcvvzd9y6bavl6vjf9zzf63sz5gdmq06yiqf"))
+       (patches (search-patches "netcdf-date-time.patch"))))
     (build-system gnu-build-system)
     (native-inputs
      `(("m4" ,m4)
@@ -1556,10 +1557,8 @@ similar to MATLAB, GNU Octave or SciPy.")
        ("graphviz" ,graphviz)))
     (inputs
      `(("hdf4" ,hdf4-alt)
-
-       ;; XXX: The 'tst_nccopy4.sh' test fails when using hdf5-1.10.
-       ("hdf5" ,hdf5-1.8)
-
+       ("hdf5" ,hdf5)
+       ("curl" ,curl)
        ("zlib" ,zlib)
        ("libjpeg" ,libjpeg-turbo)))
     (arguments
@@ -1621,7 +1620,7 @@ sharing of scientific data.")
 (define-public netcdf-fortran
   (package
     (name "netcdf-fortran")
-    (version "4.4.4")
+    (version "4.5.3")
     (source (origin
               (method url-fetch)
               (uri (string-append
@@ -1629,7 +1628,7 @@ sharing of scientific data.")
                     version ".tar.gz"))
               (sha256
                (base32
-                "0xaxdcg1p83zmypwml3swsnr3ccn38inwldyr1l3wa4dbwbrblxj"))))
+                "0x4acvfhbsx1q79dkkwrwbgfhm0w5ngnp4zj5kk92s1khihmqfhj"))))
     (build-system gnu-build-system)
     (arguments
      `(#:parallel-tests? #f))
@@ -2212,13 +2211,13 @@ ASCII text files using Gmsh's own scripting language.")
 (define-public veusz
   (package
     (name "veusz")
-    (version "3.2.1")
+    (version "3.3.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "veusz" version))
        (sha256
-        (base32 "00vmfpvyd6f33l5awlf02qdik3gmbhzyfizfwwbx7qnam2i9bbwy"))))
+        (base32 "1q7hi1qwwg4pgiz62isvv1pia85m13bspdpp1q3mrnwl11in0ag0"))))
     (build-system python-build-system)
     (arguments
      `(;; Tests will fail because they depend on optional packages like
@@ -2472,7 +2471,18 @@ scientific applications modeled by partial differential equations.")
         (uri (pypi-uri "petsc4py" version))
         (sha256
           (base32
-            "1rm1qj5wlkhxl39by9n78lh3gbmii31wsnb8j1rr5hvfr5xgbx2q"))))
+           "1rm1qj5wlkhxl39by9n78lh3gbmii31wsnb8j1rr5hvfr5xgbx2q"))
+        (modules '((guix build utils)))
+        (snippet
+         '(begin
+            ;; Ensure source file is regenerated in the build phase.
+            (delete-file "src/petsc4py.PETSc.c")
+            ;; Remove legacy GC code.  See
+            ;; https://bitbucket.org/petsc/petsc4py/issues/125.
+            (substitute* "src/PETSc/cyclicgc.pxi"
+                         ((".*gc_refs.*") "" )
+                         ((".*PyGC_Head.*") ""))
+            #t))))
     (build-system python-build-system)
     (arguments
      `(#:phases
@@ -2484,6 +2494,8 @@ scientific applications modeled by partial differential equations.")
              #t))
          (add-before 'check 'mpi-setup
            ,%openmpi-setup))))
+    (native-inputs
+     `(("python-cython" ,python-cython)))
     (inputs
      `(("petsc" ,petsc-openmpi)
        ("python-numpy" ,python-numpy)))
@@ -2672,7 +2684,7 @@ bindings to almost all functions of SLEPc.")
 (define-public metamath
   (package
     (name "metamath")
-    (version "0.192")
+    (version "0.193")
     (source
      (origin
        (method git-fetch)
@@ -2681,7 +2693,7 @@ bindings to almost all functions of SLEPc.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1k31zw36h2b0w5r6sbn9qc0v4hj42vw53qlhf5l7q2h3p5qlzvic"))))
+        (base32 "1s9hyknfvhj86g3giayyf3dxzg23iij0rs7bdvj075v9qbyhqn9b"))))
     (build-system gnu-build-system)
     (native-inputs
      `(("autoconf" ,autoconf)
@@ -2897,14 +2909,14 @@ easy-to-write markup language for mathematics.")
 (define-public superlu
   (package
     (name "superlu")
-    (version "5.2.1")
+    (version "5.2.2")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "https://portal.nersc.gov/project/sparse/superlu/"
                            "superlu_" version ".tar.gz"))
        (sha256
-        (base32 "0qzlb7cd608q62kyppd0a8c65l03vrwqql6gsm465rky23b6dyr8"))
+        (base32 "13520vk6fqspyl22cq4ak2jh3rlmhja4czq56j75fdx65fkk80s7"))
        (modules '((guix build utils)))
        (snippet
         ;; Replace the non-free implementation of MC64 with a stub adapted
@@ -2963,18 +2975,21 @@ also provides threshold-based ILU factorization preconditioners.")
 (define-public superlu-dist
   (package
     (name "superlu-dist")
-    (version "6.2.0")
+    (version "6.4.0")
     (source
      (origin
-       (method url-fetch)
-       (uri (string-append "https://portal.nersc.gov/project/sparse/superlu/"
-                           "superlu_dist_" version ".tar.gz"))
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/xiaoyeli/superlu_dist")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
        (sha256
-        (base32 "1ynmwqajc9sc3my2hssa5k9s58ggvizqv9rdss0j7w99pbh5mnvw"))
+        (base32 "0fa29yr72p4yq5ln4rgfsawmi5935n4qcr5niz6864bjladz4lql"))
        (modules '((guix build utils)))
        (snippet
         ;; Replace the non-free implementation of MC64 with a stub
         '(begin
+           (make-file-writable "SRC/mc64ad_dist.c")
            (call-with-output-file "SRC/mc64ad_dist.c"
              (lambda (port)
                (display "
@@ -3052,14 +3067,14 @@ implemented in ANSI C, and MPI for communications.")
 (define-public scotch
   (package
     (name "scotch")
-    (version "6.0.6")
+    (version "6.1.0")
     (source
      (origin
       (method url-fetch)
       (uri (string-append "https://gforge.inria.fr/frs/download.php/"
                           "latestfile/298/scotch_" version ".tar.gz"))
       (sha256
-       (base32 "1ky4k9r6jvajhqaqnnx6h8fkmds2yxgp70dpr1qzwcyhi2nhqvv8"))
+       (base32 "1184fcv4wa2df8szb5lan6pjh0raarr45pk8ilpvbz23naikzg53"))
       (patches (search-patches "scotch-build-parallelism.patch"
                                "scotch-integer-declarations.patch"))))
     (build-system gnu-build-system)
@@ -3107,7 +3122,7 @@ YACC = bison -pscotchyy -y -b y
                           "COMMON_PTHREAD"
                           "COMMON_RANDOM_FIXED_SEED"
                           "INTSIZE64"             ;use 'int64_t'
-                          ;; Prevents symbolc clashes with libesmumps
+                          ;; Prevents symbol clashes with libesmumps
                           "SCOTCH_RENAME"
                           ;; XXX: Causes invalid frees in superlu-dist tests
                           ;; "SCOTCH_PTHREAD"
@@ -4179,7 +4194,7 @@ revised simplex and the branch-and-bound methods.")
 (define-public dealii
   (package
     (name "dealii")
-    (version "9.1.1")
+    (version "9.2.0")
     (source
      (origin
        (method url-fetch)
@@ -4187,7 +4202,7 @@ revised simplex and the branch-and-bound methods.")
                            "download/v" version "/dealii-" version ".tar.gz"))
        (sha256
         (base32
-         "0xhjv0gzswpjbc43xbrpwfc5848g508l01855nszx3g5gwzlhnzw"))
+         "0fm4xzrnb7dfn4415j24d8v3jkh0lssi86250x2f5wgi83xq4nnh"))
        (modules '((guix build utils)))
        (snippet
         ;; Remove bundled sources: UMFPACK, TBB, muParser, and boost
@@ -4705,7 +4720,7 @@ as equations, scalars, vectors, and matrices.")
 (define-public z3
   (package
     (name "z3")
-    (version "4.8.8")
+    (version "4.8.9")
     (home-page "https://github.com/Z3Prover/z3")
     (source (origin
               (method git-fetch)
@@ -4714,7 +4729,7 @@ as equations, scalars, vectors, and matrices.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1rn538ghqwxq0v8i6578j8mflk6fyv0cp4hjfqynzvinjbps56da"))))
+                "1hnbzq10d23drd7ksm3c1n2611c3kd0q0yxgz8y78zaafwczvwxx"))))
     (build-system gnu-build-system)
     (arguments
      `(#:imported-modules ((guix build python-build-system)
@@ -4971,6 +4986,58 @@ terminal do calculations simply and quickly.  The formula to be calculated can
 be fed to @command{tcalc} through the command line.")
   (home-page "https://sites.google.com/site/mohammedisam2000/tcalc")
   (license license:gpl3+)))
+
+(define-public tiny-bignum
+  (let ((commit "1d7a1f9b8e77316187a6b3eae8e68d60a6f9a4d4"))
+    (package
+     (name "tiny-bignum")
+     (version (git-version "0" "0" commit))
+     (source
+      (origin
+        (method git-fetch)
+        (uri (git-reference
+              (url "https://github.com/kokke/tiny-bignum-c")
+              (commit commit)))
+        (file-name (git-file-name "tiny-bignum" commit))
+        (sha256
+         (base32 "0vj71qlhlaa7d92bfar1kwqv6582dqrby8x3kdw0yzh82k2023g6"))))
+     (build-system gnu-build-system)
+     (arguments
+      `(#:phases
+        (modify-phases %standard-phases
+          (delete 'configure)
+          (add-after 'unpack 'patch-tests
+            (lambda _
+              (substitute* "scripts/test_rand.py"
+                (("\t") "  ")
+                (("\" % (\\w+)" _ symbol) (string-append "\" % int(" symbol ")")))
+              #t))
+          (replace 'check
+            (lambda* (#:key tests? #:allow-other-keys)
+              (when tests?
+                (invoke "make" "test"))
+              #t))
+          (replace 'install
+            (lambda* (#:key outputs #:allow-other-keys)
+              (let ((share (string-append (assoc-ref outputs "out") "/share"))
+                    (doc (string-append (assoc-ref outputs "out") "/doc")))
+                (mkdir-p share)
+                (install-file "bn.c" share)
+                (install-file "bn.h" share)
+                (mkdir-p doc)
+                (install-file "LICENSE" doc)
+                (install-file "README.md" doc))
+              #t)))))
+     (native-inputs
+      `(("python" ,python-wrapper)))
+     (home-page "https://github.com/kokke/tiny-bignum-c")
+     (synopsis "Small portable multiple-precision unsigned integer arithmetic in C")
+     (description
+      "This library provides portable Arbitrary-precision unsigned integer
+arithmetic in C, for calculating with large numbers.  Basic arithmetic (+, -,
+*, /, %) and bitwise operations (&, |, ^. <<, >>) plus increments, decrements
+and comparisons are supported.")
+     (license license:unlicense))))
 
 (define-public sundials
   (package

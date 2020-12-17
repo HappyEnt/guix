@@ -147,16 +147,16 @@ a focus on simplicity and productivity.")
 (define-public ruby-2.7
   (package
     (inherit ruby)
-    (version "2.7.1")
+    (version "2.7.2")
     (source
      (origin
        (method url-fetch)
-       (uri (string-append "http://cache.ruby-lang.org/pub/ruby/"
+       (uri (string-append "https://cache.ruby-lang.org/pub/ruby/"
                            (version-major+minor version)
                            "/ruby-" version ".tar.gz"))
        (sha256
         (base32
-         "0674x98f542y02r7n2yv2qhmh97blqhi2mvh2dn5f000vlxlh66l"))
+         "1m63461mxi3fg4y3bspbgmb0ckbbb1ldgf9xi0piwkpfsk80cmvf"))
        (modules '((guix build utils)))
        (snippet `(begin
                    ;; Remove bundled libffi
@@ -228,7 +228,7 @@ a focus on simplicity and productivity.")
 (define-public mruby
   (package
     (name "mruby")
-    (version "2.0.0")
+    (version "2.1.2")
     (source
      (origin
        (method git-fetch)
@@ -238,7 +238,7 @@ a focus on simplicity and productivity.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "1r6w1asjshff43ymdwa6xmrkggza99mi2kw88k7ic6ag2j81hcj5"))))
+         "0fhfv8pi7i8jn2vgk2n2rjnbnfa12nhj514v8i4k353n7q4pmkh3"))))
     (build-system gnu-build-system)
     (arguments
      `(#:test-target "test"
@@ -1349,7 +1349,7 @@ Prawn module.")
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/prawnpdf/prawn-templates.git")
+             (url "https://github.com/prawnpdf/prawn-templates")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
@@ -1411,7 +1411,7 @@ loader for the file type associated with a filename extension, and it augments
      (origin
        (method git-fetch)               ;no test suite in distributed gem
        (uri (git-reference
-             (url "https://github.com/cjheath/treetop.git")
+             (url "https://github.com/cjheath/treetop")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
@@ -1474,7 +1474,7 @@ for performance optimizations in Ruby code.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/searls/gimme.git")
+               (url "https://github.com/searls/gimme")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
@@ -1535,7 +1535,7 @@ only what they care about.")
      (origin
        (method git-fetch)               ;no test suite in distributed gem
        (uri (git-reference
-             (url "https://github.com/testdouble/standard.git")
+             (url "https://github.com/testdouble/standard")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
@@ -1582,17 +1582,16 @@ to save time in the following ways:
 (define-public ruby-chunky-png
   (package
     (name "ruby-chunky-png")
-    (version "1.3.12")
+    (version "1.3.14")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/wvanbergen/chunky_png.git")
+             (url "https://github.com/wvanbergen/chunky_png")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32
-         "0hn8ap7iib47qkqdp0awmxgma11z0lmk1ca3lp7c97ykhv7ij1zs"))))
+        (base32 "1m7y11ix38h5a2pj5v81qdmvqh980ql9hp62hk2dxwkwsa4nh22h"))))
     (build-system ruby-build-system)
     (arguments
      `(#:test-target "spec"
@@ -1639,7 +1638,12 @@ pixel, depending on the hardware).
 Performance: ChunkyPNG is reasonably fast for Ruby standards, by only using
 integer math and a highly optimized saving routine.
 @item Interoperability with RMagick.
-@end itemize")
+@end itemize
+
+ChunkyPNG is vulnerable to decompression bombs and can run out of memory when
+loading a specifically crafted PNG file.  This is hard to fix in pure Ruby.
+Deal with untrusted images in a separate process, e.g., by using @code{fork}
+or a background processing library.")
     (home-page "https://github.com/wvanbergen/chunky_png/wiki")
     (license license:expat)))
 
@@ -1701,7 +1705,7 @@ web pages.")
        (origin
          (method git-fetch)      ;no test suite in the distributed gem
          (uri (git-reference
-               (url "https://github.com/asciidoctor/asciidoctor-pdf.git")
+               (url "https://github.com/asciidoctor/asciidoctor-pdf")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
@@ -2416,7 +2420,9 @@ extensions.")
     (arguments
      '(#:tests? #f ; test suite hangs for unknown reason
        #:gem-flags
-       (list "--"
+       (list "--no-document"            ; TODO: Re-enable when documentation
+                                        ; generation works
+             "--"
              (string-append "--with-xml2-include="
                             (assoc-ref %build-inputs "libxml2")
                             "/include/libxml2" ))))
@@ -3795,8 +3801,7 @@ specs for Ruby implementations in ruby/spec.")
                (invoke "rspec"))
              #t)))))
     (inputs
-     `(("mariadb" ,mariadb "lib")
-       ("mariadb-dev" ,mariadb "dev")
+     `(("mariadb-dev" ,mariadb "dev")
        ("zlib" ,zlib)))
     (native-inputs
      `(("ruby-rspec" ,ruby-rspec)
@@ -5125,15 +5130,17 @@ across multiple CPU cores.")
 (define-public ruby-parser
   (package
     (name "ruby-parser")
-    (version "2.7.1.4")
+    (version "2.7.2.0")
     (source
      (origin
        (method url-fetch)
        (uri (rubygems-uri "parser" version))
        (sha256
         (base32
-         "1030znhvhkfn39svwbj6qn4xb6hgl94gnvg57k4d3r76f9bryqmn"))))
+         "1f7gmm60yla325wlnd3qkxs59qm2y0aan8ljpg6k18rwzrrfil6z"))))
     (build-system ruby-build-system)
+    (arguments
+     '(#:tests? #f)) ; tests not included in gem
     (native-inputs
      `(("bundler" ,bundler)
        ("ruby-cliver" ,ruby-cliver)
@@ -6819,7 +6826,7 @@ inspired by the Sinatra microframework style of specifying actions:
      (origin
        (method git-fetch)               ;no test suite in distributed gem
        (uri (git-reference
-             (url "https://github.com/rubocop-hq/rubocop-ast.git")
+             (url "https://github.com/rubocop-hq/rubocop-ast")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
@@ -6863,7 +6870,7 @@ by RuboCop to deal with Ruby's Abstract Syntax Tree (AST), in particular:
      (origin
        (method git-fetch)               ;no tests in distributed gem
        (uri (git-reference
-             (url "https://github.com/ruby/rexml.git")
+             (url "https://github.com/ruby/rexml")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
@@ -6914,7 +6921,7 @@ better performance than @code{Regexp} and @code{String} methods from the
       (origin
         (method git-fetch)
         (uri (git-reference
-              (url "https://github.com/janosch-x/range_compressor.git")
+              (url "https://github.com/janosch-x/range_compressor")
               (commit (string-append "v" version))))
         (file-name (git-file-name name version))
         (sha256
@@ -6947,7 +6954,7 @@ following: @code{[1, 2, 3, 4, 6, 8, 9, 10]} into @code{[1..4, 6..6, 8..10]}.")
      (origin
        (method git-fetch)
        (uri (git-reference              ;no test suite in distributed gem
-             (url "https://github.com/jaynetics/regexp_property_values.git")
+             (url "https://github.com/jaynetics/regexp_property_values")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
@@ -6973,17 +6980,17 @@ they match.")
 (define-public ruby-regexp-parser
   (package
     (name "ruby-regexp-parser")
-    (version "1.7.1")
+    (version "2.0.0")
     (source
      (origin
        (method git-fetch)               ;bin/test missing from gem
        (uri (git-reference
-             (url "https://github.com/ammar/regexp_parser.git")
+             (url "https://github.com/ammar/regexp_parser")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "0dk9d4vpw31cc06s29fqyr1kq0kipym1mydifkcrnppvpl3pd53r"))))
+         "09ddxdwlml30q6j4rqf06bbjj1mwx00rs0bksnyblhv85anrqz3k"))))
     (build-system ruby-build-system)
     (arguments
      '(#:test-target "default"
@@ -7051,7 +7058,7 @@ run.")
      (origin
        (method git-fetch)               ;no tests in distributed gem
        (uri (git-reference
-             (url "https://github.com/rubocop-hq/rubocop.git")
+             (url "https://github.com/rubocop-hq/rubocop")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
@@ -10531,7 +10538,7 @@ custom checks.  This gem provides a set of additional checks.")
     (source (origin
               (method git-fetch)        ;no test in distributed gem archive
               (uri (git-reference
-                    (url "https://github.com/yob/pdf-reader.git")
+                    (url "https://github.com/yob/pdf-reader")
                     (commit (string-append "v" version))))
               (file-name (git-file-name name version))
               (sha256
@@ -10571,7 +10578,7 @@ access to the contents of a PDF file with a high degree of flexibility.")
       (source (origin
                 (method git-fetch)
                 (uri (git-reference
-                      (url "https://github.com/prawnpdf/pdf-inspector.git")
+                      (url "https://github.com/prawnpdf/pdf-inspector")
                       (commit commit)))
                 (file-name (git-file-name name version))
                 (sha256
@@ -10634,7 +10641,7 @@ functionality from Prawn.")
       (source (origin
                 (method git-fetch)
                 (uri (git-reference
-                      (url "https://github.com/prawnpdf/prawn.git")
+                      (url "https://github.com/prawnpdf/prawn")
                       (commit commit)))
                 (file-name (git-file-name name version))
                 (sha256

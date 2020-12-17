@@ -864,7 +864,8 @@ to proper type error reports.
 Guix code should define appropriate data types (for instance, using
 @code{define-record-type*}) rather than abuse lists.  In addition, it
 should use pattern matching, via Guile’s @code{(ice-9 match)} module,
-especially when matching lists.
+especially when matching lists (@pxref{Pattern Matching,,, guile, GNU
+Guile Reference Manual}).
 
 @node Formatting Code
 @subsection Formatting Code
@@ -1008,7 +1009,7 @@ to other packages unwillingly retained.  It may also help determine
 whether to split the package (@pxref{Packages with Multiple Outputs}),
 and which optional dependencies should be used.  In particular, avoid adding
 @code{texlive} as a dependency: because of its extreme size, use
-@code{texlive-tiny} or @code{texlive-union} instead.
+the @code{texlive-tiny} package or @code{texlive-union} procedure instead.
 
 @item
 For important changes, check that dependent package (if applicable) are
@@ -1368,11 +1369,6 @@ commit that others can't refer to, a check is made that the commit used
 has already been pushed to the Savannah-hosted Guix git repository.
 
 This check can be disabled, @emph{at your own peril}, by setting the
-@code{GUIX_ALLOW_ME_TO_USE_PRIVATE_COMMIT} environment variable.
-
-To build the resulting 'guix' package when using a private commit, the
-following command can be used:
-
-@example
-./pre-inst-env guix build guix --with-git-url=guix=$PWD
-@end example
+@code{GUIX_ALLOW_ME_TO_USE_PRIVATE_COMMIT} environment variable.  When
+this variable is set, the updated package source is also added to the
+store.  This is used as part of the release process of Guix.

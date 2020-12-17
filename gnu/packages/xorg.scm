@@ -11,7 +11,7 @@
 ;;; Copyright © 2016 Alex Kost <alezost@gmail.com>
 ;;; Copyright © 2016 David Craven <david@craven.ch>
 ;;; Copyright © 2016, 2017 John Darrington <jmd@gnu.org>
-;;; Copyright © 2017, 2018, 2019 Marius Bakke <mbakke@fastmail.com>
+;;; Copyright © 2017, 2018, 2019, 2020 Marius Bakke <mbakke@fastmail.com>
 ;;; Copyright © 2017, 2018, 2019 Rutger Helling <rhelling@mykolab.com>
 ;;; Copyright © 2017, 2020 Arun Isaac <arunisaac@systemreboot.net>
 ;;; Copyright © 2018, 2019, 2020 Tobias Geerinckx-Rice <me@tobias.gr>
@@ -2466,7 +2466,7 @@ XC-APPGROUP, XTEST.")
 (define-public libevdev
   (package
     (name "libevdev")
-    (version "1.8.0")
+    (version "1.9.1")
     (source
      (origin
        (method url-fetch)
@@ -2474,21 +2474,10 @@ XC-APPGROUP, XTEST.")
                            name "-" version ".tar.xz"))
        (sha256
         (base32
-         "04a2klvii0in9ln8r85mk2cm73jq8ry2m3yzmf2z8xyjxzjcmlr0"))))
+         "1jvsphdrs1i54ccjcn6ll26jy42am7h28lbsvwa6pmxgqm43qq7m"))))
     (build-system gnu-build-system)
     (arguments
-     `(#:configure-flags '("--disable-static")
-       #:phases (modify-phases %standard-phases
-                  (add-before 'configure 'pedantry
-                    (lambda _
-                      ;; XXX: libevdev includes kernel headers, which causes this
-                      ;; compile test to fail with:
-                      ;; ...-headers-4.14.67/include/asm-generic/posix_types.h:88:14:
-                      ;;error: ISO C90 does not support ‘long long’ [-Werror=long-long]
-                      (substitute* "test/Makefile.in"
-                        (("-pedantic -Werror -std=c89")
-                         "-pedantic -Werror -std=c99"))
-                      #t)))))
+     `(#:configure-flags '("--disable-static")))
     (native-inputs `(("python" ,python)))
     (home-page "https://www.freedesktop.org/wiki/Software/libevdev/")
     (synopsis "Wrapper library for evdev devices")
@@ -3023,8 +3012,8 @@ X server.")
 
 
 (define-public xf86-video-intel
-  (let ((commit "5ca3ac1a90af177eb111a965e9b4dd8a27cc58fc")
-        (revision "16"))
+  (let ((commit "ad5540f6ecaec287c70259f0181e613561b716f6")
+        (revision "17"))
     (package
       (name "xf86-video-intel")
       (version (git-version "2.99.917" revision commit))
@@ -3037,7 +3026,7 @@ X server.")
                (commit commit)))
          (sha256
           (base32
-           "1y1v6cp3r3isq3bc7mypkvypwjygi205k06slmidx2q3sz4h4mjc"))
+           "09jdg5wrq708wc83027337qvdjb96827h7sjwjfl5ffiynfpwl95"))
          (file-name (git-file-name name version))))
       (build-system gnu-build-system)
       (inputs `(("mesa" ,mesa)
@@ -4032,7 +4021,7 @@ extension to the X11 protocol.  It includes:
 (define-public xkeyboard-config
   (package
     (name "xkeyboard-config")
-    (version "2.29")
+    (version "2.31")
     (source
       (origin
         (method url-fetch)
@@ -4042,7 +4031,7 @@ extension to the X11 protocol.  It includes:
               ".tar.bz2"))
         (sha256
           (base32
-            "00hqc8nykvy8c09b8vab64dcd0ij3n5klxjn6rl00q7hickpah8x"))))
+            "18xddaxh83zm698syh50w983jg6b7b8zgv0dfaf7ha485hgihi6s"))))
     (build-system gnu-build-system)
     (inputs
       `(("libx11" ,libx11)
@@ -5320,8 +5309,7 @@ over Xlib, including:
 (define-public xorg-server
   (package
     (name "xorg-server")
-    (version "1.20.8")
-    (replacement xorg-server/fixed)
+    (version "1.20.10")
     (source
       (origin
         (method url-fetch)
@@ -5329,7 +5317,7 @@ over Xlib, including:
                             "xorg-server-" version ".tar.bz2"))
         (sha256
          (base32
-          "0ih15m7gh1z1ly6z7g82bkni719yisqmbk61a1wgp82bxrmn8yyi"))
+          "16bwrf0ag41l7jbrllbix8z6avc5yimga7ihvq4ch3a5hb020x4p"))
         (patches
          (list
           ;; See:
@@ -5445,35 +5433,22 @@ communicates with the user via graphical controls such as buttons and
 draggable titlebars and borders.")
     (license license:x11)))
 
-(define xorg-server/fixed  ; security fixes
-  (package
-    (inherit xorg-server)
-    (version "1.20.9")
-    (source
-     (origin
-       (inherit (package-source xorg-server))
-       (uri (string-append "mirror://xorg/individual/xserver/"
-                           "xorg-server-" version ".tar.bz2"))
-       (sha256
-        (base32
-         "0w9mrnffvjgmwi50kln15i8rpdskxv97r78l75wlcmg4vzhg46g2"))))))
-
 ;; This package is intended to be used when building GTK+.
 ;; Note: It's currently marked as "hidden" to avoid having two non-eq?
 ;; packages with the same name and version.
-;; TODO: Update this in the next rebuild cycle.
+;; TODO: Inherit source from xorg-server in a future rebuild cycle.
 (define-public xorg-server-for-tests
   (hidden-package
    (package
      (inherit xorg-server)
-     (version "1.20.7")
+     (version "1.20.9")
      (source (origin
                (inherit (package-source xorg-server))
                (uri (string-append "mirror://xorg/individual/xserver/"
                                    "xorg-server-" version ".tar.bz2"))
                (sha256
                 (base32
-                 "18bfl04ihw1jr3h0fs522nnxxq5ixjay77y9dcymnkzk23q8cndx")))))))
+                 "0w9mrnffvjgmwi50kln15i8rpdskxv97r78l75wlcmg4vzhg46g2")))))))
 
 (define-public xorg-server-xwayland
   (package/inherit xorg-server
@@ -6110,17 +6085,17 @@ to answer a question.  Xmessage can also exit after a specified time.")
 (define-public xterm
   (package
     (name "xterm")
-    (version "361")
-    (source (origin
-              (method url-fetch)
-              (uri (list
-                    (string-append "http://invisible-mirror.net/archives/xterm/"
-                                   "xterm-" version ".tgz")
-                    (string-append "ftp://ftp.invisible-island.net/xterm/"
-                                   "xterm-" version ".tgz")))
-              (sha256
-               (base32
-                "0gv27akkfb796aww1snq3c2sxmi8vajgfxk83g60awp4slh0yqc5"))))
+    (version "362")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (list
+             (string-append "https://invisible-mirror.net/archives/xterm/"
+                            "xterm-" version ".tgz")
+             (string-append "ftp://ftp.invisible-island.net/xterm/"
+                            "xterm-" version ".tgz")))
+       (sha256
+        (base32 "18mch57f5sypgfdbvna22ailcfpnixw0fc5wkf2j3w58dwigwkqx"))))
     (build-system gnu-build-system)
     (arguments
      '(#:configure-flags '("--enable-wide-chars" "--enable-load-vt-fonts"
@@ -6304,16 +6279,15 @@ basic eye-candy effects.")
 (define-public xpra
   (package
     (name "xpra")
-    (version "4.0.4")
+    (version "4.0.5")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "https://www.xpra.org/src/xpra-"
                            version ".tar.xz"))
        (sha256
-        (base32 "10alqdfmgml9ixdi1nyd9xlw8a5q0j8m2sv4g9p83pd6z1a0rpv2"))
-       (patches (search-patches "xpra-4.0.1-systemd-run.patch"
-                                "xpra-4.0.4-norequests.patch"))))
+        (base32 "11ml66z8vbc0fa567kkmp2j20l5l60aflnkrz5ay8arw3w92nmnz"))
+       (patches (search-patches "xpra-4.0.1-systemd-run.patch"))))
     (build-system python-build-system)
     ;; see also http://xpra.org/trac/wiki/Dependencies
     (inputs `(

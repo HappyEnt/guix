@@ -6,7 +6,7 @@
 ;;; Copyright © 2016, 2017, 2018 Marius Bakke <mbakke@fastmail.com>
 ;;; Copyright © 2016, 2017 Danny Milosavljevic <dannym@scratchpost.org>
 ;;; Copyright © 2016, 2017 David Craven <david@craven.ch>
-;;; Copyright © 2017, 2018 Efraim Flashner <efraim@flashner.co.il>
+;;; Copyright © 2017, 2018, 2020 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2018, 2019, 2020 Tobias Geerinckx-Rice <me@tobias.gr>
 ;;; Copyright © 2019 nee <nee@cock.li>
 ;;; Copyright © 2019 Mathieu Othacehe <m.othacehe@gmail.com>
@@ -115,11 +115,12 @@
                      ;; determine the root file system when it's a RAID
                      ;; device.  Failing to do that, 'grub-probe' silently
                      ;; fails if 'mdadm' is not in $PATH.
-                     (substitute* "grub-core/osdep/linux/getroot.c"
-                       (("argv\\[0\\] = \"mdadm\"")
-                        (string-append "argv[0] = \""
-                                       (assoc-ref inputs "mdadm")
-                                       "/sbin/mdadm\"")))
+                     (when (assoc-ref inputs "mdadm")
+                       (substitute* "grub-core/osdep/linux/getroot.c"
+                         (("argv\\[0\\] = \"mdadm\"")
+                          (string-append "argv[0] = \""
+                                         (assoc-ref inputs "mdadm")
+                                         "/sbin/mdadm\""))))
 
                      ;; Make the font visible.
                      (copy-file (assoc-ref (or native-inputs inputs)
@@ -132,6 +133,20 @@
                        (("^ckbcomp ")
                         (string-append (assoc-ref inputs "console-setup")
                                        "/bin/ckbcomp ")))
+                     #t))
+                  (add-after 'unpack 'set-freetype-variables
+                    ;; These variables need to be set to the native versions
+                    ;; of the dependencies because they are used to build
+                    ;; programs which are executed during build time.
+                    (lambda* (#:key native-inputs #:allow-other-keys)
+                      (when (assoc-ref native-inputs "freetype")
+                        (let ((freetype (assoc-ref native-inputs "freetype")))
+                          (setenv "BUILD_FREETYPE_LIBS"
+                                  (string-append "-L" freetype
+                                                 "/lib -lfreetype"))
+                          (setenv "BUILD_FREETYPE_CFLAGS"
+                                  (string-append "-I" freetype
+                                                 "/include/freetype2"))))
                      #t))
                   (add-before 'check 'disable-flaky-test
                     (lambda _
@@ -149,10 +164,11 @@
                         (("test_unset grub_func_test")
                           "test_unset"))
                       #t)))
-       ;; Disable tests on ARM and AARCH64 platforms.
-       #:tests? ,(not (any (cute string-prefix? <> (or (%current-target-system)
-                                                       (%current-system)))
-                           '("arm" "aarch64")))))
+       ;; Disable tests on ARM and AARCH64 platforms or when cross-compiling.
+       #:tests? ,(not (or (any (cute string-prefix? <> (or (%current-target-system)
+                                                           (%current-system)))
+                               '("arm" "aarch64"))
+                          (%current-target-system)))))
     (inputs
      `(("gettext" ,gettext-minimal)
 
@@ -194,6 +210,7 @@
        ("flex" ,flex)
        ("texinfo" ,texinfo)
        ("help2man" ,help2man)
+       ("freetype" ,freetype)   ; native version needed for build-grub-mkfont
 
        ;; XXX: When building GRUB 2.02 on 32-bit x86, we need a binutils
        ;; capable of assembling 64-bit instructions.  However, our default
@@ -241,21 +258,25 @@ menu to select one of the installed operating systems.")
      (fold alist-delete (package-native-inputs grub)
            '("help2man" "texinfo" "parted" "qemu" "xorriso")))
     (arguments
-     `(#:configure-flags (list "PYTHON=true")
-       #:phases (modify-phases %standard-phases
-                  (add-after 'unpack 'patch-stuff
-                   (lambda* (#:key native-inputs inputs #:allow-other-keys)
-                     (substitute* "grub-core/Makefile.in"
-                       (("/bin/sh") (which "sh")))
+     (substitute-keyword-arguments (package-arguments grub)
+       ((#:configure-flags _ ''())
+        '(list "PYTHON=true"))
+       ((#:tests? _ #t)
+        #f)
+       ((#:phases phases '%standard-phases)
+        `(modify-phases ,phases
+           (replace 'patch-stuff
+             (lambda* (#:key native-inputs inputs #:allow-other-keys)
+               (substitute* "grub-core/Makefile.in"
+                 (("/bin/sh") (which "sh")))
 
-                     ;; Make the font visible.
-                     (copy-file (assoc-ref (or native-inputs inputs)
-                                           "unifont")
-                                "unifont.bdf.gz")
-                     (system* "gunzip" "unifont.bdf.gz")
+               ;; Make the font visible.
+               (copy-file (assoc-ref (or native-inputs inputs)
+                                     "unifont")
+                          "unifont.bdf.gz")
+               (system* "gunzip" "unifont.bdf.gz")
 
-                     #t)))
-       #:tests? #f))))
+               #t))))))))
 
 (define-public grub-efi
   (package
@@ -424,7 +445,7 @@ menu to select one of the installed operating systems.")
      `(("python" ,python)))
     (arguments
      `(#:make-flags
-       (list "CC=gcc"
+       (list (string-append "CC=" ,(cc-for-target))
 
              ;; /bin/fdt{get,overlay,put} need help finding libfdt.so.1.
              (string-append "LDFLAGS=-Wl,-rpath="
@@ -435,6 +456,15 @@ menu to select one of the installed operating systems.")
              "INSTALL=install")
        #:phases
        (modify-phases %standard-phases
+         (add-after 'unpack 'patch-pkg-config
+           (lambda _
+             (substitute* '("Makefile"
+                            "tests/run_tests.sh")
+               (("pkg-config")
+                (or (which "pkg-config")
+                    (string-append ,(%current-target-system)
+                                   "-pkg-config"))))
+             #t))
          (delete 'configure))))         ; no configure script
     (home-page "https://www.devicetree.org")
     (synopsis "Compiles device tree source files")

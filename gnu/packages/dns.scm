@@ -317,7 +317,7 @@ and BOOTP/TFTP for network booting of diskless machines.")
   (package
     (name "bind")
     ;; When updating, check whether isc-dhcp's bundled copy should be as well.
-    (version "9.16.8")
+    (version "9.16.10")
     (source (origin
               (method url-fetch)
               (uri (string-append
@@ -325,7 +325,7 @@ and BOOTP/TFTP for network booting of diskless machines.")
                     "/bind-" version ".tar.xz"))
               (sha256
                (base32
-                "0ccdbqmpvnxlbrxjsx2w8ir4xh961svzcw7n87n8dglj6rb9r6wy"))))
+                "1cv26gzbyk3ahidr1fip0pgj28s7l52cafdqpykfc1b2kh0zqixw"))))
     (build-system gnu-build-system)
     (outputs `("out" "utils"))
     (inputs
@@ -533,14 +533,14 @@ asynchronous fashion.")
 (define-public nsd
   (package
     (name "nsd")
-    (version "4.3.3")
+    (version "4.3.4")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "https://www.nlnetlabs.nl/downloads/nsd/nsd-"
                            version ".tar.gz"))
        (sha256
-        (base32 "0lgdiqnkfvy245h6kkiqic586qjwmg51lsfs86vlc0kwjwddiijz"))))
+        (base32 "0l4ba80ihwg3s2ifhnkmk7rjabrcy5zw6sz4hn0vm9sif6lk9s1v"))))
     (build-system gnu-build-system)
     (arguments
      `(#:configure-flags
@@ -807,7 +807,7 @@ Extensions} (DNSSEC).")
 (define-public knot
   (package
     (name "knot")
-    (version "3.0.1")
+    (version "3.0.2")
     (source
      (origin
        (method git-fetch)
@@ -816,7 +816,7 @@ Extensions} (DNSSEC).")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "10mlzldxqvbaw78nghkr0s73rlbpz9wg16z14321xw2l9xfibkad"))
+        (base32 "1cinzz8p86fzknnr2z6b49yqr4y05mmnr0l2q3lwzcfhc6dcl8di"))
        (modules '((guix build utils)))
        (snippet
         '(begin
@@ -937,15 +937,16 @@ synthesis, and on-the-fly re-configuration.")
 (define-public knot-resolver
   (package
     (name "knot-resolver")
-    (version "5.1.3")
+    (version "5.2.1")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://secure.nic.cz/files/knot-resolver/"
                                   "knot-resolver-" version ".tar.xz"))
               (sha256
                (base32
-                "12s5070nqqf599s1mb6rjas2as481rjf751qk5yrz6p34y885k90"))))
+                "09jqy23q1pgj76y2qd1xfk72wwmypnyawm3span3gx00qi2bfdxa"))))
     (build-system meson-build-system)
+    (outputs '("out" "doc"))
     (arguments
      '(#:configure-flags '("-Ddoc=enabled")
        #:phases
@@ -960,6 +961,20 @@ synthesis, and on-the-fly re-configuration.")
          (add-after 'build 'build-doc
            (lambda _
              (invoke "ninja" "doc")))
+         (add-after 'install 'move-doc
+           (lambda* (#:key outputs #:allow-other-keys)
+             ;; Move the manual and the example configuration files to the
+             ;; "doc" output.
+             (let ((out (assoc-ref outputs "out"))
+                   (doc (assoc-ref outputs "doc")))
+               (mkdir-p (string-append doc "/share/doc/knot-resolver"))
+               (for-each
+                (lambda (dir)
+                  (rename-file (string-append out "/share/" dir)
+                               (string-append doc "/share/" dir)))
+                '("doc/knot-resolver/examples"
+                  "doc/knot-resolver/html"
+                  "info")))))
          (add-after 'install 'wrap-binary
            (lambda* (#:key inputs outputs #:allow-other-keys)
              (let* ((out (assoc-ref outputs "out"))
@@ -982,7 +997,8 @@ synthesis, and on-the-fly re-configuration.")
        ("pkg-config" ,pkg-config)
        ("python-breathe" ,python-breathe)
        ("python-sphinx" ,python-sphinx)
-       ("python-sphinx-rtd-theme" ,python-sphinx-rtd-theme)))
+       ("python-sphinx-rtd-theme" ,python-sphinx-rtd-theme)
+       ("texinfo" ,texinfo)))
     (inputs
      `(("fstrm" ,fstrm)
        ("gnutls" ,gnutls)
@@ -991,7 +1007,8 @@ synthesis, and on-the-fly re-configuration.")
        ("lmdb" ,lmdb)
        ("luajit" ,luajit)
        ;; TODO: Add optional lua modules: basexx and psl.
-       ("lua-bitop" ,lua5.1-bitop)))
+       ("lua-bitop" ,lua5.1-bitop)
+       ("nghttp2" ,nghttp2 "lib")))
     (home-page "https://www.knot-resolver.cz/")
     (synopsis "Caching validating DNS resolver")
     (description

@@ -6,6 +6,7 @@
 ;;; Copyright © 2020 Leo Famulari <leo@famulari.name>
 ;;; Copyright © 2020 Mark H Weaver <mhw@netris.org>
 ;;; Copyright © 2020 Gabriel Arazas <foo.dogsquared@gmail.com>
+;;; Copyright © 2020 Nicolas Goaziou <mail@nicolasgoaziou.fr>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -36,6 +37,57 @@
   #:use-module (gnu packages pkg-config)
   #:use-module (gnu packages tls)
   #:use-module (gnu packages version-control))
+
+(define-public bat
+  (package
+    (name "bat")
+    (version "0.17.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "bat" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "1ia12774prjnm3msiaja6qdpxkpyknxswqpgkmwzj0wn9nhkc7nz"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:cargo-inputs
+       (("rust-ansi-colours" ,rust-ansi-colours-1)
+        ("rust-ansi-term" ,rust-ansi-term-0.12)
+        ("rust-atty" ,rust-atty-0.2)
+        ("rust-clap" ,rust-clap-2)
+        ("rust-console" ,rust-console-0.13)
+        ("rust-content-inspector" ,rust-content-inspector-0.2)
+        ("rust-dirs" ,rust-dirs-3)
+        ("rust-encoding" ,rust-encoding-0.2)
+        ("rust-error-chain" ,rust-error-chain-0.12)
+        ("rust-git2" ,rust-git2-0.13)
+        ("rust-globset" ,rust-globset-0.4)
+        ("rust-lazy-static" ,rust-lazy-static-1)
+        ("rust-path-abs" ,rust-path-abs-0.5)
+        ("rust-semver" ,rust-semver-0.11)
+        ("rust-serde" ,rust-serde-1)
+        ("rust-serde-yaml" ,rust-serde-yaml-0.8)
+        ("rust-shell-words" ,rust-shell-words-1)
+        ("rust-syntect" ,rust-syntect-4)
+        ("rust-unicode-width" ,rust-unicode-width-0.1)
+        ("rust-wild" ,rust-wild-2))
+       #:cargo-development-inputs
+       (("rust-assert-cmd" ,rust-assert-cmd-1)
+        ("rust-predicates" ,rust-predicates-1)
+        ("rust-tempdir" ,rust-tempdir-0.3))))
+    (native-inputs
+     `(("pkg-config" ,pkg-config)))
+    (inputs
+     `(("libgit2" ,libgit2)
+       ("zlib" ,zlib)))
+    (home-page "https://github.com/sharkdp/bat")
+    (synopsis "@command{cat} clone with syntax highlighting and git integration")
+    (description
+     "@command{bat} is a drop-in @command{cat} replacement featuring syntax
+highlighting for a large number of languages, git integration, and automatic
+paging.")
+    (license (list license:expat license:asl2.0))))
 
 (define-public exa
   (package
@@ -75,11 +127,6 @@
        (("rust-datetime" ,rust-datetime-0.4))
        #:phases
        (modify-phases %standard-phases
-         (add-after 'configure 'dont-vendor-sources
-           (lambda* (#:key inputs #:allow-other-keys)
-             (let ((openssl (assoc-ref inputs "openssl")))
-               (setenv "OPENSSL_DIR" openssl))
-             #t))
          ;; Ignoring failing tests.
          ;; Reported in https://github.com/ogham/exa/issues/318
          (add-before 'check 'disable-failing-tests
@@ -90,6 +137,7 @@
 
              (substitute* "src/options/view.rs"
                (("test!\\(across:.*") "")
+               (("test!\\(cr:.*") "")
                (("test!\\(empty:.*") "")
                (("test!\\(gracross:.*") "")
                (("test!\\(grid:.*") "")
@@ -393,18 +441,12 @@ gitignore rules.")
         ("rust-lazy-static" ,rust-lazy-static-1)
         ("rust-regex" ,rust-regex-1)
         ("rust-serde-json" ,rust-serde-json-1)
-        ("rust-tempfile" ,rust-tempfile-3))
-       #:phases
-       (modify-phases %standard-phases
-         (add-after 'configure 'unvendor-libraries-from-crates
-           (lambda* (#:key inputs #:allow-other-keys)
-             (let ((openssl (assoc-ref inputs "openssl")))
-               (setenv "OPENSSL_DIR" openssl))
-             #t)))))
+        ("rust-tempfile" ,rust-tempfile-3))))
     (native-inputs
+     `(("pkg-config" ,pkg-config)))
+    (inputs
      `(("libgit2" ,libgit2)
        ("openssl" ,openssl)
-       ("pkg-config" ,pkg-config)
        ("zlib" ,zlib)))
     (home-page "https://tokei.rs")
     (synopsis "Count code, quickly")

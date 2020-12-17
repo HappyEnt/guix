@@ -3,7 +3,7 @@
 ;;; Copyright © 2014, 2015 Mark H Weaver <mhw@netris.org>
 ;;; Copyright © 2016 Andreas Enge <andreas@enge.fr>
 ;;; Copyright © 2016 Florian Paul Schmidt <mista.tapas@gmx.net>
-;;; Copyright © 2016 Kei Kebreau <kkebreau@posteo.net>
+;;; Copyright © 2016, 2020 Kei Kebreau <kkebreau@posteo.net>
 ;;; Copyright © 2017, 2019 Ricardo Wurmus <rekado@elephly.net>
 ;;; Copyright © 2017 Petter <petter@mykolab.ch>
 ;;; Copyright © 2017 Nikita <nikita@n0.is>
@@ -38,6 +38,7 @@
   #:use-module (gnu packages cdrom)
   #:use-module (gnu packages fontutils)
   #:use-module (gnu packages freedesktop)
+  #:use-module (gnu packages gettext)
   #:use-module (gnu packages glib)
   #:use-module (gnu packages gnome)
   #:use-module (gnu packages gstreamer)
@@ -53,7 +54,9 @@
   #:use-module (gnu packages pkg-config)
   #:use-module (gnu packages polkit)
   #:use-module (gnu packages popt)
+  #:use-module (gnu packages python-xyz)
   #:use-module (gnu packages pulseaudio)
+  #:use-module (gnu packages search)
   #:use-module (gnu packages web)
   #:use-module (gnu packages wm)
   #:use-module (gnu packages xml)
@@ -62,8 +65,10 @@
   #:use-module (guix build-system cmake)
   #:use-module (guix build-system glib-or-gtk)
   #:use-module (guix build-system gnu)
+  #:use-module (guix build-system python)
   #:use-module (guix build-system trivial)
   #:use-module (guix download)
+  #:use-module (guix git-download)
   #:use-module (guix gexp)
   #:use-module ((guix licenses) #:hide (freetype))
   #:use-module (guix packages)
@@ -121,7 +126,7 @@ Xfce Desktop Environment.")
 (define-public xfconf
   (package
     (name "xfconf")
-    (version "4.14.3")
+    (version "4.14.4")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://archive.xfce.org/src/xfce/"
@@ -129,7 +134,7 @@ Xfce Desktop Environment.")
                                   "xfconf-" version ".tar.bz2"))
               (sha256
                (base32
-                "00hcb96bw5ylfs9ppblchj8zv9026m3dlf7lnmgiq5f6xyh5542q"))))
+                "0wszp93z64112jq5wm4133s64in2ndvnzbgsbn8dh7p5xhp64dyc"))))
     (build-system gnu-build-system)
     (arguments
      '(#:phases
@@ -201,6 +206,99 @@ storage system.")
      "Libxfce4ui is the replacement of the old libxfcegui4 library.  It is used
 to share commonly used Xfce widgets among the Xfce applications.")
     (license lgpl2.0+)))
+
+(define-public catfish
+  (package
+    (name "catfish")
+    (version "1.4.13")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append "https://archive.xfce.org/src/apps/"
+                                  "catfish/" (version-major+minor version)
+                                  "/catfish-" version ".tar.bz2"))
+              (sha256
+               (base32
+                "0fg89946z6n8njxn4mv29jksw8yavg8vypsljn9031pjwl3fmh2q"))))
+    (build-system python-build-system)
+    (arguments
+     '(#:phases
+       (modify-phases %standard-phases
+         (add-after 'unpack 'patch-command-paths
+           (lambda* (#:key inputs #:allow-other-keys)
+             (substitute* "catfish/CatfishSearchEngine.py"
+               (("'which'") (string-append "'" (which "which") "'")))
+             (substitute* "catfish/CatfishWindow.py"
+               (("xdg-mime") (which "xdg-mime"))
+               (("xdg-open") (which "xdg-open")))))
+         ;; setup.py script does not support one of the Python build
+         ;; system's default flags, "--single-version-externally-managed".
+         (replace 'install
+           (lambda* (#:key outputs #:allow-other-keys)
+             (invoke "python" "setup.py" "install"
+                     (string-append "--prefix=" (assoc-ref outputs "out"))
+                     "--root=/")))
+         (add-after 'install 'wrap-program
+           (lambda* (#:key outputs #:allow-other-keys)
+             (let ((out (assoc-ref outputs "out")))
+               (wrap-program (string-append out "/bin/catfish")
+                 `("PYTHONPATH" = (,(getenv "PYTHONPATH")))
+                 `("GI_TYPELIB_PATH" = (,(getenv "GI_TYPELIB_PATH"))))))))
+       #:tests? #f))
+    (native-inputs
+     `(("pkg-config" ,pkg-config)
+       ("python-distutils-extra" ,python-distutils-extra)
+       ("intltool" ,intltool)))
+    (inputs
+     `(("which" ,which)
+       ("xdg-utils" ,xdg-utils)))
+    (propagated-inputs
+     `(("gtk+" ,gtk+)
+       ("python-dbus" ,python-dbus)
+       ("python-pexpect" ,python-pexpect)
+       ("python-pycairo" ,python-pycairo)
+       ("python-pygobject" ,python-pygobject)))
+    (home-page "https://docs.xfce.org/apps/catfish/start")
+    (synopsis "File searching tool for Xfce")
+    (description
+     "Catfish is a file searching tool for Linux and Unix.  The interface is
+intentionally lightweight and simple, using only GTK+ 3.  You can configure
+it to your needs by using several command line options.")
+    (license gpl2+)))
+
+(define-public elementary-xfce-icon-theme
+  (package
+    (name "elementary-xfce-icon-theme")
+    (version "0.15.1")
+    (source (origin
+              (method git-fetch)
+              (uri
+               (git-reference
+                (url "https://github.com/shimmerproject/elementary-xfce")
+                (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "1rl15kh9c7qxw4pvwmw44fb4v3vwh6zin4wpx55bnvm5j76y6p3f"))))
+    (build-system gnu-build-system)
+    (arguments
+     '(#:tests? #f                      ; no check target
+       #:make-flags '("CC=gcc")
+       #:phases
+       (modify-phases %standard-phases
+         (add-after 'unpack 'make-git-checkout-writable
+           (lambda _
+             (for-each make-file-writable (find-files "."))
+             #t)))))
+    (native-inputs
+     `(("gtk+" ,gtk+)
+       ("optipng" ,optipng)
+       ("pkg-config" ,pkg-config)))
+    (home-page "https://shimmerproject.org/")
+    (synopsis "Elementary icons extended and maintained for Xfce")
+    (description "This is a fork of the upstream elementary project.  This icon
+theme is supposed to keep everything working for Xfce, but gets updates from
+upstream occasionally.")
+    (license gpl2+)))
 
 (define-public exo
   (package
@@ -495,11 +593,21 @@ keys for controlling the audio volume.")
     (inputs
      `(("xfce4-panel" ,xfce4-panel)
        ("garcon" ,garcon)
+       ("gettext" ,gettext-minimal)
        ("exo" ,exo)
        ("gtk+" ,gtk+)
        ("libxfce4ui" ,libxfce4ui)))
     (arguments
-      `(#:tests? #f)) ; no tests
+     `(#:tests? #f                      ; no tests
+       #:phases
+       (modify-phases %standard-phases
+         (add-after 'unpack 'fix-shell-script
+           (lambda* (#:key inputs #:allow-other-keys)
+             (substitute* (string-append "panel-plugin/xfce4-popup-whiskermenu.in")
+               (("@CMAKE_INSTALL_FULL_BINDIR@")
+                (string-append (assoc-ref inputs "xfce4-panel") "/bin"))
+               (("gettext") (which "gettext")))
+             #t)))))
     (home-page "https://goodies.xfce.org/projects/panel-plugins/xfce4-whiskermenu-plugin")
     (synopsis "Application menu panel plugin for Xfce")
     (description
@@ -662,7 +770,7 @@ like appearance, display, keyboard and mouse settings.")
 (define-public thunar
   (package
     (name "thunar")
-    (version "1.8.15")
+    (version "1.8.16")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://archive.xfce.org/src/xfce/"
@@ -670,7 +778,7 @@ like appearance, display, keyboard and mouse settings.")
                                   "thunar-" version ".tar.bz2"))
               (sha256
                (base32
-                "14vw4yaf9fff24zmj4dp8r8hf8mb19hl4w4l0jc8c4qzy865c93n"))))
+                "0k1w2zwa8z6sc8vi3frva74npks79x79n7q9p7ibwk7irfqkh4r2"))))
     (build-system gnu-build-system)
     (native-inputs
      `(("pkg-config" ,pkg-config)
@@ -755,7 +863,7 @@ on the screen.")
 (define-public xfdesktop
   (package
     (name "xfdesktop")
-    (version "4.14.2")
+    (version "4.14.3")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://archive.xfce.org/src/xfce/"
@@ -763,7 +871,7 @@ on the screen.")
                                   "xfdesktop-" version ".tar.bz2"))
               (sha256
                (base32
-                "0x1yx9sd5aanrlr1qnbwd2nsmcg09g4132k0kyb7z47a3x3381d3"))
+                "14sp5a4n21prwmh2l5mjq5fjaq7r2pbjxddfx4wzaix8867x1mq6"))
               (modules '((guix build utils)))
               (snippet
                #~(begin
@@ -787,6 +895,7 @@ on the screen.")
                                           "/tmp/final.jpg")
                                   (copy-file "/tmp/final.jpg" image))
                                 '(;; "backgrounds/xfce-blue.jpg"
+                                  "backgrounds/xfce-stripes.png"
                                   "backgrounds/xfce-teal.jpg"))
                       #t)))
 
@@ -898,7 +1007,7 @@ system resources, while still being visually appealing and user friendly.")
 (define-public xfce4-power-manager
   (package
     (name "xfce4-power-manager")
-    (version "1.7.0")
+    (version "1.7.1")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://archive.xfce.org/src/xfce/"
@@ -906,7 +1015,7 @@ system resources, while still being visually appealing and user friendly.")
                                   "xfce4-power-manager-" version ".tar.bz2"))
               (sha256
                (base32
-                "0jqjwy341dxyijjm9k77a12iih6b5r3f4cmpr2lppa7mf37qqdj5"))))
+                "1ki088iyr266cfyq9bmmhhd27wrsrmbhsblyf4yqby03hlvqif3k"))))
     (build-system gnu-build-system)
     (native-inputs
      `(("pkg-config" ,pkg-config)
@@ -1034,7 +1143,7 @@ several different time zones.")
 (define-public xfce4-notifyd
   (package
     (name "xfce4-notifyd")
-    (version "0.6.1")
+    (version "0.6.2")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://archive.xfce.org/src/apps/"
@@ -1042,7 +1151,7 @@ several different time zones.")
                                   name "-" version ".tar.bz2"))
               (sha256
                (base32
-                "1d49l2vdz4hb2c14ai5p81wz7vikh9g3ffz0gmm2kgw9kjcp8llv"))))
+                "0ib5s7kjbr9sy8nh89nfcc4w6qplacnk4s92iycijy2wcv389aqr"))))
     (build-system glib-or-gtk-build-system)
     (native-inputs
      `(("intltool" ,intltool)
@@ -1176,7 +1285,7 @@ A plugin for the Xfce panel is also available.")
 (define-public xfce4-screensaver
   (package
     (name "xfce4-screensaver")
-    (version "0.1.10")
+    (version "0.1.11")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://archive.xfce.org/src/apps/"
@@ -1186,7 +1295,7 @@ A plugin for the Xfce panel is also available.")
                                   version ".tar.bz2"))
               (sha256
                (base32
-                "0mqxbyq9np6jzky8y35dlxxmk78q2w0jvwg9kh7a4ib7vmw1qvsq"))))
+                "0xxcvvcch8bqd35ksq8l88a46xnidp59iq4ssyygki0a2vd20h41"))))
     (build-system gnu-build-system)
     (arguments
      `(#:phases
@@ -1986,7 +2095,7 @@ lan interface (signal state, signal quality, network name (SSID)).")
 (define-public xfce4-weather-plugin
   (package
    (name "xfce4-weather-plugin")
-   (version "0.10.1")
+   (version "0.10.2")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://archive.xfce.org/src/panel-plugins/"
@@ -1995,7 +2104,7 @@ lan interface (signal state, signal quality, network name (SSID)).")
                                   "/xfce4-weather-plugin-" version ".tar.bz2"))
               (sha256
                (base32
-                "12bs2rfmmy021087i10vxibdbbvd5vld0vk3h5hymhpz7rgszcmg"))))
+                "1ik2qvmwylsz5vyz4np2y0mmd37s89xkayxi97490c4mj85pj5wh"))))
     (build-system gnu-build-system)
     (native-inputs
      `(("intltool" ,intltool)

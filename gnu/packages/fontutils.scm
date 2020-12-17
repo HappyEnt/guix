@@ -30,29 +30,34 @@
 
 (define-module (gnu packages fontutils)
   #:use-module (gnu packages)
-  #:use-module (gnu packages compression)
+  #:use-module (gnu packages autotools)
+  #:use-module (gnu packages bison)
+  #:use-module (gnu packages build-tools)   ;for meson-0.55
   #:use-module (gnu packages check)
+  #:use-module (gnu packages compression)
+  #:use-module (gnu packages datastructures)
+  #:use-module (gnu packages flex)
+  #:use-module (gnu packages fonts)
+  #:use-module (gnu packages freedesktop)
+  #:use-module (gnu packages fribidi)
+  #:use-module (gnu packages gcc)
+  #:use-module (gnu packages gettext)
   #:use-module (gnu packages ghostscript)
+  #:use-module (gnu packages glib)
+  #:use-module (gnu packages gnome)
+  #:use-module (gnu packages gperf)
+  #:use-module (gnu packages gtk)
+  #:use-module (gnu packages image)
   #:use-module (gnu packages linux)
+  #:use-module (gnu packages man)
   #:use-module (gnu packages perl)
   #:use-module (gnu packages pkg-config)
-  #:use-module (gnu packages autotools)
-  #:use-module (gnu packages fonts)
-  #:use-module (gnu packages gettext)
   #:use-module (gnu packages python)
   #:use-module (gnu packages python-xyz)
-  #:use-module (gnu packages image)
-  #:use-module (gnu packages bison)
-  #:use-module (gnu packages flex)
-  #:use-module (gnu packages glib)
-  #:use-module (gnu packages gperf)
-  #:use-module (gnu packages xorg)
-  #:use-module (gnu packages fribidi)
-  #:use-module (gnu packages gtk)
-  #:use-module (gnu packages xml)
   #:use-module (gnu packages sqlite)
-  #:use-module (gnu packages gnome)
-  #:use-module (gnu packages freedesktop)
+  #:use-module (gnu packages xdisorg)
+  #:use-module (gnu packages xml)
+  #:use-module (gnu packages xorg)
   #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix packages)
   #:use-module (guix download)
@@ -160,7 +165,7 @@ scripts.")
     (inputs
      `(("zlib" ,zlib)))
     (arguments
-     `(#:make-flags '("CC=gcc")
+     `(#:make-flags '(,(string-append "CC=" (cc-for-target)))
        #:tests? #f                      ;no tests
        #:phases
        (modify-phases %standard-phases
@@ -170,7 +175,8 @@ scripts.")
              (let* ((out (assoc-ref outputs "out"))
                     (bin (string-append out "/bin")))
                (install-file "sfnt2woff" bin)
-               (install-file "woff2sfnt" bin)))))))
+               (install-file "woff2sfnt" bin))
+             #t)))))
     (synopsis "Convert between OpenType and WOFF fonts")
     (description
      "This package provides two tools:
@@ -282,7 +288,7 @@ work with most software requiring Type 1 fonts.")
        (method git-fetch)
        (uri
         (git-reference
-         (url "https://github.com/google/woff2.git")
+         (url "https://github.com/google/woff2")
          (commit (string-append "v" version))))
        (file-name
         (git-file-name name version))
@@ -827,6 +833,50 @@ maintain the Noto Fonts project.")
                     "file://sample_texts/attributions.txt"
                     "See sample_texts/attributions.txt in the distribution.")))))
 
+(define-public fcft
+  (package
+    (name "fcft")
+    (version "2.3.1")
+    (home-page "https://codeberg.org/dnkl/fcft")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference (url home-page) (commit version)))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "1ddzdfq6y9db50zimxfsr955zkpr8y6fk4nrblsl0j0vliywlg8l"))))
+    (build-system meson-build-system)
+    (arguments
+     `(#:meson ,meson-0.55))
+    (native-inputs
+     `(("check" ,check)
+       ("gcc" ,gcc-10)    ;TODO: Remove when the default compiler is > GCC 7.
+       ("pkg-config" ,pkg-config)
+       ("scdoc" ,scdoc)))
+    (propagated-inputs
+     `(;; Required by fcft.pc.
+       ("fontconfig" ,fontconfig)
+       ("freetype" ,freetype)
+       ("harfbuzz" ,harfbuzz)
+       ("pixman" ,pixman)
+       ("tllist" ,tllist)))
+    (synopsis "Font loading and glyph rasterization library")
+    (description
+     "@code{fcft} is a small font loading and glyph rasterization library
+built on-top of FontConfig, FreeType2 and pixman.
+
+It can load and cache fonts from a fontconfig-formatted name string, e.g.
+@code{Monospace:size=12}, optionally with user configured fallback fonts.
+
+After a font has been loaded, you can rasterize glyphs.  When doing so, the
+primary font is first considered.  If it does not have the requested glyph,
+the user configured fallback fonts (if any) are considered.  If none of the
+user configured fallback fonts has the requested glyph, the FontConfig
+generated list of fallback fonts are checked.")
+    ;; The code is distributed under the Expat license, but embeds Unicode
+    ;; data files carrying the Unicode license.
+    (license (list license:expat license:unicode))))
+
 (define-public fontmanager
   (package
    (name "fontmanager")
@@ -936,7 +986,7 @@ Unicode Charts.  It was developed for use with DejaVu Fonts project.")
 (define-public libraqm
   (package
     (name "libraqm")
-    (version "0.7.0")
+    (version "0.7.1")
     (source
      (origin
        (method url-fetch)
@@ -944,7 +994,7 @@ Unicode Charts.  It was developed for use with DejaVu Fonts project.")
                            "releases/download/v" version "/"
                            "raqm-" version ".tar.gz"))
        (sha256
-        (base32 "0hgry3fj2y3qaq2fnmdgd93ixkk3ns5jds4vglkiv2jfvpn7b1g2"))))
+        (base32 "0a4q9dziirb85sa9rmkamg2krdhd009di2vlz91njwxcp3q8qj46"))))
     (build-system gnu-build-system)
     (arguments
      `(#:configure-flags (list "--disable-static")))
@@ -966,3 +1016,33 @@ It currently provides bidirectional text support (using FriBiDi),
 shaping (using HarfBuzz), and proper script itemization.  As a result, Raqm
 can support most writing systems covered by Unicode.")
     (license license:expat)))
+
+(define-public lcdf-typetools
+  (package
+    (name "lcdf-typetools")
+    (version "2.108")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                     (url "https://github.com/kohler/lcdf-typetools")
+                     (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "0a6jqaqwq43ldjjjlnsh6mczs2la9363qav7v9fyrfzkfj8kw9ad"))))
+    (build-system gnu-build-system)
+    (arguments
+     `(#:configure-flags
+       ;; This is only provided by the monolithic texlive distribution.
+       ;; FIXME: texlive-kpathsea doesn't come with the library and headers
+       (list "--without-kpathsea")))
+    (native-inputs
+     `(("autoconf" ,autoconf)
+       ("automake" ,automake)))
+    (home-page "https://lcdf.org/type/")
+    (synopsis "Multiple font manipulation tools")
+    (description "LCDF Typetools comprises several programs for manipulating
+PostScript Type 1, Type 1 Multiple Master, OpenType, and TrueType fonts.
+These tools are cfftot1, mmafm, mmpfb, otfinfo, otftotfm, t1dotlessj, t1lint,
+t1rawfm, t1reencode, t1testpage and ttftotype42.")
+    (license license:gpl2+)))

@@ -14,7 +14,7 @@
 ;;; Copyright © 2017, 2018, 2019, 2020 Tobias Geerinckx-Rice <me@tobias.gr>
 ;;; Copyright © 2017 Vasile Dumitrascu <va511e@yahoo.com>
 ;;; Copyright © 2017 Clément Lassieur <clement@lassieur.org>
-;;; Copyright © 2017 André <eu@euandre.org>
+;;; Copyright © 2017, 2020 EuAndreh <eu@euandre.org>
 ;;; Copyright © 2017, 2018, 2020 Marius Bakke <mbakke@fastmail.com>
 ;;; Copyright © 2017 Stefan Reichör <stefan@xsteve.at>
 ;;; Copyright © 2017, 2020 Oleg Pykhalov <go.wigust@gmail.com>
@@ -31,6 +31,7 @@
 ;;; Copyright © 2020 Jan (janneke) Nieuwenhuizen <janneke@gnu.org>
 ;;; Copyright © 2020 Vinicius Monego <monego@posteo.net>
 ;;; Copyright © 2020 Tanguy Le Carrour <tanguy@bioneland.org>
+;;; Copyright © 2020 Michael Rohleder <mike@rohleder.de>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -55,6 +56,7 @@
   #:use-module (guix git-download)
   #:use-module (guix hg-download)
   #:use-module (guix build-system cmake)
+  #:use-module (guix build-system copy)
   #:use-module (guix build-system gnu)
   #:use-module (guix build-system go)
   #:use-module (guix build-system perl)
@@ -74,6 +76,7 @@
   #:use-module (gnu packages ed)
   #:use-module (gnu packages file)
   #:use-module (gnu packages flex)
+  #:use-module (gnu packages freedesktop)
   #:use-module (gnu packages gettext)
   #:use-module (gnu packages gl)
   #:use-module (gnu packages golang)
@@ -93,6 +96,7 @@
   #:use-module (gnu packages perl-check)
   #:use-module (gnu packages pkg-config)
   #:use-module (gnu packages python)
+  #:use-module (gnu packages python-check)
   #:use-module (gnu packages python-web)
   #:use-module (gnu packages python-xyz)
   #:use-module (gnu packages readline)
@@ -159,14 +163,14 @@ as well as the classic centralized workflow.")
 (define-public git
   (package
    (name "git")
-   (version "2.28.0")
+   (version "2.29.2")
    (source (origin
             (method url-fetch)
             (uri (string-append "mirror://kernel.org/software/scm/git/git-"
                                 version ".tar.xz"))
             (sha256
              (base32
-              "17a311vzimqn1glc9d7x82rhb1mb81m5rr4g8xji8idaafid39fz"))))
+              "1h87yv117ypnc0yi86941089c14n91gixk8b6shj2y35prp47z7j"))))
    (build-system gnu-build-system)
    (native-inputs
     `(("native-perl" ,perl)
@@ -183,7 +187,7 @@ as well as the classic centralized workflow.")
                 version ".tar.xz"))
           (sha256
            (base32
-            "1dvwq0py8a2ywmgc5pzdlsj3608s7r9wyba292728fcs3yj7ynk6"))))
+            "14npkg9rnp2yclsx5p622qpm6byzfy5k5wb209vkmm5r60m4mm72"))))
       ;; For subtree documentation.
       ("asciidoc" ,asciidoc-py3)
       ("docbook-xsl" ,docbook-xsl)
@@ -390,6 +394,16 @@ as well as the classic centralized workflow.")
               (install-file "contrib/subtree/git-subtree.1"
                             (string-append subtree "/share/man/man1"))
               #t)))
+         (add-after 'install 'restore-sample-hooks-shebang
+           (lambda* (#:key outputs #:allow-other-keys)
+             (let* ((out (assoc-ref outputs "out"))
+                    (dir (string-append out "/share/git-core/templates/hooks")))
+               (for-each (lambda (file)
+                           (format #t "restoring shebang on `~a'~%" file)
+                           (substitute* file
+                             (("^#!.*/bin/sh") "#!/bin/sh")))
+                         (find-files dir ".*"))
+               #t)))
         (add-after 'install 'split
           (lambda* (#:key inputs outputs #:allow-other-keys)
             ;; Split the binaries to the various outputs.
@@ -518,11 +532,6 @@ everything from small to very large projects with speed and efficiency.")
            (delete 'install-man-pages)
            (delete 'install-subtree)
            (delete 'install-credential-netrc)
-           (add-before 'check 'delete-svn-test
-             (lambda _
-               ;; This test cannot run since we are not building 'git-svn'.
-               (delete-file "t/t9020-remote-svn.sh")
-               #t))
            (add-after 'install 'remove-unusable-perl-commands
              (lambda* (#:key outputs #:allow-other-keys)
                (let* ((out     (assoc-ref outputs "out"))
@@ -659,7 +668,7 @@ to GitHub contributions calendar.")
 (define-public libgit2
   (package
     (name "libgit2")
-    (version "1.0.1")
+    (version "1.1.0")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://github.com/libgit2/libgit2/"
@@ -667,7 +676,7 @@ to GitHub contributions calendar.")
                                   "/libgit2-" version ".tar.gz"))
               (sha256
                (base32
-                "0nlg35pxhh548nn7aa3y1m81mf81nkbzz86i2psps4f474n497v8"))
+                "1fjdglkh04qv3b4alg621pxa689i0wlf8m7nf2755zawjr2zhwxd"))
               (patches (search-patches "libgit2-mtime-0.patch"))
               (snippet '(begin
                           (delete-file-recursively "deps") #t))
@@ -1205,7 +1214,7 @@ lot easier.")
 (define-public stgit
   (package
     (name "stgit")
-    (version "0.21")
+    (version "0.23")
     (source
      (origin
        (method git-fetch)
@@ -1214,7 +1223,7 @@ lot easier.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "00pmz93znl418lsjwy4mr0chp8i2w27h1xjysa05f62smsv91yyc"))))
+        (base32 "0bgxgsd6nj6gkk74c56vrjsyr7j19jrj6cx2ma6f7b20wriznhd5"))))
     (build-system python-build-system)
     (native-inputs
      `(("perl" ,perl)))
@@ -1244,7 +1253,7 @@ lot easier.")
                      "PERL_PATH=perl"
                      (string-append "SHELL_PATH=" (which "bash"))
                      "test"))))))
-    (home-page "http://procode.org/stgit/")
+    (home-page "https://stacked-git.github.io/")
     (synopsis "Stacked Git")
     (description
      "StGit is a command-line application that provides functionality similar
@@ -1446,7 +1455,7 @@ control to Git repositories.")
 (define-public pre-commit
   (package
     (name "pre-commit")
-    (version "2.7.1")
+    (version "2.8.1")
     (source
      (origin
        ;; No tests in the PyPI tarball.
@@ -1456,7 +1465,7 @@ control to Git repositories.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0n7qby5a4yz3s02nqcp5js6jg9wrd0x7msblxwb1883ds4b2b71a"))))
+        (base32 "0b3ks6viccq3n4p8i8zgfd40vp1k5nkhmmlz7p4nxcdizw8zxgn8"))))
     (build-system python-build-system)
     (arguments
      `(#:phases
@@ -1497,6 +1506,12 @@ control to Git repositories.")
                       " and not test_additional_rust_lib_dependencies_installed"
                       " and not test_local_rust_additional_dependencies"
                       " and not test_rust_hook"
+                      ;; Disable dotnet tests.
+                      " and not test_dotnet_hook"
+                      ;; Disable nodejs tests.
+                      " and not test_unhealthy_if_system_node_goes_missing"
+                      " and not test_installs_without_links_outside_env"
+                      " and not test_healthy_system_node"
                       ;; Disable python2 test.
                       " and not test_switch_language_versions_doesnt_clobber"
                       ;; These tests try to open a network socket.
@@ -1539,8 +1554,10 @@ control to Git repositories.")
                #t))))))
     (native-inputs
      `(("git" ,git-minimal)
-       ("python-pytest" ,python-pytest)))
-    (inputs
+       ("python-pytest" ,python-pytest)
+       ("python-re-assert" ,python-re-assert)))
+    ;; Propagate because pre-commit is also used as a module.
+    (propagated-inputs
      `(("python-cfgv" ,python-cfgv)
        ("python-identify" ,python-identify)
        ("python-nodeenv" ,python-nodeenv)
@@ -2263,7 +2280,7 @@ Mercurial, Bazaar, Darcs, CVS, Fossil, and Veracity.")
 (define-public grokmirror
   (package
     (name "grokmirror")
-    (version "2.0.0")
+    (version "2.0.5")
     (source
      (origin
        (method git-fetch)
@@ -2273,7 +2290,7 @@ Mercurial, Bazaar, Darcs, CVS, Fossil, and Veracity.")
              (commit (string-append "v" version))))
        (file-name (string-append name "-" version "-checkout"))
        (sha256
-        (base32 "1cs43vf87x8x5k5ncgiwiclc92a1dvxpg2z6lh6psaiip808gylp"))))
+        (base32 "006ar3kc6fw1sq300ar9np4a63qzzsdama6cv30wh65v5mqw1mnv"))))
     (build-system python-build-system)
     (arguments
      `(#:tests? #f                      ; no test suite
@@ -2288,7 +2305,8 @@ Mercurial, Bazaar, Darcs, CVS, Fossil, and Veracity.")
                          (find-files "." "\\.1$")))
              #t)))))
     (propagated-inputs
-     `(("python-requests" ,python-requests)))
+     `(("python-packaging" ,python-packaging)
+       ("python-requests" ,python-requests)))
     (home-page
      "https://git.kernel.org/pub/scm/utils/grokmirror/grokmirror.git")
     (synopsis "Framework to smartly mirror git repositories")
@@ -2296,6 +2314,37 @@ Mercurial, Bazaar, Darcs, CVS, Fossil, and Veracity.")
 collections efficiently.  Mirrors decide to clone and update repositories
 based on a manifest file published by servers.")
     (license license:gpl3+)))
+
+(define-public b4
+  (package
+    (name "b4")
+    (version "0.6.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "b4" version))
+       (sha256
+        (base32 "01qid6mvddikcdpf2ihsyn8x3z5j2n64g0ip9pqbx42hrc50pmcz"))))
+    (build-system python-build-system)
+    (arguments '(#:tests? #f))          ; No tests.
+    (inputs
+     `(("python-dkimpy" ,python-dkimpy)
+       ("python-dnspython" ,python-dnspython)
+       ("python-requests" ,python-requests)))
+    (home-page "https://git.kernel.org/pub/scm/utils/b4/b4.git")
+    (synopsis "Tool for working with patches in public-inbox archives")
+    (description
+     "The @code{b4} command is designed to make it easier to participate in
+patch-based workflows for projects that have public-inbox archives.
+
+Features include:
+@itemize
+@item downloading a thread's mbox given a message ID
+@item processing an mbox so that is ready to be fed to @code{git-am}
+@item creating templated replies for processed patches and pull requests
+@item submitting cryptographic attestation for patches.
+@end itemize")
+    (license license:gpl2+)))
 
 (define-public git-annex-remote-rclone
   (package
@@ -2661,6 +2710,40 @@ videos, datasets, and graphics with text pointers inside Git, while storing the
 file contents on a remote server.")
     (license license:expat)))
 
+(define-public git-open
+  (package
+    (name "git-open")
+    (version "2.1.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/paulirish/git-open")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "11n46bngvca5wbdbfcxzjhjbfdbad7sgf7h9gf956cb1q8swsdm0"))))
+    (build-system copy-build-system)
+    (inputs
+     `(("xdg-utils" ,xdg-utils)))
+    (arguments
+     `(#:phases
+       (modify-phases %standard-phases
+         (add-after 'install 'wrap-program
+           (lambda* (#:key outputs inputs #:allow-other-keys)
+             (let ((out (assoc-ref outputs "out"))
+                   (xdg-utils (assoc-ref inputs "xdg-utils")))
+               (wrap-program (string-append out "/bin/git-open")
+                 `("PATH" ":" prefix (,(string-append xdg-utils "/bin"))))))))
+       #:install-plan
+       '(("git-open" "bin/git-open"))))
+    (home-page "https://github.com/paulirish/git-open")
+    (synopsis "Open a Git repository's homepage from the command-line")
+    (description
+     "@code{git open} opens the repository's website from the command-line,
+guessing the URL pattern from the @code{origin} remote.")
+    (license license:expat)))
+
 (define-public tla
   (package
     (name "gnu-arch")
@@ -2718,6 +2801,53 @@ for historians.")
     (home-page "https://www.gnu.org/software/gnu-arch/")
     (license license:gpl2)))                      ;version 2 only
 
+(define-public diff-so-fancy
+  (package
+    (name "diff-so-fancy")
+    (version "1.3.0")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/so-fancy/diff-so-fancy")
+                    (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "0aavxahzha2mms4vdwysk79pa6wzswpfwgsq2hwaxnaf66maahfl"))))
+    (inputs
+     `(("perl" ,perl)
+       ("ncurses" ,ncurses)))
+    (build-system copy-build-system)
+    (arguments
+     '(#:phases
+       (modify-phases %standard-phases
+         (add-after 'unpack 'patch-lib-path
+           (lambda* (#:key outputs #:allow-other-keys)
+             (let ((lib (string-append (assoc-ref outputs "out") "/lib")))
+               (substitute* "diff-so-fancy"
+                 (("use lib.*$")
+                  (string-append "use lib '" lib "';\n")))
+               #t)))
+         (add-after 'install 'symlink-executable
+           (lambda* (#:key outputs inputs #:allow-other-keys)
+             (let ((out (assoc-ref outputs "out"))
+                   (ncurses (assoc-ref inputs "ncurses"))
+                   (perl (assoc-ref inputs "perl")))
+               (wrap-program (string-append out "/bin/diff-so-fancy")
+                 `("PATH" ":" prefix (,(string-append ncurses "/bin")
+                                      ,(string-append perl "/bin"))))
+               #t))))
+       #:install-plan
+       '(("lib" "lib")
+         ("diff-so-fancy" "bin/"))))
+    (home-page "https://github.com/so-fancy/diff-so-fancy")
+    (synopsis "Makes diffs more human friendly and readable")
+    (description
+     "@code{diff-so-fancy} strives to make your diffs human readable instead
+of machine readable.  This helps improve code quality and helps you spot
+defects faster.")
+    (license license:expat)))
+
 (define-public go-github-go-git
   (package
     (name "go-github-go-git")
@@ -2771,3 +2901,64 @@ for historians.")
     (synopsis "Git implementation library")
     (description "This package provides a Git implementation library.")
     (license license:asl2.0)))
+
+(define-public gita
+  (let ((commit "62eb3d69874f75bdd6f95743e57315bc59890f70")
+        (revision "1"))
+    (package
+      (name "gita")
+      (version (git-version "0.10.10" revision commit))
+      (source (origin
+                (method git-fetch)
+                (uri (git-reference
+                      (url "https://github.com/nosarthur/gita")
+                      (commit commit)))
+                (file-name (git-file-name name version))
+                (sha256
+                 (base32
+                  "1jn5wnmjbdrrgz9fif7s81pv3g92q0wjcqy5qxl77kjy7iv0kpfp"))))
+      (build-system python-build-system)
+      (native-inputs
+       `(("git" ,git) ;for tests
+         ("python-pytest" ,python-pytest)))
+      (propagated-inputs
+       `(("python-pyyaml" ,python-pyyaml)))
+      (arguments
+       `(#:phases
+         (modify-phases %standard-phases
+           (replace 'check
+             (lambda* (#:key inputs outputs #:allow-other-keys)
+               (substitute* "tests/test_main.py"
+                 (("'gita\\\\n'") "'source\\n'")
+                 (("'gita'") "'source'"))
+               (invoke (string-append (assoc-ref inputs "git") "/bin/git")
+                       "init")
+               (add-installed-pythonpath inputs outputs)
+               (invoke (string-append (assoc-ref inputs "python-pytest")
+                                      "/bin/pytest")
+                       "-vv" "tests")))
+           (add-after 'install 'install-shell-completions
+             (lambda* (#:key outputs #:allow-other-keys)
+               (let* ((out (assoc-ref outputs "out"))
+                      (bash-completion (string-append out "/etc/bash_completion.d"))
+                      (zsh-completion (string-append out "/etc/zsh/site-functions")))
+                 (mkdir-p bash-completion)
+                 (copy-file ".gita-completion.bash"
+                            (string-append bash-completion "/gita"))
+                 (mkdir-p zsh-completion)
+                 (copy-file ".gita-completion.zsh"
+                            (string-append zsh-completion "/_gita"))))))))
+      (home-page "https://github.com/nosarthur/gita")
+      (synopsis "Command-line tool to manage multiple Git repos")
+      (description "This package provides a command-line tool to manage
+multiple Git repos.
+
+This tool does two things:
+@itemize
+@item display the status of multiple Git repos such as branch, modification,
+commit message side by side
+@item (batch) delegate Git commands/aliases from any working directory
+@end itemize
+
+If several repos are related, it helps to see their status together.")
+      (license license:expat))))

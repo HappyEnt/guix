@@ -151,7 +151,7 @@ between two other data points.")
 (define-public gama
   (package
     (name "gama")
-    (version "2.10")
+    (version "2.12")
     (source
       (origin
         (method url-fetch)
@@ -159,7 +159,12 @@ between two other data points.")
                             version ".tar.gz"))
         (sha256
          (base32
-          "14im3ahh849rildvs4qsk009jywf9w84vcmh7w44ajmlwcw7xiys"))))
+          "0zfilasalsy29b7viw0iwgnl9bkvp0l87gpxl1hx7379l8agwqyj"))
+        (modules '((guix build utils)))
+        (snippet
+         '(begin
+            (delete-file-recursively "lib/expat")
+            #t))))
     (build-system gnu-build-system)
     (arguments '(#:parallel-tests? #f)) ; race condition
     (native-inputs
@@ -179,7 +184,7 @@ coordinates as well as partial support for adjustments in global coordinate syst
 (define-public gpxsee
   (package
     (name "gpxsee")
-    (version "7.34")
+    (version "7.37")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -188,7 +193,7 @@ coordinates as well as partial support for adjustments in global coordinate syst
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0cdq2bqgkcqcyvasnrlgpl97b0kfi65iq2q6yy7dpp9xw4w764b1"))))
+                "0fpb43smh0kwic5pdxs46c0hkqj8g084h72pa024x1my6w12y9b8"))))
     (build-system gnu-build-system)
     (arguments
      '(#:phases
