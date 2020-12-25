@@ -444,7 +444,7 @@ graphs and can export its output to different formats.")
 (define-public facter
   (package
     (name "facter")
-    (version "4.0.46")
+    (version "4.0.47")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -453,7 +453,7 @@ graphs and can export its output to different formats.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1pi93i1jfpmxxw22b5r4gyx5jzgrammlrjzhjr3q2bpn3kcas91j"))))
+                "1zz5kk3ad1jj8y939369dfvjh7zqwpkcqzzad7yb6wp01rc5sf88"))))
     (build-system ruby-build-system)
     (arguments
      `(#:phases
@@ -515,7 +515,7 @@ or via the @code{facter} Ruby library.")
 (define-public htop
   (package
     (name "htop")
-    (version "3.0.3")
+    (version "3.0.4")
     (source
      (origin
        (method git-fetch)
@@ -523,7 +523,7 @@ or via the @code{facter} Ruby library.")
              (url "https://github.com/htop-dev/htop")
              (commit version)))
        (sha256
-        (base32 "0ylig6g2w4r3qfb16cf922iriqyn64frkzpk87vpga16kclvf08y"))
+        (base32 "1fckfv96vzqjs3lzy0cgwsqv5vh1sxca3fhvgskmnkvr5bq6cia9"))
        (file-name (git-file-name name version))))
     (build-system gnu-build-system)
     (inputs
@@ -1398,7 +1398,7 @@ system administrator.")
 (define-public sudo
   (package
     (name "sudo")
-    (version "1.9.4")
+    (version "1.9.4p2")
     (source (origin
               (method url-fetch)
               (uri
@@ -1408,8 +1408,7 @@ system administrator.")
                                     version ".tar.gz")))
               (sha256
                (base32
-                "1w03257akspgkkl757vmpq3p30sb2n6y61hll038mw9sqwnbv4cb"))
-              (patches (search-patches "sudo-fix-build-without-sendmail.patch"))
+                "0r0g8z289ipw0zpkhmm33cpfm42j01jds2q1wilhh3flg7xg2jn3"))
               (modules '((guix build utils)))
               (snippet
                '(begin
@@ -1859,7 +1858,7 @@ module slots, and the list of I/O ports (e.g. serial, parallel, USB).")
 (define-public acpica
   (package
     (name "acpica")
-    (version "20201113")
+    (version "20201217")
     (source (origin
               (method url-fetch)
               (uri (string-append
@@ -1867,7 +1866,7 @@ module slots, and the list of I/O ports (e.g. serial, parallel, USB).")
                     version ".tar.gz"))
               (sha256
                (base32
-                "0fmck3zklc328c8nzvfzm2xyh2i8zszzrd4k8kk8q30y4avnc6z1"))))
+                "06rdpfjmij5nni1x2wi1gnalhsza5yxq1viskjm9r11wmsjnxm2a"))))
     (build-system gnu-build-system)
     (native-inputs `(("flex" ,flex)
                      ("bison" ,bison)))
@@ -2190,13 +2189,13 @@ of supported upstream metrics systems simultaneously.")
 (define-public ansible
   (package
     (name "ansible")
-    (version "2.9.11")
+    (version "2.9.16")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "ansible" version))
        (sha256
-        (base32 "1c9ayh61qwasgncmlw7rjx5r4g5n2cpg1d5blgn53zg7xhrx1yc8"))))
+        (base32 "0j1icfqff25zm9sq6j41ipl6gcj3i67mb5bqbjf2f2q1yx6rm8sk"))))
     (build-system python-build-system)
     (native-inputs
      `(("python-bcrypt" ,python-bcrypt)
@@ -3614,7 +3613,7 @@ Python loading in HPC environments.")
   (let ((real-name "inxi"))
     (package
       (name "inxi-minimal")
-      (version "3.1.09-1")
+      (version "3.2.01-1")
       (source
        (origin
          (method git-fetch)
@@ -3623,7 +3622,7 @@ Python loading in HPC environments.")
                (commit version)))
          (file-name (git-file-name real-name version))
          (sha256
-          (base32 "0m6s8kxjppy3jm39is5i1lbrah29cw86rq0vamvx46izbdyf84y5"))))
+          (base32 "15bakrv3jzj5h88c3bd0cfhh6hb8b4hm79924k1ygn29sqzgyw65"))))
       (build-system trivial-build-system)
       (inputs
        `(("bash" ,bash-minimal)
@@ -3716,6 +3715,8 @@ support forum.  It runs with the @code{/exec} command in most IRC clients.")
        ("perl-io-socket-ssl" ,perl-io-socket-ssl)
        ("perl-json-xs" ,perl-json-xs)
        ("perl-time-hires" ,perl-time-hires)
+       ("lvm2" ,lvm2)                   ; lvs
+       ("mdadm" ,mdadm)
        ;; TODO: Add more inputs:
        ;; ipmi-sensors
        ;; hddtemp

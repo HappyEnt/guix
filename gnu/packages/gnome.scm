@@ -6457,7 +6457,7 @@ USB transfers with your high-level application or system daemon.")
 (define-public simple-scan
   (package
     (name "simple-scan")
-    (version "3.38.1")
+    (version "3.38.2")
     (source
      (origin
        (method url-fetch)
@@ -6465,7 +6465,7 @@ USB transfers with your high-level application or system daemon.")
                            (version-major+minor version) "/"
                            "simple-scan-" version ".tar.xz"))
        (sha256
-        (base32 "0grscz96bwj79ka4qvxh8h75avdx6824k8k38ylmaj6xbl6gi0hy"))))
+        (base32 "02sdkhxgr6i7iy481h4xavgaqd0a5dlsipzwrm4qd242jrr813d8"))))
     (build-system meson-build-system)
     ;; TODO: Fix icons in home screen, About dialogue, and scan menu.
     (arguments
@@ -10298,14 +10298,14 @@ views can be printed as PDF or PostScript files, or exported to HTML.")
 (define-public lollypop
   (package
     (name "lollypop")
-    (version "1.4.2")
+    (version "1.4.6")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "https://adishatz.org/lollypop/"
                            "lollypop-" version ".tar.xz"))
        (sha256
-        (base32 "1hfl68gkvqy5kxlmrsalz78mw1bs1yvqvy2rhg7pzgwiazsdvwzz"))))
+        (base32 "1hlahr50gsagx1ifcdk4yn43xps6w0vqn0gnd6xckfc7qmg1pgq7"))))
     (build-system meson-build-system)
     (arguments
      `(#:imported-modules
@@ -10335,7 +10335,8 @@ views can be printed as PDF or PostScript files, or exported to HTML.")
        ("gtk+:bin" ,gtk+ "bin")         ; For gtk-update-icon-cache
        ("pkg-config" ,pkg-config)))
     (inputs
-     `(("gobject-introspection" ,gobject-introspection)
+     `(("glib-networking" ,glib-networking)
+       ("gobject-introspection" ,gobject-introspection)
        ("gsettings-desktop-schemas" ,gsettings-desktop-schemas)
        ("gst-plugins-base" ,gst-plugins-base)
        ("libnotify" ,libnotify)
@@ -11881,6 +11882,9 @@ libraries.  Applications do not need to be recompiled--or even restarted.")
                                "-Dplugin_clang=false"
                                "-Dplugin_flatpak=false"
                                "-Dplugin_glade=false"
+                               ;; XXX: This one has been shown not to work in
+                               ;;      <https://issues.guix.gnu.org/45272>
+                               "-Dplugin_jedi=false"
                                ;; ... except this one.
                                "-Dplugin_update_manager=false")
        #:phases
@@ -11941,7 +11945,7 @@ integrated profiler via Sysprof, debugging support, and more.")
 (define-public komikku
   (package
     (name "komikku")
-    (version "0.23.0")
+    (version "0.24.0")
     (source
      (origin
        (method git-fetch)
@@ -11951,7 +11955,7 @@ integrated profiler via Sysprof, debugging support, and more.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "1xh3qmf2pk80qxj528lajjcwg7mps72s1zz8cj388av58p8l3hyw"))))
+         "010p32zrim245y0l784yp0rasqcqlyr3lrxwl3r1876x83qhs6q3"))))
     (build-system meson-build-system)
     (arguments
      `(#:glib-or-gtk? #t
@@ -11983,7 +11987,6 @@ integrated profiler via Sysprof, debugging support, and more.")
        ("libnotify" ,libnotify)
        ("libsecret" ,libsecret)
        ("python-beautifulsoup4" ,python-beautifulsoup4)
-       ("python-cloudscraper" ,python-cloudscraper)
        ("python-dateparser" ,python-dateparser)
        ("python-keyring" ,python-keyring)
        ("python-lxml" ,python-lxml)
@@ -11992,6 +11995,7 @@ integrated profiler via Sysprof, debugging support, and more.")
        ("python-pure-protobuf" ,python-pure-protobuf)
        ("python-pycairo" ,python-pycairo)
        ("python-pygobject" ,python-pygobject)
+       ("python-requests" ,python-requests)
        ("python-unidecode" ,python-unidecode)))
     (native-inputs
      `(("desktop-file-utils" ,desktop-file-utils)

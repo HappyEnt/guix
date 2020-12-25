@@ -118,6 +118,7 @@
   #:use-module (gnu packages gnupg)
   #:use-module (gnu packages golang)
   #:use-module (gnu packages gperf)
+  #:use-module (gnu packages graphviz)
   #:use-module (gnu packages gtk)
   #:use-module (gnu packages guile)
   #:use-module (gnu packages guile-xyz)
@@ -289,14 +290,14 @@ the same, being completely separated from the Internet.")
     ;; ’stable’ and recommends that “in general you deploy the NGINX mainline
     ;; branch at all times” (https://www.nginx.com/blog/nginx-1-6-1-7-released/)
     ;; Consider updating the nginx-documentation package together with this one.
-    (version "1.19.5")
+    (version "1.19.6")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://nginx.org/download/nginx-"
                                   version ".tar.gz"))
               (sha256
                (base32
-                "173rv8gacd9bakb0r9jmkr4pqgjw9mzpdh3f7x2d8ln4ssplc2jw"))))
+                "1d9kzks8x1226prjbpdin4dz93fjnv304zlqybfqachx5fh9a4di"))))
     (build-system gnu-build-system)
     (inputs `(("openssl" ,openssl)
               ("pcre" ,pcre)
@@ -379,9 +380,9 @@ and as a proxy to reduce the load on back-end HTTP or mail servers.")
 
 (define-public nginx-documentation
   ;; This documentation should be relevant for the current nginx package.
-  (let ((version "1.19.5")
-        (revision 2622)
-        (changeset "64bbb9163a14"))
+  (let ((version "1.19.6")
+        (revision 2636)
+        (changeset "a0824dab33ff"))
     (package
       (name "nginx-documentation")
       (version (simple-format #f "~A-~A-~A" version revision changeset))
@@ -393,7 +394,7 @@ and as a proxy to reduce the load on back-end HTTP or mail servers.")
                (file-name (string-append name "-" version))
                (sha256
                 (base32
-                 "085f3c00mqsaq95hp1bv9y0b517jv4zzs2q0j1c9m8nvh7k09zaa"))))
+                 "06w6fg33pnkqpaagzp9rqizill61vj7db7083mrd6i6by0j7cp1b"))))
       (build-system gnu-build-system)
       (arguments
        '(#:tests? #f                    ; no test suite
@@ -682,7 +683,7 @@ programming language.")))
 (define-public lighttpd
   (package
     (name "lighttpd")
-    (version "1.4.56")
+    (version "1.4.57")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://download.lighttpd.net/lighttpd/"
@@ -690,7 +691,7 @@ programming language.")))
                                   "lighttpd-" version ".tar.xz"))
               (sha256
                (base32
-                "0xyzahrkmldwskwgjgj4dc3rmfmgqiwwr9y7jfhqpbp8g76q9kp4"))))
+                "0zr1ssagirv5l4r2ii1k9v366a4vwylwbq74nb5pwby1i4drdjjj"))))
     (build-system gnu-build-system)
     (arguments
      `(#:configure-flags
@@ -1485,7 +1486,7 @@ used to validate and fix HTML data.")
 (define-public esbuild
   (package
     (name "esbuild")
-    (version "0.8.23")
+    (version "0.8.26")
     (source
      (origin
        (method git-fetch)
@@ -1494,7 +1495,7 @@ used to validate and fix HTML data.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0lrz685hdhx4cyxbslacg5x2xvm8zd1a5kjg4b7q10i5w56wb5xc"))
+        (base32 "0zw68mgmmicbkvx7s22knvm8nng5qn41b1chn35prhkla3kx1jn1"))
        (modules '((guix build utils)))
        (snippet
         '(begin
@@ -1792,6 +1793,7 @@ from streaming URLs.  It is a command-line wrapper for the libquvi library.")
        (method url-fetch)
        (uri (string-append "mirror://apache/serf/serf-"
                            version ".tar.bz2"))
+       (patches (search-patches "serf-python3.patch"))
        (sha256
         (base32 "1k47gbgpp52049andr28y28nbwh9m36bbb0g8p0aka3pqlhjv72l"))))
     (build-system scons-build-system)
@@ -1804,8 +1806,7 @@ from streaming URLs.  It is a command-line wrapper for the libquvi library.")
        ;;("gss" ,gss)
        ("zlib" ,zlib)))
     (arguments
-     `(#:scons ,scons-python2
-       #:scons-flags (list (string-append "APR=" (assoc-ref %build-inputs "apr"))
+     `(#:scons-flags (list (string-append "APR=" (assoc-ref %build-inputs "apr"))
                            (string-append "APU=" (assoc-ref %build-inputs "apr-util"))
                            (string-append "OPENSSL=" (assoc-ref %build-inputs "openssl"))
                            ;; (string-append "GSSAPI=" (assoc-ref %build-inputs "gss"))
@@ -6140,9 +6141,6 @@ into your tests.  It automatically starts up a HTTP server in a separate thread 
 @code{httpbin} and provides your test with the URL in the fixture.")
     (license license:expat)))
 
-(define-public python2-pytest-httpbin
-  (package-with-python2 python-pytest-httpbin))
-
 (define-public http-parser
   (package
     (name "http-parser")
@@ -8005,3 +8003,29 @@ It contains the code shared by all Kiwix ports.")
     (description "Kiwix Desktop allows you to enjoy a lot of different content
 offline (such as Wikipedia), without any access to Internet.")
     (license license:gpl3)))
+
+(define-public uriparser
+  (let ((commit "25dddb16cf044a7df27884e7ad3911baaaca3d7c")
+        (revision "1"))
+    (package
+      (name "uriparser")
+      (version (git-version "0.9.4" revision commit))
+      (source (origin
+                (method git-fetch)
+                (uri (git-reference
+                      (url "https://github.com/uriparser/uriparser")
+                      (commit commit)))
+                (file-name (git-file-name name version))
+                (sha256
+                 (base32
+                  "1ffzia679axcsccx2fxjpxhb0i5xc42zxn446x6c1170w6v69qf6"))))
+      (build-system cmake-build-system)
+      (native-inputs `(("gtest" ,googletest)
+                       ("doxygen" ,doxygen)
+                       ("graphviz" ,graphviz)))
+      (synopsis "Strictly RFC 3986 compliant URI parsing and handling library")
+      (description "uriparser is a strictly RFC 3986 compliant URI parsing and
+handling library written in C89 (\"ANSI C\").  uriparser is fast and supports
+Unicode.")
+      (home-page "https://uriparser.github.io/")
+      (license license:bsd-3))))

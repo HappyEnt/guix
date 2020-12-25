@@ -26,7 +26,10 @@
   #:use-module (guix combinators)
   #:use-module (guix config)
   #:use-module (guix records)
-  #:use-module ((guix serialization) #:select (restore-file))
+  #:use-module (guix diagnostics)
+  #:use-module (guix i18n)
+  #:use-module ((guix serialization) #:select (restore-file dump-file))
+  #:autoload   (guix store deduplication) (dump-file/deduplicate)
   #:autoload   (guix scripts discover) (read-substitute-urls)
   #:use-module (gcrypt hash)
   #:use-module (guix base32)
@@ -255,6 +258,18 @@ connection (typically PORT) is kept open once data has been fetched from URI."
   ;; See <https://lists.gnu.org/archive/html/guix-devel/2014-02/msg00340.html>
   ;; for more information.
   (contents     narinfo-contents))
+
+(define (narinfo-hash-algorithm+value narinfo)
+  "Return two values: the hash algorithm used by NARINFO and its value as a
+bytevector."
+  (match (string-tokenize (narinfo-hash narinfo)
+                          (char-set-complement (char-set #\:)))
+    ((algorithm base32)
+     (values (lookup-hash-algorithm (string->symbol algorithm))
+             (nix-base32-string->bytevector base32)))
+    (_
+     (raise (formatted-message
+             (G_ "invalid narinfo hash: ~s") (narinfo-hash narinfo))))))
 
 (define (narinfo-hash->sha256 hash)
   "If the string HASH denotes a sha256 hash, return it as a bytevector.
@@ -499,12 +514,18 @@ return its MAX-LENGTH first elements and its tail."
 
 (define* (http-multiple-get base-uri proc seed requests
                             #:key port (verify-certificate? #t)
+                            (open-connection guix:open-connection-for-uri)
+                            (keep-alive? #t)
                             (batch-size 1000))
   "Send all of REQUESTS to the server at BASE-URI.  Call PROC for each
 response, passing it the request object, the response, a port from which to
 read the response body, and the previous result, starting with SEED, à la
-'fold'.  Return the final result.  When PORT is specified, use it as the
-initial connection on which HTTP requests are sent."
+'fold'.  Return the final result.
+
+When PORT is specified, use it as the initial connection on which HTTP
+requests are sent; otherwise call OPEN-CONNECTION to open a new connection for
+a URI.  When KEEP-ALIVE? is false, close the connection port before
+returning."
   (let connect ((port     port)
                 (requests requests)
                 (result   seed))
@@ -513,10 +534,9 @@ initial connection on which HTTP requests are sent."
 
     ;; (format (current-error-port) "connecting (~a requests left)..."
     ;;         (length requests))
-    (let ((p (or port (guix:open-connection-for-uri
-                       base-uri
-                       #:verify-certificate?
-                       verify-certificate?))))
+    (let ((p (or port (open-connection base-uri
+                                       #:verify-certificate?
+                                       verify-certificate?))))
       ;; For HTTPS, P is not a file port and does not support 'setvbuf'.
       (when (file-port? p)
         (setvbuf p 'block (expt 2 16)))
@@ -541,7 +561,8 @@ initial connection on which HTTP requests are sent."
           (()
            (match (drop requests processed)
              (()
-              (close-port p)
+              (unless keep-alive?
+                (close-port p))
               (reverse result))
              (remainder
               (connect p remainder result))))
@@ -583,18 +604,18 @@ if file doesn't exist, and the narinfo otherwise."
 
 (define* (open-connection-for-uri/maybe uri
                                         #:key
-                                        (verify-certificate? #f)
+                                        fresh?
                                         (time %fetch-timeout))
-  "Open a connection to URI and return a port to it, or, if connection failed,
-print a warning and return #f."
+  "Open a connection to URI via 'open-connection-for-uri/cached' and return a
+port to it, or, if connection failed, print a warning and return #f.  Pass
+#:fresh? to 'open-connection-for-uri/cached'."
   (define host
     (uri-host uri))
 
   (catch #t
     (lambda ()
-      (guix:open-connection-for-uri uri
-                                    #:verify-certificate? verify-certificate?
-                                    #:timeout time))
+      (open-connection-for-uri/cached uri #:timeout time
+                                      #:fresh? fresh?))
     (match-lambda*
       (('getaddrinfo-error error)
        (unless (hash-ref %unreachable-hosts host)
@@ -668,23 +689,26 @@ print a warning and return #f."
   (define (do-fetch uri)
     (case (and=> uri uri-scheme)
       ((http https)
-       (let ((requests (map (cut narinfo-request url <>) paths)))
-         (match (open-connection-for-uri/maybe uri)
-           (#f
-            '())
-           (port
-            (update-progress!)
-            ;; Note: Do not check HTTPS server certificates to avoid depending
-            ;; on the X.509 PKI.  We can do it because we authenticate
-            ;; narinfos, which provides a much stronger guarantee.
-            (let ((result (http-multiple-get uri
-                                             handle-narinfo-response '()
-                                             requests
-                                             #:verify-certificate? #f
-                                             #:port port)))
-              (close-port port)
-              (newline (current-error-port))
-              result)))))
+       ;; Note: Do not check HTTPS server certificates to avoid depending
+       ;; on the X.509 PKI.  We can do it because we authenticate
+       ;; narinfos, which provides a much stronger guarantee.
+       (let* ((requests (map (cut narinfo-request url <>) paths))
+              (result   (call-with-cached-connection uri
+                          (lambda (port)
+                            (if port
+                                (begin
+                                  (update-progress!)
+                                  (http-multiple-get uri
+                                                     handle-narinfo-response '()
+                                                     requests
+                                                     #:open-connection
+                                                     open-connection-for-uri/cached
+                                                     #:verify-certificate? #f
+                                                     #:port port))
+                                '()))
+                          open-connection-for-uri/maybe)))
+         (newline (current-error-port))
+         result))
       ((file #f)
        (let* ((base  (string-append (uri-path uri) "/"))
               (files (map (compose (cut string-append base <> ".narinfo")
@@ -975,10 +999,14 @@ the URI, its compression method (a string), and the compressed file size."
 
 (define open-connection-for-uri/cached
   (let ((cache '()))
-    (lambda* (uri #:key fresh?)
+    (lambda* (uri #:key fresh? timeout verify-certificate?)
       "Return a connection for URI, possibly reusing a cached connection.
-When FRESH? is true, delete any cached connections for URI and open a new
-one.  Return #f if URI's scheme is 'file' or #f."
+When FRESH? is true, delete any cached connections for URI and open a new one.
+Return #f if URI's scheme is 'file' or #f.
+
+When true, TIMEOUT is the maximum number of milliseconds to wait for
+connection establishment.  When VERIFY-CERTIFICATE? is true, verify HTTPS
+server certificates."
       (define host (uri-host uri))
       (define scheme (uri-scheme uri))
       (define key (list host scheme (uri-port uri)))
@@ -990,7 +1018,9 @@ one.  Return #f if URI's scheme is 'file' or #f."
               ;; CACHE, if any.
               (let-values (((socket)
                             (guix:open-connection-for-uri
-                             uri #:verify-certificate? #f))
+                             uri
+                             #:verify-certificate? verify-certificate?
+                             #:timeout timeout))
                            ((new-cache evicted)
                             (at-most (- %max-cached-connections 1) cache)))
                 (for-each (match-lambda
@@ -1004,14 +1034,19 @@ one.  Return #f if URI's scheme is 'file' or #f."
                   (begin
                     (false-if-exception (close-port socket))
                     (set! cache (alist-delete key cache))
-                    (open-connection-for-uri/cached uri))
+                    (open-connection-for-uri/cached uri #:timeout timeout
+                                                    #:verify-certificate?
+                                                    verify-certificate?))
                   (begin
                     ;; Drain input left from the previous use.
                     (drain-input socket)
                     socket))))))))
 
-(define (call-with-cached-connection uri proc)
-  (let ((port (open-connection-for-uri/cached uri)))
+(define* (call-with-cached-connection uri proc
+                                      #:optional
+                                      (open-connection
+                                       open-connection-for-uri/cached))
+  (let ((port (open-connection uri)))
     (catch #t
       (lambda ()
         (proc port))
@@ -1023,7 +1058,7 @@ one.  Return #f if URI's scheme is 'file' or #f."
         (if (or (and (eq? key 'system-error)
                      (= EPIPE (system-error-errno `(,key ,@args))))
                 (memq key '(bad-response bad-header bad-header-component)))
-            (proc (open-connection-for-uri/cached uri #:fresh? #t))
+            (proc (open-connection uri #:fresh? #t))
             (apply throw key args))))))
 
 (define-syntax-rule (with-cached-connection uri port exp ...)
@@ -1031,12 +1066,26 @@ one.  Return #f if URI's scheme is 'file' or #f."
   (call-with-cached-connection uri (lambda (port) exp ...)))
 
 (define* (process-substitution store-item destination
-                               #:key cache-urls acl print-build-trace?)
+                               #:key cache-urls acl
+                               deduplicate? print-build-trace?)
   "Substitute STORE-ITEM (a store file name) from CACHE-URLS, and write it to
-DESTINATION as a nar file.  Verify the substitute against ACL."
+DESTINATION as a nar file.  Verify the substitute against ACL, and verify its
+hash against what appears in the narinfo.  When DEDUPLICATE? is true, and if
+DESTINATION is in the store, deduplicate its files.  Print a status line on
+the current output port."
   (define narinfo
     (lookup-narinfo cache-urls store-item
                     (cut valid-narinfo? <> acl)))
+
+  (define destination-in-store?
+    (string-prefix? (string-append (%store-prefix) "/")
+                    destination))
+
+  (define (dump-file/deduplicate* . args)
+    ;; Make sure deduplication looks at the right store (necessary in test
+    ;; environments).
+    (apply dump-file/deduplicate
+           (append args (list #:store (%store-prefix)))))
 
   (unless narinfo
     (leave (G_ "no valid substitute for '~a'~%")
@@ -1044,9 +1093,6 @@ DESTINATION as a nar file.  Verify the substitute against ACL."
 
   (let-values (((uri compression file-size)
                 (narinfo-best-uri narinfo)))
-    ;; Tell the daemon what the expected hash of the Nar itself is.
-    (format #t "~a~%" (narinfo-hash narinfo))
-
     (unless print-build-trace?
       (format (current-error-port)
               (G_ "Downloading ~a...~%") (uri->string uri)))
@@ -1079,9 +1125,20 @@ DESTINATION as a nar file.  Verify the substitute against ACL."
                    ;; closed here, while the child process doing the
                    ;; reporting will close it upon exit.
                    (decompressed-port (string->symbol compression)
-                                      progress)))
+                                      progress))
+
+                  ;; Compute the actual nar hash as we read it.
+                  ((algorithm expected)
+                   (narinfo-hash-algorithm+value narinfo))
+                  ((hashed get-hash)
+                   (open-hash-input-port algorithm input)))
       ;; Unpack the Nar at INPUT into DESTINATION.
-      (restore-file input destination)
+      (restore-file hashed destination
+                    #:dump-file (if (and destination-in-store?
+                                         deduplicate?)
+                                    dump-file/deduplicate*
+                                    dump-file))
+      (close-port hashed)
       (close-port input)
 
       ;; Wait for the reporter to finish.
@@ -1091,8 +1148,17 @@ DESTINATION as a nar file.  Verify the substitute against ACL."
       ;; one to visually separate substitutions.
       (display "\n\n" (current-error-port))
 
-      ;; Tell the daemon that we're done.
-      (display "success\n" (current-output-port)))))
+      ;; Check whether we got the data announced in NARINFO.
+      (let ((actual (get-hash)))
+        (if (bytevector=? actual expected)
+            ;; Tell the daemon that we're done.
+            (format (current-output-port) "success ~a ~a~%"
+                    (narinfo-hash narinfo) (narinfo-size narinfo))
+            ;; The actual data has a different hash than that in NARINFO.
+            (format (current-output-port) "hash-mismatch ~a ~a ~a~%"
+                    (hash-algorithm-name algorithm)
+                    (bytevector->nix-base32-string expected)
+                    (bytevector->nix-base32-string actual)))))))
 
 
 ;;;
@@ -1219,6 +1285,9 @@ default value."
       ((= string->number number) (> number 0))
       (_ #f)))
 
+  (define deduplicate?
+    (find-daemon-option "deduplicate"))
+
   ;; The daemon's agent code opens file descriptor 4 for us and this is where
   ;; stderr should go.
   (parameterize ((current-error-port (if (%error-to-file-descriptor-4?)
@@ -1278,6 +1347,7 @@ default value."
                  (process-substitution store-path destination
                                        #:cache-urls (substitute-urls)
                                        #:acl (current-acl)
+                                       #:deduplicate? deduplicate?
                                        #:print-build-trace?
                                        print-build-trace?)
                  (loop))))))
@@ -1291,6 +1361,7 @@ default value."
 ;;; Local Variables:
 ;;; eval: (put 'with-timeout 'scheme-indent-function 1)
 ;;; eval: (put 'with-cached-connection 'scheme-indent-function 2)
+;;; eval: (put 'call-with-cached-connection 'scheme-indent-function 1)
 ;;; End:
 
 ;;; substitute.scm ends here

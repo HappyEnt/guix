@@ -1191,6 +1191,46 @@ Features include:
 optimized for performance yet simple to use.")
       (license license:expat))))
 
+(define-public go-github-com-tomnomnom-gron
+  (package
+    (name "gron")
+    (version "0.6.0")
+    (home-page "https://github.com/tomnomnom/gron")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url home-page)
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "05f3w4zr15wd7xk75l12y5kip4gnv719a2x9w2hy23q3pnss9wk0"))))
+    (build-system go-build-system)
+    (arguments
+     (let ((import-path "github.com/tomnomnom/gron"))
+       `(#:import-path ,import-path
+         #:phases
+         (modify-phases %standard-phases
+           (add-after 'check 'remove-non-source
+             (lambda _
+               (for-each (lambda (dir)
+                           (delete-file-recursively
+                            (string-append "src/" ,import-path dir)))
+                         '("/docs" "/script" "/testdata"))
+               #t))))))
+    (inputs
+     `(("github.com/fatih/color" ,go-github-com-fatih-color)
+       ("github.com/mattn/go-colorable" ,go-github-com-mattn-go-colorable)
+       ("github.com/mattn/go-isatty" ,go-github-com-mattn-go-isatty)
+       ("github.com/nwidger/jsoncolor" ,go-github-com-nwidger-jsoncolor)
+       ("github.com/pkg/errors" ,go-github-com-pkg-errors)))
+    (synopsis "Transform JSON to make it easier to grep")
+    (description
+     "This package transforms JSON into discrete assignments to make it easier
+to use line-based tools such as grep to search for what you want and see the
+absolute \"path\" to it.")
+    (license license:expat)))
+
 (define-public go-github-com-tv42-httpunix
   (let ((commit "2ba4b9c3382c77e7b9ea89d00746e6111d142a22")
         (revision "0"))
@@ -1240,30 +1280,28 @@ sockets.")
       (license license:expat))))
 
 (define-public go-github-com-emicklei-go-restful
-  (let ((commit "89ef8af493ab468a45a42bb0d89a06fccdd2fb22")
-        (revision "0"))
-    (package
-      (name "go-github-com-emicklei-go-restful")
-      (version (git-version "0.0.0" revision commit))
-      (source
-       (origin
-         (method git-fetch)
-         (uri (git-reference
-               (url "https://github.com/emicklei/go-restful")
-               (commit commit)))
-         (file-name (git-file-name name version))
-         (sha256
-          (base32
-           "0rrlfcfq80fkxifpih6bq31vavb5mf4530xz51pp9pq1mn2fzjfh"))))
-      (build-system go-build-system)
-      (arguments
-       '(#:import-path "github.com/emicklei/go-restful"))
-      (home-page "https://github.com/emicklei/go-restful")
-      (synopsis "Build REST-style web services using Go")
-      (description "This package provides @code{go-restful}, which helps
+  (package
+    (name "go-github-com-emicklei-go-restful")
+    (version "3.4.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/emicklei/go-restful")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "0m1y5a6xr6hmdj77afrvyh2llkbhn1166lcrgis654shl8zs9qhz"))))
+    (build-system go-build-system)
+    (arguments
+     '(#:import-path "github.com/emicklei/go-restful"))
+    (home-page "https://github.com/emicklei/go-restful")
+    (synopsis "Build REST-style web services using Go")
+    (description "This package provides @code{go-restful}, which helps
 developers to use @code{http} methods explicitly and in a way that's consistent
 with the HTTP protocol definition.")
-      (license license:expat))))
+    (license license:expat)))
 
 (define-public go-github-com-google-cadvisor
   (let ((commit "2ed7198f77395ee9a172878a0a7ab92ab59a2cfd")
@@ -1708,7 +1746,7 @@ application's http.Handlers.")
 (define-public go-github-com-magiconair-properties
   (package
     (name "go-github-com-magiconair-properties")
-    (version "1.8.1")
+    (version "1.8.4")
     (source
      (origin
        (method git-fetch)
@@ -1718,7 +1756,7 @@ application's http.Handlers.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "19zqw1x0w0crh8zc84yy82nkcc5yjz72gviaf2xjgfm5a8np7nyb"))))
+         "0q7d55z0v8y55dyy8nhgdnswf5zkgj3i87irbk294nvzhx01bnxd"))))
     (build-system go-build-system)
     (arguments
      `(#:import-path "github.com/magiconair/properties"))
@@ -2122,32 +2160,30 @@ terminal.")
     (license license:expat)))
 
 (define-public go-github-com-mattn-go-colorable
-  (let ((commit "efa589957cd060542a26d2dd7832fd6a6c6c3ade")
-        (revision "0"))
-    (package
-      (name "go-github-com-mattn-go-colorable")
-      (version (git-version "0.0.0" revision commit))
-      (source
-       (origin
-         (method git-fetch)
-         (uri (git-reference
-               (url "https://github.com/mattn/go-colorable")
-               (commit commit)))
-         (file-name (git-file-name name version))
-         (sha256
-          (base32
-           "0kshi4hvm0ayrsxqxy0599iv81kryhd2fn9lwjyczpj593cq069r"))))
-      (build-system go-build-system)
-      (native-inputs
-       `(("go-github-com-mattn-go-isatty"
-          ,go-github-com-mattn-go-isatty)))
-      (arguments
-       '(#:import-path "github.com/mattn/go-colorable"))
-      (home-page "https://github.com/mattn/go-colorable")
-      (synopsis "Handle ANSI color escapes on Windows")
-      (description "This package provides @code{colorable}, a module that
+  (package
+    (name "go-github-com-mattn-go-colorable")
+    (version "0.1.8")
+    (home-page "https://github.com/mattn/go-colorable")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url home-page)
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "0q34zqwbnls72md8q8mhj368s7p3i4xspvs3rk8fs76s0pn7dr2l"))))
+    (build-system go-build-system)
+    (native-inputs
+     `(("go-github-com-mattn-go-isatty"
+        ,go-github-com-mattn-go-isatty)))
+    (arguments
+     '(#:import-path "github.com/mattn/go-colorable"))
+    (synopsis "Handle ANSI color escapes on Windows")
+    (description "This package provides @code{colorable}, a module that
 makes it possible to handle ANSI color escapes on Windows.")
-      (license license:expat))))
+    (license license:expat)))
 
 (define-public go-github-com-mattn-go-pointer
   (let ((commit "a0a44394634f41e4992b173b24f14fecd3318a67")
@@ -3519,7 +3555,7 @@ format in Go.")
 (define-public go-github-com-kr-pretty
   (package
     (name "go-github-com-kr-pretty")
-    (version "0.2.0")
+    (version "0.2.1")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -3528,13 +3564,13 @@ format in Go.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1ywbfzz1h3a3qd8rpkiqwi1dm4w8ls9ijb4x1b7567grns9f0vnp"))))
+                "0vzfz06y9q8gs2nxx0kys0591vzp78k0fvpb8digi5n15h3b25hy"))))
     (build-system go-build-system)
     (propagated-inputs
      `(("go-github-com-kr-text" ,go-github-com-kr-text)))
     (arguments
      '(#:import-path "github.com/kr/pretty"))
-    (synopsis "A pretty printer for Go values")
+    (synopsis "Pretty printer for Go values")
     (description "This package provides a pretty printer for Go values.")
     (home-page "https://github.com/kr/pretty")
     (license license:expat)))
@@ -5342,6 +5378,33 @@ terminal.  It gathers information about the terminal environment in terms of
 its ANSI and color support and offers you convenient methods to colorize and
 style your output, without you having to deal with all kinds of weird ANSI
 escape sequences and color conversions.")
+    (license license:expat)))
+
+(define-public go-github-com-nwidger-jsoncolor
+  (package
+    (name "go-github-com-nwidger-jsoncolor")
+    (version "0.3.0")
+    (home-page "https://github.com/nwidger/jsoncolor")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url home-page)
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "13rd146pnj7qm70r1333gyd1f61x40nafxlpvdxlci9h7mx8c5p8"))))
+    (build-system go-build-system)
+    (arguments
+     `(#:import-path "github.com/nwidger/jsoncolor"))
+    (native-inputs
+     `(("go-github-com-fatih-color" ,go-github-com-fatih-color)))
+    (synopsis "Colorized JSON marshalling and encoding")
+    (description
+     "@code{jsoncolor} is a drop-in replacement for @code{encoding/json}'s
+@code{Marshal} and @code{MarshalIndent} functions and @code{Encoder} type
+which produce colorized output using github.com/fatih/color.")
     (license license:expat)))
 
 (define-public go-github-com-olekukonko-tablewriter

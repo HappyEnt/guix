@@ -1218,7 +1218,7 @@ effects and music to make a completely free game.")
        ("sdl-image" ,sdl-image)
        ("sdl-mixer" ,sdl-mixer)
        ("zlib" ,zlib)))
-    (home-page "http://www.freedroid.org/")
+    (home-page "https://www.freedroid.org/")
     (synopsis "Isometric role-playing game against killer robots")
     (description
      "Freedroid RPG is an @dfn{RPG} (Role-Playing Game) with isometric graphics.
@@ -3817,7 +3817,7 @@ falling, themeable graphics and sounds, and replays.")
 (define-public wesnoth
   (package
     (name "wesnoth")
-    (version "1.14.14")
+    (version "1.14.15")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://sourceforge/wesnoth/wesnoth-"
@@ -3826,7 +3826,7 @@ falling, themeable graphics and sounds, and replays.")
                                   "wesnoth-" version ".tar.bz2"))
               (sha256
                (base32
-                "1l7mdxn4kw938qz824057rqh99b7y9439a54s64n1xz95w77lp0r"))))
+                "05iapxj3nzaqh10y42yq1jf7spxgm4iwjw4qj1c4lnb25xp4mc2h"))))
     (build-system cmake-build-system)
     (arguments
      `(#:tests? #f))                    ;no check target
@@ -3957,14 +3957,14 @@ world}, @uref{http://evolonline.org, Evol Online} and
 (define openttd-engine
   (package
     (name "openttd-engine")
-    (version "1.10.0")
+    (version "1.10.3")
     (source
      (origin (method url-fetch)
              (uri (string-append "https://cdn.openttd.org/openttd-releases/"
                                  version "/openttd-" version "-source.tar.xz"))
              (sha256
               (base32
-               "0lz2y2rjc23k0d97y65cqhy2splw9cmrbvhgz0iqps8xkan1m8hv"))))
+               "0fxmfz1mm95a2x0rnzfff9wb8q57w0cvsdd0z7agdcbyakph25n1"))))
     (build-system gnu-build-system)
     (arguments
      `(#:tests? #f              ; no "check" target
@@ -5571,7 +5571,7 @@ for Un*x systems with X11.")
 (define-public freeciv
   (package
    (name "freeciv")
-   (version "2.6.2")
+   (version "2.6.2.1")
    (source
     (origin
      (method url-fetch)
@@ -5583,7 +5583,7 @@ for Un*x systems with X11.")
                   (version-major+minor version) "/" version
                   "/freeciv-" version ".tar.bz2")))
      (sha256
-      (base32 "13vc2xg1cf19rhbnr7k38b56b2hdapqymq5vma1l69kn7hyyz0b1"))))
+      (base32 "0pjqnwpxsirhyf5c4f1b9gxkqah0213wqaynklq84mahq41sq15x"))))
    (build-system gnu-build-system)
    (inputs
     `(("curl" ,curl)

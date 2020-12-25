@@ -185,7 +185,8 @@ This package contains GUI widgets for baloo.")
          ("qtquickcontrols" ,qtquickcontrols)
          ("qtquickcontrols2" ,qtquickcontrols2)
          ("kiconthemes" ,kiconthemes)
-         ("breeze" ,breeze)
+         ("breeze" ,breeze) ; make dark them available easily
+         ("breeze-icons" ,breeze-icons) ; recommended icon set
          ("purpose" ,purpose)
          ("qtwebkit" ,qtwebkit)
          ("qtgraphicaleffects" ,qtgraphicaleffects)
@@ -200,12 +201,14 @@ This package contains GUI widgets for baloo.")
                       (qtbase (assoc-ref inputs "qtbase"))
                       (frei0r (assoc-ref inputs "frei0r-plugins"))
                       (ffmpeg (assoc-ref inputs "ffmpeg"))
-                      (breeze (assoc-ref inputs "breeze")))
+                      (breeze (assoc-ref inputs "breeze"))
+                      (breeze-icons (assoc-ref inputs "breeze-icons")))
                  (wrap-program (string-append out "/bin/kdenlive")
                    `("PATH" ":" prefix
                      ,(list (string-append ffmpeg "/bin")))
                    `("XDG_DATA_DIRS" ":" prefix
-                     ,(list (string-append breeze "/share")))
+                     ,(list (string-append breeze "/share")
+                            (string-append breeze-icons "/share")))
                    `("QT_PLUGIN_PATH" ":" prefix
                      ,(list (getenv "QT_PLUGIN_PATH")))
                    `("FREI0R_PATH" ":" =
@@ -230,7 +233,7 @@ projects.")
 (define-public kdevelop
   (package
     (name "kdevelop")
-    (version "5.5.2")
+    (version "5.6.1")
     (source
       (origin
         (method url-fetch)
@@ -238,7 +241,7 @@ projects.")
                             "/" version "/src/kdevelop-"
                             version ".tar.xz"))
         (sha256
-         (base32 "1nkl3z1n1l7ly2zvmbx2sdhx5q72wcvpwhzsz3qgw1474qd9i3i2"))))
+         (base32 "02ip5r67hjfpywkm3mz86n6wbqcr7996ifzfd2fyzsvm4998hi4y"))))
     (build-system qt-build-system)
     (native-inputs
      `(("extra-cmake-modules" ,extra-cmake-modules)
@@ -831,10 +834,10 @@ Python, PHP, and Perl.")
        ("kcrash" ,kcrash)
        ("kjs" ,kjs)))
     (home-page "https://kde.org/applications/graphics/okular/")
-    (synopsis "Document Viewer")
-    (description "Okular is a universal document viewer developed by KDE.
- Okular works on multiple platforms, including but not limited to
- Linux, Windows, macOS, *BSD, etc.")
+    (synopsis "Document viewer")
+    (description
+     "Okular is a document viewer developed for KDE.  It can display files in
+a variety of formats, including PDF, PostScript, DejaVu, and EPub.")
     (license license:gpl2+)))
 
 (define-public kdegraphics-mobipocket

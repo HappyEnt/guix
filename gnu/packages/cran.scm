@@ -24876,6 +24876,82 @@ censored data with competing risks (see data set @code{menopause}).  The
 package also provides functions to visualize the observed data and the MLE.")
     (license license:gpl2+)))
 
+(define-public r-metafor
+  (package
+    (name "r-metafor")
+    (version "2.4-0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (cran-uri "metafor" version))
+       (sha256
+        (base32
+         "1b599fxk7s0brkchmx698fr5k4g1kzkia2rnlvhg349ffs5nfjmn"))))
+    (properties `((upstream-name . "metafor")))
+    (build-system r-build-system)
+    (propagated-inputs
+     `(("r-matrix" ,r-matrix)
+       ("r-nlme" ,r-nlme)))
+    (home-page "https://cran.r-project.org/web/packages/metafor/")
+    (synopsis "Meta-analysis package for R")
+    (description
+     "This package provides a comprehensive collection of functions for
+conducting meta-analyses in R.  The package includes functions to calculate
+various effect sizes or outcome measures, fit fixed-, random-, and
+mixed-effects models to such data, carry out moderator and meta-regression
+analyses, and create various types of meta-analytical plots (e.g., forest,
+funnel, radial, L'Abbe, Baujat, GOSH plots).  For meta-analyses of binomial
+and person-time data, the package also provides functions that implement
+specialized methods, including the Mantel-Haenszel method, Peto's method, and
+a variety of suitable generalized linear (mixed-effects) models (i.e.
+mixed-effects logistic and Poisson regression models).  Finally, the package
+provides functionality for fitting meta-analytic multivariate/multilevel
+models that account for non-independent sampling errors and/or true
+effects (e.g. due to the inclusion of multiple treatment studies, multiple
+endpoints, or other forms of clustering).  Network meta-analyses and
+meta-analyses accounting for known correlation structures (e.g. due to
+phylogenetic relatedness) can also be conducted.")
+    (license license:gpl2+)))
+
+(define-public r-altmeta
+  (package
+    (name "r-altmeta")
+    (version "3.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (cran-uri "altmeta" version))
+       (sha256
+        (base32
+         "0z252lbsknqp33i0b0xf5r7spr535iq47bv40vgip6nsqhgrl7b0"))))
+    (properties `((upstream-name . "altmeta")))
+    (build-system r-build-system)
+    (propagated-inputs
+     `(("r-coda" ,r-coda)
+       ("r-lme4" ,r-lme4)
+       ("r-matrix" ,r-matrix)
+       ("r-metafor" ,r-metafor)
+       ("r-rjags" ,r-rjags)))
+    (home-page "https://cran.r-project.org/web/packages/altmeta/")
+    (synopsis "Alternative meta-analysis methods")
+    (description
+     "This package provides alternative statistical methods for meta-analysis,
+including:
+
+@enumerate
+@item bivariate generalized linear mixed models for synthesizing odds ratios,
+  relative risks, and risk differences
+@item heterogeneity tests and measures that are robust to outliers;
+@item measures, tests, and visualization tools for publication bias or
+  small-study effects;
+@item meta-analysis of diagnostic tests for synthesizing sensitivities,
+  specificities, etc.;
+@item meta-analysis methods for synthesizing proportions;
+@item models for multivariate meta-analysis.
+@end enumerate
+")
+    (license license:gpl2+)))
+
 (define-public r-perm
   (package
     (name "r-perm")

@@ -562,7 +562,7 @@ It can utilize SIMD instructions that are available on modern processors.")
 (define-public glpk
   (package
     (name "glpk")
-    (version "4.65")
+    (version "5.0")
     (source
      (origin
       (method url-fetch)
@@ -570,12 +570,13 @@ It can utilize SIMD instructions that are available on modern processors.")
                           version ".tar.gz"))
       (sha256
        (base32
-        "040sfaa9jclg2nqdh83w71sv9rc1sznpnfiripjdyr48cady50a2"))))
+        "05bgxidxj8d9xdp82niy7cy36w181cxq7p8vc3y2ixshpgp1642a"))))
     (build-system gnu-build-system)
     (inputs
      `(("gmp" ,gmp)))
     (arguments
-     `(#:configure-flags '("--with-gmp")))
+     `(#:configure-flags '("--with-gmp"
+                           "--disable-static")))
     (home-page "https://www.gnu.org/software/glpk/")
     (synopsis "GNU Linear Programming Kit, supporting the MathProg language")
     (description
@@ -585,6 +586,20 @@ GNU MathProg modeling language, a subset of the AMPL language, and features a
 translator for the language.  In addition to the C library, a stand-alone
 LP/MIP solver is included in the package.")
     (license license:gpl3+)))
+
+(define-public glpk-4
+  (package
+    (inherit glpk)
+    (name "glpk")
+    (version "4.65")
+    (source
+     (origin
+      (method url-fetch)
+      (uri (string-append "mirror://gnu/glpk/glpk-"
+                          version ".tar.gz"))
+      (sha256
+       (base32
+        "040sfaa9jclg2nqdh83w71sv9rc1sznpnfiripjdyr48cady50a2"))))))
 
 (define-public 4ti2
   (package
@@ -1891,7 +1906,7 @@ can solve two kinds of problems:
 (define-public octave-cli
   (package
     (name "octave-cli")
-    (version "5.2.0")
+    (version "6.1.0")
     (source
      (origin
       (method url-fetch)
@@ -1899,7 +1914,7 @@ can solve two kinds of problems:
                           version ".tar.lz"))
       (sha256
        (base32
-        "1848dq6nxzal8gwjrcp6xhi5gq96w89nss9d9rz75q408gb3mbl6"))))
+        "0355s0pi8603ccs2j08zym3nalgalslxn83s37zq8nkrrkwxrjfk"))))
     (build-system gnu-build-system)
     (inputs
      `(("alsa-lib" ,alsa-lib)

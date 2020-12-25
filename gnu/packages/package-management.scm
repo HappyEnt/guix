@@ -131,8 +131,8 @@
   ;; Note: the 'update-guix-package.scm' script expects this definition to
   ;; start precisely like this.
   (let ((version "1.2.0")
-        (commit "799f066768bacb321ebad84c75b2bbfd269e7cd8")
-        (revision 6))
+        (commit "7624ebbae33cf49dded5e9032ed426781c9554f6")
+        (revision 8))
     (package
       (name "guix")
 
@@ -148,7 +148,7 @@
                       (commit commit)))
                 (sha256
                  (base32
-                  "04k8q5yjmxazskl13ap210jki2zh73zlzd0xdx06v08liskgz10q"))
+                  "0dd28df278fzlwxk1c0n86q98q8q8cj6g87as8v4rymyprf4gyjc"))
                 (file-name (string-append "guix-" version "-checkout"))))
       (build-system gnu-build-system)
       (arguments
@@ -1026,8 +1026,8 @@ environments.")
     (license (list license:gpl3+ license:agpl3+ license:silofl1.1))))
 
 (define-public guix-build-coordinator
-  (let ((commit "79e28fbfd7298eecd754f75170c09c59c0943f67")
-        (revision "10"))
+  (let ((commit "c33d3f570bd32afc2def410067db6b92ad6aff0a")
+        (revision "12"))
     (package
       (name "guix-build-coordinator")
       (version (git-version "0" revision commit))
@@ -1038,7 +1038,7 @@ environments.")
                       (commit commit)))
                 (sha256
                  (base32
-                  "02yk56iisfwg8k4l1allxlanisp1cm13v6yifgl90b7msvy7qz3a"))
+                  "01mr211s1nb9hhm6784ibp87g59wifajcclbss3ry7i3qsbvg22j"))
                 (file-name (string-append name "-" version "-checkout"))))
       (build-system gnu-build-system)
       (arguments
@@ -1068,6 +1068,7 @@ environments.")
                     (wrap-program file
                       `("PATH" ":" prefix
                         (,bin
+                         ,(dirname (which "nproc")) ; used by the agent
                          ;; Support building without sqitch as an input, as it
                          ;; can't be cross-compiled yet
                          ,@(or (and=> (assoc-ref inputs "sqitch")

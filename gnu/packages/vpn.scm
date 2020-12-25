@@ -319,7 +319,7 @@ this process.  It is compatible with Fortinet VPNs.")
 (define-public openvpn
   (package
     (name "openvpn")
-    (version "2.4.9")
+    (version "2.4.10")
     (source (origin
               (method url-fetch)
               (uri (string-append
@@ -327,7 +327,7 @@ this process.  It is compatible with Fortinet VPNs.")
                     version ".tar.xz"))
               (sha256
                (base32
-                "1qpbllwlha7cffsd5dlddb8rl22g9rar5zflkz1wrcllhvfkl7v4"))))
+                "0xx378ja2rdfaayc257z0z5ddsp8h0jcpqnd1a6bdw3rlsam6a6g"))))
     (build-system gnu-build-system)
     (arguments
      '(#:configure-flags '("--enable-iproute2=yes")))
@@ -351,7 +351,7 @@ traversing network address translators (@dfn{NAT}s) and firewalls.")
 (define-public protonvpn-cli
   (package
     (name "protonvpn-cli")
-    (version "2.2.4")
+    (version "2.2.6")
     (source
      (origin
        ;; PyPI has a ".whl" file but not a proper source release.
@@ -362,19 +362,44 @@ traversing network address translators (@dfn{NAT}s) and firewalls.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32
-         "08yca0a0prrnrc7ir7ajd56yxvxpcs4m1k8f5kf273f5whgr7wzw"))))
+        (base32 "0y7v9ikrmy5dbjlpbpacp08gy838i8z54m8m4ps7ldk1j6kyia3n"))))
     (build-system python-build-system)
-    (arguments '(#:tests? #f)) ; no tests in repo
+    (arguments
+     '(#:tests? #f ; no tests in repo
+       #:phases
+       (modify-phases %standard-phases
+         (add-after 'wrap 'wrap-wrapper
+           ;; Wrap entrypoint with paths to its hard dependencies.
+           (lambda* (#:key inputs outputs #:allow-other-keys)
+             (let ((entrypoint (string-append (assoc-ref outputs "out")
+                                              "/bin/.protonvpn-real")))
+               (wrap-program entrypoint
+                            `("PATH" ":" prefix
+                              ,(map (lambda (name)
+                                      (let ((input (assoc-ref inputs name)))
+                                        (string-append input "/bin:"
+                                                       input "/sbin")))
+                                    (list "dialog"
+                                          "iproute2"
+                                          "iptables"
+                                          "ncurses"
+                                          "openvpn"
+                                          "procps"
+                                          "which")))))
+             #t)))))
     (native-inputs
      `(("python-docopt" ,python-docopt)))
     (inputs
-     `(("python-jinja2" ,python-jinja2)
+     `(("dialog" ,dialog)
+       ("iproute2" ,iproute)
+       ("iptables" ,iptables)
+       ("ncurses" ,ncurses)
+       ("openvpn" ,openvpn)
+       ("procps" ,procps)
+       ("python-jinja2" ,python-jinja2)
        ("python-pythondialog" ,python-pythondialog)
-       ("python-requests" ,python-requests)))
-    (propagated-inputs
-     `(("openvpn" ,openvpn)
-       ("dialog" ,dialog)))
+       ("python-requests" ,python-requests)
+       ("which" ,which)))
     (synopsis "Command-line client for ProtonVPN")
     (description
      "This is the official command-line interface for ProtonVPN, a secure
